@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ShoppingCart, Menu, X, MessageCircle, User } from "lucide-react";
 import { 
   Sheet,
@@ -12,9 +11,9 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import SearchDropdown from "./SearchDropdown";
 
 export default function Navbar() {
-  const [searchQuery, setSearchQuery] = useState("");
   const isMobile = useIsMobile();
   
   const NavLinks = () => (
@@ -76,13 +75,7 @@ export default function Navbar() {
           <div className="flex items-center gap-3">
             {!isMobile && (
               <div className="relative w-[200px] lg:w-[300px]">
-                <Input
-                  type="text"
-                  placeholder="Search products..."
-                  className="pr-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
+                <SearchDropdown />
               </div>
             )}
             
@@ -104,7 +97,7 @@ export default function Navbar() {
               </Button>
             </Link>
             
-            <Link to="/account">
+            <Link to="/profile">
               <Button variant="ghost" size="icon">
                 <User className="h-5 w-5" />
               </Button>
@@ -114,12 +107,7 @@ export default function Navbar() {
         
         {isMobile && (
           <div className="mt-3 mb-1">
-            <Input
-              type="text"
-              placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <SearchDropdown />
           </div>
         )}
       </div>

@@ -78,6 +78,81 @@ export const products: Product[] = [
     rating: 4.8,
     isFeatured: true,
     discount: 10
+  },
+  {
+    id: "tomato-organic-1",
+    name: "Organic Tomatoes",
+    description: "Fresh, organically grown tomatoes. Perfect for salads, sauces, and culinary uses.",
+    price: 3.99,
+    category: "vegetable",
+    age: "mature",
+    image: "https://images.unsplash.com/photo-1524593166156-312f362cada0?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    stock: 250,
+    weightPerUnit: "1 kg",
+    rating: 4.7
+  },
+  {
+    id: "cucumber-fresh-1",
+    name: "Fresh Cucumbers",
+    description: "Crisp and refreshing cucumbers, grown with sustainable farming practices.",
+    price: 2.99,
+    category: "vegetable",
+    age: "mature",
+    image: "https://images.unsplash.com/photo-1604977042946-1eecc30f269e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    stock: 180,
+    weightPerUnit: "500g",
+    rating: 4.5,
+    discount: 5
+  },
+  {
+    id: "apple-red-1",
+    name: "Red Apples",
+    description: "Sweet and crunchy red apples, perfect for snacking or baking.",
+    price: 4.99,
+    category: "fruit",
+    age: "mature",
+    image: "https://images.unsplash.com/photo-1567306226681-6a1e63fc2ebc?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    stock: 300,
+    weightPerUnit: "1 kg",
+    rating: 4.8,
+    isFeatured: true
+  },
+  {
+    id: "orange-juicy-1",
+    name: "Juicy Oranges",
+    description: "Vitamin-rich oranges with a perfect balance of sweetness and tanginess.",
+    price: 5.49,
+    category: "fruit",
+    age: "mature",
+    image: "https://images.unsplash.com/photo-1557800636-894a64c1696f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    stock: 200,
+    weightPerUnit: "1 kg",
+    rating: 4.6
+  },
+  {
+    id: "chicken-broiler-1",
+    name: "Broiler Chickens",
+    description: "Healthy broiler chickens raised in a free-range environment, perfect for meat production.",
+    price: 12.99,
+    category: "livestock",
+    age: "young",
+    image: "https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    stock: 50,
+    weightPerUnit: "1 bird",
+    rating: 4.7,
+    isFeatured: true
+  },
+  {
+    id: "goat-dairy-1",
+    name: "Dairy Goats",
+    description: "Healthy dairy goats from quality breeding stock, excellent for milk production.",
+    price: 199.99,
+    category: "livestock",
+    age: "mature",
+    image: "https://images.unsplash.com/photo-1560598822-8ae46255e8e1?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+    stock: 10,
+    weightPerUnit: "1 goat",
+    rating: 4.9
   }
 ];
 

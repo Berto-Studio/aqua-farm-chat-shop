@@ -1,5 +1,5 @@
 
-export type ProductCategory = 'catfish' | 'tilapia';
+export type ProductCategory = 'catfish' | 'tilapia' | 'vegetable' | 'fruit' | 'livestock';
 export type ProductAge = 'young' | 'mature';
 
 export interface Product {
@@ -16,3 +16,4 @@ export interface Product {
   discount?: number;
   isFeatured?: boolean;
 }
+

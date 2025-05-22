@@ -19,7 +19,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     category,
     age,
     discount,
-    rating
+    rating,
+    stock
   } = product;
 
   const formattedPrice = new Intl.NumberFormat('en-US', {
@@ -33,6 +34,18 @@ export default function ProductCard({ product }: ProductCardProps) {
         currency: 'USD'
       }).format(price * (1 - discount / 100))
     : null;
+  
+  const stockStatus = stock > 0 
+    ? stock > 50 
+      ? "In Stock" 
+      : "Low Stock"
+    : "Out of Stock";
+    
+  const stockVariant = stock > 0 
+    ? stock > 50 
+      ? "success" 
+      : "secondary"
+    : "destructive";
 
   return (
     <Card className="overflow-hidden h-full flex flex-col transition-transform hover:scale-[1.02]">
@@ -48,9 +61,11 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Badge variant="secondary" className="capitalize">
             {category}
           </Badge>
-          <Badge variant="outline" className="bg-white capitalize">
-            {age}
-          </Badge>
+          {category === "catfish" || category === "tilapia" ? (
+            <Badge variant="outline" className="bg-white capitalize">
+              {age}
+            </Badge>
+          ) : null}
           {discount && (
             <Badge variant="destructive">
               {discount}% OFF
@@ -84,9 +99,14 @@ export default function ProductCard({ product }: ProductCardProps) {
             </svg>
           </div>
         </div>
+        <div className="mt-2">
+          <Badge variant={stockVariant} className="text-xs">
+            {stockStatus} ({stock})
+          </Badge>
+        </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full gap-2">
+        <Button className="w-full gap-2" disabled={stock === 0}>
           <ShoppingCart className="h-4 w-4" />
           Add to Cart
         </Button>

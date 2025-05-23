@@ -156,7 +156,7 @@ export const products: Product[] = [
   }
 ];
 
-export const getFeaturedProducts = () => products.filter(product => product.isFeatured);
+export const getFeaturedProducts = () => products.filter(product => product.rating >= 4.8).slice(0, 10);
 
 export const getProductsByCategory = (category: string) => 
   products.filter(product => product.category === category);

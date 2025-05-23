@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -10,7 +9,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import ProductGrid from "@/components/product/ProductGrid";
+import FeaturedProductsSlider from "@/components/product/FeaturedProductsSlider";
 import { getFeaturedProducts } from "@/data/products";
 
 const HeroCarouselItems = [
@@ -63,6 +62,18 @@ export default function Index() {
         <CarouselNext className="right-4" />
       </Carousel>
 
+      {/* Featured Products */}
+      <section className="py-12 bg-secondary">
+        <div className="container">
+          <FeaturedProductsSlider products={featuredProducts} />
+          <div className="mt-8 text-center">
+            <Button asChild size="lg">
+              <Link to="/products">View All Products</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* Category Cards */}
       <section className="py-12 container">
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Shop by Category</h2>
@@ -97,19 +108,6 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-        </div>
-      </section>
-
-      {/* Featured Products */}
-      <section className="py-12 bg-secondary">
-        <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">Featured Products</h2>
-          <ProductGrid products={featuredProducts} />
-          <div className="mt-8 text-center">
-            <Button asChild size="lg">
-              <Link to="/products">View All Products</Link>
-            </Button>
-          </div>
         </div>
       </section>
 

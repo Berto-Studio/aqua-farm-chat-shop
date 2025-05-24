@@ -23,21 +23,21 @@ export default function FeaturedProductsSlider({ products }: FeaturedProductsSli
         <Badge variant="secondary">Rating 4.8+</Badge>
       </div>
       
-      <Carousel className="w-full">
-        <CarouselContent>
-          {products.map((product) => (
-            <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
-              <div className="p-1">
-                <ProductCard product={product} />
-              </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
-        <div className="hidden md:block">
-          <CarouselPrevious className="left-0" />
-          <CarouselNext className="right-0" />
-        </div>
-      </Carousel>
+      <div className="relative px-12">
+        <Carousel className="w-full">
+          <CarouselContent>
+            {products.map((product) => (
+              <CarouselItem key={product.id} className="md:basis-1/2 lg:basis-1/3">
+                <div className="p-1">
+                  <ProductCard product={product} />
+                </div>
+              </CarouselItem>
+            ))}
+          </CarouselContent>
+        </Carousel>
+        <CarouselPrevious className="-left-6 bg-white shadow-lg border-2 hover:bg-gray-50" />
+        <CarouselNext className="-right-6 bg-white shadow-lg border-2 hover:bg-gray-50" />
+      </div>
     </div>
   );
 }

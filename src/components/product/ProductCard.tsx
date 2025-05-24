@@ -29,6 +29,12 @@ export default function ProductCard({ product }: ProductCardProps) {
     stock > 0 ? (stock > 50 ? "In Stock" : "Low Stock") : "Out of Stock";
 
   const stockVariant =
+    stock > 0 ? (stock > 50 ? "success" : "secondary") : "destructive";
+
+  const stockStatus =
+    stock > 0 ? (stock > 50 ? "In Stock" : "Low Stock") : "Out of Stock";
+
+  const stockVariant =
     stock > 0 ? (stock > 50 ? "default" : "secondary") : "destructive";
 
   return (
@@ -86,7 +92,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full gap-2">
+        <Button className="w-full gap-2" disabled={stock === 0}>
           <ShoppingCart className="h-4 w-4" />
           Buy now
         </Button>

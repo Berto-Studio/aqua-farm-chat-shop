@@ -8,8 +8,12 @@ import AdminLayout from "./components/admin/AdminLayout";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import Profile from "./pages/Profile";
+import Products from "./pages/Products";
 import ProductDetail from "./pages/products/ProductDetail";
 import AboutUs from "./pages/AboutUs";
+import ContactUs from "./pages/ContactUs";
+import Services from "./pages/Services";
+import Cart from "./pages/Cart";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -41,6 +45,7 @@ const App = () => (
           {/* Main Shop Routes */}
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
+            <Route path="/products" element={<Products />} />
             <Route path="/chat" element={<Chat />} />
             <Route path="/chat/:conversationId" element={<Chat />} />
             <Route path="/profile" element={<Profile />} />

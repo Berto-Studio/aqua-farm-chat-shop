@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/chat/ChatInterface";
 import ChatList from "@/components/chat/ChatList";
 import { Button } from "@/components/ui/button";
@@ -13,9 +14,12 @@ import {
 import { getConversationById, getAllConversations } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
 import { MessageCircle, X } from "lucide-react";
+import { MessageCircle, X } from "lucide-react";
 
 export default function Chat() {
   const { conversationId } = useParams<{ conversationId: string }>();
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(true);
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
   const allConversations = getAllConversations();
@@ -37,6 +41,7 @@ export default function Chat() {
 
     const newMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
+      senderId: "user-current",
       senderId: "user-current",
       receiverId: "admin",
       content,
@@ -62,6 +67,11 @@ export default function Chat() {
 
       setMessages((prevMessages) => [...prevMessages, adminResponse]);
     }, 1000);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    navigate("/");
   };
 
   const handleClose = () => {

@@ -21,6 +21,10 @@ import ChatInterface from "@/components/chat/ChatInterface";
 import ChatList from "@/components/chat/ChatList";
 import { getAllConversations } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
+import ChatInterface from "@/components/chat/ChatInterface";
+import ChatList from "@/components/chat/ChatList";
+import { getAllConversations } from "@/data/chat";
+import { ChatMessage } from "@/types/chat";
 
 export default function Navbar() {
   const isMobile = useIsMobile();

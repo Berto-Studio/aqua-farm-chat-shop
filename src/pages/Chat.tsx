@@ -1,14 +1,24 @@
 
 import { useState } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useParams, Navigate, useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/chat/ChatInterface";
 import ChatList from "@/components/chat/ChatList";
 import { Button } from "@/components/ui/button";
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from "@/components/ui/dialog";
 import { getConversationById, getAllConversations } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
+import { MessageCircle, X } from "lucide-react";
 
 export default function Chat() {
   const { conversationId } = useParams<{ conversationId: string }>();
+  const navigate = useNavigate();
+  const [isOpen, setIsOpen] = useState(true);
   const allConversations = getAllConversations();
   const conversation = conversationId 
     ? getConversationById(conversationId) 
@@ -28,7 +38,7 @@ export default function Chat() {
     
     const newMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
-      senderId: "user-current", // Current user is sending
+      senderId: "user-current",
       receiverId: "admin",
       content,
       timestamp: new Date(),
@@ -54,41 +64,60 @@ export default function Chat() {
     }, 1000);
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    navigate("/");
+  };
+
   return (
-    <div className="container py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold">Customer Support</h1>
-        <p className="text-muted-foreground">Chat with our support team for assistance</p>
-      </div>
-      
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px]">
-        <div className="md:col-span-1">
-          <ChatList 
-            conversations={allConversations}
-            activeConversationId={conversation?.id}
-          />
-        </div>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
+      <DialogContent className="max-w-4xl w-[95vw] h-[80vh] max-h-[600px] p-0">
+        <DialogHeader className="p-4 pb-2">
+          <DialogTitle className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5" />
+            Customer Support
+          </DialogTitle>
+          <DialogClose asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="absolute right-4 top-4"
+              onClick={handleClose}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </DialogClose>
+        </DialogHeader>
         
-        <div className="md:col-span-2">
-          {conversation ? (
-            <ChatInterface
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              currentUserId="user-current"
+        <div className="flex flex-col md:flex-row h-full p-4 pt-0 gap-4">
+          <div className="w-full md:w-1/3 h-48 md:h-full">
+            <ChatList 
+              conversations={allConversations}
+              activeConversationId={conversation?.id}
             />
-          ) : (
-            <div className="h-full border rounded-lg flex flex-col items-center justify-center p-6 bg-white">
-              <div className="text-center mb-4">
-                <h3 className="text-lg font-semibold mb-2">Start a New Conversation</h3>
-                <p className="text-muted-foreground">
-                  Need help with your order or have questions about our products?
-                </p>
+          </div>
+          
+          <div className="flex-1 h-64 md:h-full">
+            {conversation ? (
+              <ChatInterface
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                currentUserId="user-current"
+              />
+            ) : (
+              <div className="h-full border rounded-lg flex flex-col items-center justify-center p-6 bg-white">
+                <div className="text-center mb-4">
+                  <h3 className="text-lg font-semibold mb-2">Start a New Conversation</h3>
+                  <p className="text-muted-foreground">
+                    Need help with your order or have questions about our products?
+                  </p>
+                </div>
+                <Button>New Conversation</Button>
               </div>
-              <Button>New Conversation</Button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

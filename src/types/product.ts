@@ -1,6 +1,5 @@
-
-export type ProductCategory = 'catfish' | 'tilapia';
-export type ProductAge = 'young' | 'mature';
+export type ProductCategory = "livestock" | "fish" | "vegetable" | "fruit";
+export type ProductAge = "young" | "mature";
 
 export interface Product {
   id: string;

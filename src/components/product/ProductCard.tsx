@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,35 +10,33 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const {
-    id,
-    name,
-    price,
-    image,
-    category,
-    age,
-    discount,
-    rating
-  } = product;
+  const { id, name, price, image, category, age, discount, rating, stock } =
+    product;
 
-  const formattedPrice = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD'
+  const formattedPrice = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "GHS",
   }).format(price);
 
-  const discountedPrice = discount 
-    ? new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD'
+  const discountedPrice = discount
+    ? new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "GHS",
       }).format(price * (1 - discount / 100))
     : null;
 
+  const stockStatus =
+    stock > 0 ? (stock > 50 ? "In Stock" : "Low Stock") : "Out of Stock";
+
+  const stockVariant =
+    stock > 0 ? (stock > 50 ? "default" : "secondary") : "destructive";
+
   return (
-    <Card className="overflow-hidden h-full flex flex-col transition-transform hover:scale-[1.02]">
+    <Card className="overflow-hidden h-[450px] flex flex-col transition-transform hover:scale-[1.02]">
       <Link to={`/products/${id}`} className="relative">
         <div className="h-48 overflow-hidden">
-          <img 
-            src={image} 
+          <img
+            src={image}
             alt={name}
             className="w-full h-full object-cover transition-transform hover:scale-105"
           />
@@ -51,11 +48,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Badge variant="outline" className="bg-white capitalize">
             {age}
           </Badge>
-          {discount && (
-            <Badge variant="destructive">
-              {discount}% OFF
-            </Badge>
-          )}
+          {discount && <Badge variant="destructive">{discount}% OFF</Badge>}
         </div>
       </Link>
       <CardContent className="pt-4 flex-grow">
@@ -71,7 +64,9 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <span className="text-muted-foreground line-through text-sm">
                   {formattedPrice}
                 </span>
-                <span className="font-bold text-primary">{discountedPrice}</span>
+                <span className="font-bold text-primary">
+                  {discountedPrice}
+                </span>
               </div>
             ) : (
               <span className="font-bold">{formattedPrice}</span>
@@ -84,11 +79,16 @@ export default function ProductCard({ product }: ProductCardProps) {
             </svg>
           </div>
         </div>
+        <div className="mt-2">
+          <Badge variant={stockVariant} className="text-xs">
+            {stockStatus} ({stock})
+          </Badge>
+        </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
         <Button className="w-full gap-2">
           <ShoppingCart className="h-4 w-4" />
-          Add to Cart
+          Buy now
         </Button>
       </CardFooter>
     </Card>

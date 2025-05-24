@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,19 +11,19 @@ interface ChatInterfaceProps {
   currentUserId: string;
 }
 
-export default function ChatInterface({ 
-  messages, 
-  onSendMessage, 
-  currentUserId 
+export default function ChatInterface({
+  messages,
+  onSendMessage,
+  currentUserId,
 }: ChatInterfaceProps) {
   const [newMessage, setNewMessage] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const formatTime = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: true
+    return new Intl.DateTimeFormat("en-US", {
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
     }).format(date);
   };
 
@@ -49,24 +48,34 @@ export default function ChatInterface({
         <div className="space-y-4">
           {messages.map((message) => {
             const isCurrentUser = message.senderId === currentUserId;
-            
+
             return (
-              <div 
-                key={message.id} 
-                className={`flex ${isCurrentUser ? 'justify-end' : 'justify-start'}`}
+              <div
+                key={message.id}
+                className={`flex ${
+                  isCurrentUser ? "justify-end" : "justify-start"
+                }`}
               >
-                <div 
+                <div
                   className={`max-w-[80%] px-4 py-2 rounded-lg ${
-                    isCurrentUser 
-                      ? 'bg-primary text-white rounded-br-none' 
-                      : 'bg-gray-100 text-gray-800 rounded-bl-none'
+                    isCurrentUser
+                      ? "bg-primary text-white rounded-br-none"
+                      : "bg-gray-100 text-gray-800 rounded-bl-none"
                   }`}
                 >
                   {!isCurrentUser && (
-                    <div className="font-semibold text-xs mb-1">{message.senderName}</div>
+                    <div className="font-semibold text-xs mb-1">
+                      {message.senderName}
+                    </div>
                   )}
                   <div>{message.content}</div>
-                  <div className={`text-xs mt-1 ${isCurrentUser ? 'text-primary-foreground/70' : 'text-gray-500'}`}>
+                  <div
+                    className={`text-xs mt-1 ${
+                      isCurrentUser
+                        ? "text-primary-foreground/70"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {formatTime(message.timestamp)}
                   </div>
                 </div>
@@ -76,7 +85,7 @@ export default function ChatInterface({
           <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
-      
+
       <form onSubmit={handleSubmit} className="p-3 border-t">
         <div className="flex gap-2">
           <Textarea
@@ -85,7 +94,7 @@ export default function ChatInterface({
             placeholder="Type your message..."
             className="min-h-10 resize-none"
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSubmit(e);
               }

@@ -29,12 +29,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     stock > 0 ? (stock > 50 ? "In Stock" : "Low Stock") : "Out of Stock";
 
   const stockVariant =
-    stock > 0 ? (stock > 50 ? "success" : "secondary") : "destructive";
-
-  const stockStatus =
-    stock > 0 ? (stock > 50 ? "In Stock" : "Low Stock") : "Out of Stock";
-
-  const stockVariant =
     stock > 0 ? (stock > 50 ? "default" : "secondary") : "destructive";
 
   return (

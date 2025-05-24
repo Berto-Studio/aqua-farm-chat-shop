@@ -24,10 +24,6 @@ import AdminChat from "./pages/admin/AdminChat";
 import NotFound from "./pages/NotFound";
 import Register from "./pages/authentication/register";
 import Login from "./pages/authentication/login";
-import Products from "./pages/products/products";
-import ContactUs from "./pages/ContactUs";
-import Cart from "./pages/payment/Cart";
-import Services from "./pages/Services";
 
 const queryClient = new QueryClient();
 

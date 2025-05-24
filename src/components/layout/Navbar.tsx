@@ -164,23 +164,40 @@ export default function Navbar() {
       </header>
 
       <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-        <DialogContent className="max-w-4xl w-[95vw] h-[80vh] max-h-[600px] p-0">
-          <DialogHeader className="p-4 pb-2">
+        <DialogContent className={`
+          ${isMobile 
+            ? 'w-[100vw] h-[100vh] max-w-none max-h-none m-0 rounded-none' 
+            : 'w-[90vw] h-[85vh] max-w-5xl max-h-[700px]'
+          } 
+          p-0 overflow-hidden
+        `}>
+          <DialogHeader className="p-4 pb-2 border-b">
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               Customer Support
             </DialogTitle>
           </DialogHeader>
           
-          <div className="flex flex-col md:flex-row h-full p-4 pt-0 gap-4">
-            <div className="w-full md:w-1/3 h-48 md:h-full">
+          <div className={`
+            flex h-full p-4 pt-0 gap-4 
+            ${isMobile ? 'flex-col' : 'flex-row'}
+          `}>
+            <div className={`
+              ${isMobile 
+                ? 'w-full h-[200px] flex-shrink-0' 
+                : 'w-1/3 h-full'
+              }
+            `}>
               <ChatList 
                 conversations={allConversations}
                 activeConversationId={conversation?.id}
               />
             </div>
             
-            <div className="flex-1 h-64 md:h-full">
+            <div className={`
+              flex-1 
+              ${isMobile ? 'h-full min-h-0' : 'h-full'}
+            `}>
               {conversation ? (
                 <ChatInterface
                   messages={messages.length > 0 ? messages : conversation.messages}

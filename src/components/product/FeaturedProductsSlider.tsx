@@ -34,9 +34,9 @@ export default function FeaturedProductsSlider({ products }: FeaturedProductsSli
               </CarouselItem>
             ))}
           </CarouselContent>
+          <CarouselPrevious className="-left-6 bg-white shadow-lg border-2 hover:bg-gray-50" />
+          <CarouselNext className="-right-6 bg-white shadow-lg border-2 hover:bg-gray-50" />
         </Carousel>
-        <CarouselPrevious className="-left-6 bg-white shadow-lg border-2 hover:bg-gray-50" />
-        <CarouselNext className="-right-6 bg-white shadow-lg border-2 hover:bg-gray-50" />
       </div>
     </div>
   );

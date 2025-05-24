@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -70,6 +69,9 @@ export default function Navbar() {
       <Link to="/products" className="font-medium hover:text-primary transition-colors">
         Products
       </Link>
+      <Link to="/services" className="font-medium hover:text-primary transition-colors">
+        Services
+      </Link>
       <Link to="/about" className="font-medium hover:text-primary transition-colors">
         About Us
       </Link>
@@ -99,6 +101,9 @@ export default function Navbar() {
                       </SheetClose>
                       <SheetClose asChild>
                         <Link to="/products" className="font-medium text-lg">Products</Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link to="/services" className="font-medium text-lg">Services</Link>
                       </SheetClose>
                       <SheetClose asChild>
                         <Link to="/about" className="font-medium text-lg">About Us</Link>

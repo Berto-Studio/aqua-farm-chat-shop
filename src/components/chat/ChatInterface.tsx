@@ -43,7 +43,7 @@ export default function ChatInterface({
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full border rounded-lg overflow-hidden bg-white">
+    <div className="flex flex-col h-full border rounded-lg flex-1 bg-white">
       <ScrollArea className="flex-grow p-4">
         <div className="space-y-4">
           {messages.map((message) => {

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -82,9 +81,6 @@ export default function Navbar() {
 
   const NavLinks = () => (
     <div className="flex gap-4 items-center">
-      <Link to="/" className="font-medium hover:text-primary transition-colors">
-        Home
-      </Link>
       <Link
         to="/products"
         className="font-medium hover:text-primary transition-colors"
@@ -127,11 +123,6 @@ export default function Navbar() {
                   </SheetTrigger>
                   <SheetContent side="left" className="w-[250px] sm:w-[300px]">
                     <div className="flex flex-col gap-6 mt-6">
-                      <SheetClose asChild>
-                        <Link to="/" className="font-medium text-lg">
-                          Home
-                        </Link>
-                      </SheetClose>
                       <SheetClose asChild>
                         <Link to="/products" className="font-medium text-lg">
                           Products
@@ -218,7 +209,10 @@ export default function Navbar() {
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                      <DropdownMenuItem
+                        onClick={handleLogout}
+                        className="cursor-pointer"
+                      >
                         <span>Logout</span>
                       </DropdownMenuItem>
                     </>
@@ -257,7 +251,7 @@ export default function Navbar() {
               ? "w-[100vw] h-[100vh] max-w-none max-h-none m-0 rounded-none"
               : "w-[90vw] h-[85vh] max-w-5xl max-h-[700px]"
           } 
-          p-0 overflow-hidden
+          p-0 overflow-y-scroll
         `}
         >
           <DialogHeader className="p-4 pb-2 border-b">
@@ -286,8 +280,8 @@ export default function Navbar() {
 
             <div
               className={`
-              flex-1 
-              ${isMobile ? "h-full min-h-0" : "h-full"}
+                
+              ${isMobile ? "h-[65vh] min-h-0" : "h-[60vh]"}
             `}
             >
               {conversation ? (

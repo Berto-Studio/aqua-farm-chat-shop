@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -333,7 +334,7 @@ export default function Settings() {
                     Choose your preferred theme. System will automatically switch between light and dark based on your device settings.
                   </p>
                   <RadioGroup 
-                    value={theme} 
+                    value={theme || "light"} 
                     onValueChange={handleThemeChange}
                     className="grid grid-cols-3 gap-4"
                   >

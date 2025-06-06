@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -104,7 +105,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="bg-white border-b sticky top-0 z-40">
+      <header className="bg-background border-b border-border sticky top-0 z-40">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-6">
@@ -143,10 +144,10 @@ export default function Navbar() {
               )}
 
               <Link to="/" className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
+                <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
                   FS
                 </div>
-                <span className="font-bold text-xl hidden sm:inline-block">
+                <span className="font-bold text-xl hidden sm:inline-block text-foreground">
                   FishFarm
                 </span>
               </Link>
@@ -188,7 +189,7 @@ export default function Navbar() {
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-white">
+                <DropdownMenuContent align="end" className="w-56 bg-background border-border">
                   {isLoggedIn ? (
                     <>
                       <DropdownMenuItem asChild>
@@ -251,7 +252,7 @@ export default function Navbar() {
           p-0 overflow-y-scroll
         `}
         >
-          <DialogHeader className="p-4 pb-2 border-b">
+          <DialogHeader className="p-4 pb-2 border-b border-border">
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
               Customer Support
@@ -290,7 +291,7 @@ export default function Navbar() {
                   currentUserId="user-current"
                 />
               ) : (
-                <div className="h-full border rounded-lg flex flex-col items-center justify-center p-6 bg-white">
+                <div className="h-full border rounded-lg flex flex-col items-center justify-center p-6 bg-background">
                   <div className="text-center mb-4">
                     <h3 className="text-lg font-semibold mb-2">
                       Start a New Conversation

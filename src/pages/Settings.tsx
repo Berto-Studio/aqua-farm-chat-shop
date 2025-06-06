@@ -1,20 +1,22 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useUserStore } from "@/store/store";
-import { User, Lock, Bell, Globe } from "lucide-react";
+import { useTheme } from "next-themes";
+import { User, Lock, Bell, Globe, Palette } from "lucide-react";
 
 export default function Settings() {
   const { toast } = useToast();
   const { user } = useUserStore();
+  const { theme, setTheme } = useTheme();
   
   const [profileForm, setProfileForm] = useState({
     name: user?.name || "",
@@ -82,15 +84,24 @@ export default function Settings() {
     });
   };
   
+  const handleThemeChange = (newTheme: string) => {
+    setTheme(newTheme);
+    toast({
+      title: "Theme Updated",
+      description: `Theme changed to ${newTheme === "system" ? "system" : newTheme} mode.`
+    });
+  };
+  
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6">Settings</h1>
       
       <Tabs defaultValue="profile" className="w-full">
-        <TabsList className="grid grid-cols-4 w-full mb-6">
+        <TabsList className="grid grid-cols-5 w-full mb-6">
           <TabsTrigger value="profile">Profile</TabsTrigger>
           <TabsTrigger value="security">Security</TabsTrigger>
           <TabsTrigger value="notifications">Notifications</TabsTrigger>
+          <TabsTrigger value="appearance">Appearance</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
         </TabsList>
         
@@ -299,6 +310,57 @@ export default function Settings() {
                 
                 <Button type="submit">Save Notification Preferences</Button>
               </form>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="appearance" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Palette className="h-5 w-5" />
+                Theme Settings
+              </CardTitle>
+              <CardDescription>
+                Customize the appearance of your interface
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-medium mb-3">Theme</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Choose your preferred theme. System will automatically switch between light and dark based on your device settings.
+                  </p>
+                  <RadioGroup 
+                    value={theme} 
+                    onValueChange={handleThemeChange}
+                    className="grid grid-cols-3 gap-4"
+                  >
+                    <div className="flex items-center space-x-2 border rounded-lg p-4 hover:bg-accent cursor-pointer">
+                      <RadioGroupItem value="light" id="light" />
+                      <Label htmlFor="light" className="cursor-pointer flex-1">
+                        <div className="font-medium">Light</div>
+                        <div className="text-sm text-muted-foreground">A clean, bright interface</div>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 border rounded-lg p-4 hover:bg-accent cursor-pointer">
+                      <RadioGroupItem value="dark" id="dark" />
+                      <Label htmlFor="dark" className="cursor-pointer flex-1">
+                        <div className="font-medium">Dark</div>
+                        <div className="text-sm text-muted-foreground">Easy on the eyes in low light</div>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 border rounded-lg p-4 hover:bg-accent cursor-pointer">
+                      <RadioGroupItem value="system" id="system" />
+                      <Label htmlFor="system" className="cursor-pointer flex-1">
+                        <div className="font-medium">System</div>
+                        <div className="text-sm text-muted-foreground">Follows your device settings</div>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

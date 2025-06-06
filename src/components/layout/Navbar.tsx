@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Menu, X, MessageCircle, User } from "lucide-react";
@@ -28,13 +28,15 @@ import ChatInterface from "@/components/chat/ChatInterface";
 import ChatList from "@/components/chat/ChatList";
 import { getAllConversations } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
+import { useUserStore } from "@/store/store";
 
 export default function Navbar() {
   const isMobile = useIsMobile();
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  // Mock login state - replace with actual auth logic
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  //Zustand store for user and login state
+  const { user, isLoggedIn, logout } = useUserStore();
 
   const allConversations = getAllConversations();
   const conversation = allConversations[0];
@@ -69,14 +71,6 @@ export default function Navbar() {
 
       setMessages((prevMessages) => [...prevMessages, adminResponse]);
     }, 1000);
-  };
-
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
   };
 
   const NavLinks = () => (
@@ -200,17 +194,20 @@ export default function Navbar() {
                       <DropdownMenuItem asChild>
                         <Link to="/profile" className="cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
-                          <span>Profile</span>
+                          <span>{user?.name || "Profile"}</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/profile" className="cursor-pointer">
-                          <span>Settings</span>
+                        <Link to="/settings" className="cursor-pointer">
+                          Settings
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={handleLogout}
+                        onClick={() => {
+                          logout();
+                          window.location.href = "/login";
+                        }}
                         className="cursor-pointer"
                       >
                         <span>Logout</span>
@@ -220,12 +217,12 @@ export default function Navbar() {
                     <>
                       <DropdownMenuItem asChild>
                         <Link to="/login" className="cursor-pointer">
-                          <span>Login</span>
+                          Login
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
                         <Link to="/register" className="cursor-pointer">
-                          <span>Register</span>
+                          Register
                         </Link>
                       </DropdownMenuItem>
                     </>

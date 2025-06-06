@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, LogIn } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { AuthLayout } from "@/components/authentication/AuthLayout";
+import { useUserStore } from "@/store/store";
+import logIn from "@/services/auth/login";
 
 const Index = () => {
   const [email, setEmail] = useState("");
@@ -14,29 +16,37 @@ const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-
-      // For demo purposes - in real app you'd verify credentials
-      if (email && password) {
+    try {
+      const response = await logIn({ email, password });
+      if (response.success) {
         toast({
-          title: "Login successful",
-          description: "Welcome to inSpace!",
+          title: "Success",
+          description: "You have successfully logged in.",
+          variant: "success",
         });
-        navigate("/dashboard");
+        console.log("Login successful, navigating...");
+        navigate("/");
       } else {
         toast({
-          title: "Login failed",
-          description: "Please enter both email and password.",
+          title: "Error",
+          description: response.message || "Login failed. Please try again.",
           variant: "destructive",
         });
       }
-    }, 1000);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again later.",
+        variant: "destructive",
+      });
+      console.error("Login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (

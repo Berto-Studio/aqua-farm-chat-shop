@@ -2,7 +2,7 @@ import { Product } from "@/types/product";
 
 export const products: Product[] = [
   {
-    id: "catfish-fingerlings-1",
+    id: "0",
     name: "Catfish Fingerlings Pack",
     description:
       "Healthy catfish fingerlings, perfect for starting your fish farm. Each fingerling is 2-3 inches in length and ready for your pond or tank.",
@@ -16,7 +16,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "catfish-juvenile-1",
+    id: "1",
     name: "Juvenile Catfish",
     description:
       "Juvenile catfish for faster growth and better yield. Each fish is 5-6 inches in length, healthy and disease-free.",
@@ -30,7 +30,7 @@ export const products: Product[] = [
     rating: 4.6,
   },
   {
-    id: "catfish-mature-1",
+    id: "2",
     name: "Mature Catfish",
     description:
       "Fully grown catfish ready for harvest. Each fish weighs approximately 1-1.5 kg, perfect for commercial use or personal consumption.",
@@ -44,7 +44,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "tilapia-fingerlings-1",
+    id: "3",
     name: "Tilapia Fingerlings Pack",
     description:
       "Healthy tilapia fingerlings from premium genetic stock. Each fingerling is 1-2 inches in length, perfect for your aquaculture project.",
@@ -58,7 +58,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "tilapia-juvenile-1",
+    id: "4",
     name: "Juvenile Tilapia",
     description:
       "Juvenile tilapia fish for optimal growth. Each fish is 4-5 inches in length, bred for fast growth and disease resistance.",
@@ -72,7 +72,7 @@ export const products: Product[] = [
     rating: 4.5,
   },
   {
-    id: "tilapia-mature-1",
+    id: "5",
     name: "Mature Tilapia",
     description:
       "Fully grown tilapia ready for harvest. Each fish weighs approximately 0.5-0.8 kg, perfect for immediate use.",
@@ -87,7 +87,7 @@ export const products: Product[] = [
     discount: 10,
   },
   {
-    id: "tomato-organic-1",
+    id: "6",
     name: "Organic Tomatoes",
     description:
       "Fresh, organically grown tomatoes. Perfect for salads, sauces, and culinary uses.",
@@ -101,7 +101,7 @@ export const products: Product[] = [
     rating: 4.7,
   },
   {
-    id: "cucumber-fresh-1",
+    id: "7",
     name: "Fresh Cucumbers",
     description:
       "Crisp and refreshing cucumbers, grown with sustainable farming practices.",

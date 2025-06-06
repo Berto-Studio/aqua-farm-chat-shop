@@ -24,6 +24,7 @@ import AdminChat from "./pages/admin/AdminChat";
 import NotFound from "./pages/NotFound";
 import Register from "./pages/authentication/register";
 import Login from "./pages/authentication/login";
+import ProtectedRoute from "./components/protected/protectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -34,43 +35,51 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Authentication Routes */}
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-
-          {/* Main Shop Routes */}
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/chat" element={<Chat />} />
-            <Route path="/chat/:conversationId" element={<Chat />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/products/:productId" element={<ProductDetail />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/contact" element={<ContactUs />} />
-            <Route path="/services" element={<Services />} />
-
-            {/* Payment Routes */}
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Index />} />
+            <Route path="products" element={<Products />} />
+            <Route path="products/:id" element={<ProductDetail />} />
+            <Route path="services" element={<Services />} />
+            <Route path="about" element={<AboutUs />} />
+            <Route path="contact" element={<ContactUs />} />
             <Route path="cart" element={<Cart />} />
-            <Route path="checkout" element={<Products />} />
-            <Route path="success" element={<Products />} />
-            <Route path="cancel" element={<Products />} />
+            <Route
+              path="profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="chat"
+              element={
+                <ProtectedRoute>
+                  <Chat />
+                </ProtectedRoute>
+              }
+            />
           </Route>
 
-          {/* Admin Routes */}
           <Route path="/admin" element={<AdminLayout />}>
-            <Route index element={<AdminDashboard />} />
+            <Route
+              index
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
             <Route path="products" element={<AdminProducts />} />
             <Route path="orders" element={<AdminOrders />} />
             <Route path="customers" element={<AdminCustomers />} />
             <Route path="analytics" element={<AdminAnalytics />} />
             <Route path="settings" element={<AdminSettings />} />
             <Route path="chat" element={<AdminChat />} />
-            <Route path="chat/:conversationId" element={<AdminChat />} />
           </Route>
 
-          {/* Catch-all route for 404 */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

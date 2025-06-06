@@ -19,7 +19,7 @@ import { getProductById } from "@/data/products";
 
 export default function ProductDetail() {
   const { productId } = useParams<{ productId: string }>();
-  const product = getProductById(productId || "");
+  const product = getProductById("0");
   const [quantity, setQuantity] = useState(1);
 
   if (!product) {

@@ -36,8 +36,8 @@ export default function Navbar() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
-  //Zustand store for user and login state
-  const { user, isLoggedIn, logout } = useUserStore();
+  // Zustand store for user and login state
+  const { user, isLoggedIn, isLoading, logout } = useUserStore();
 
   const allConversations = getAllConversations();
   const conversation = allConversations[0];
@@ -192,7 +192,7 @@ export default function Navbar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" disabled={isLoading}>
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>

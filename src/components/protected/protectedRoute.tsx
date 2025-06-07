@@ -7,5 +7,6 @@ export default function ProtectedRoute({
   children: JSX.Element;
 }) {
   const { isLoggedIn } = useUserStore();
+
   return isLoggedIn ? children : <Navigate to="/login" replace />;
 }

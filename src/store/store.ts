@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -28,9 +27,9 @@ export const useUserStore = create<UserState>()(
     }),
     {
       name: "user-storage", // unique name for localStorage key
-      partialize: (state) => ({ 
-        user: state.user, 
-        isLoggedIn: state.isLoggedIn 
+      partialize: (state) => ({
+        user: state.user,
+        isLoggedIn: state.isLoggedIn,
       }), // only persist user and isLoggedIn
     }
   )

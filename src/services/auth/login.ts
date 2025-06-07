@@ -1,6 +1,7 @@
 import { apiRequest } from "@/hooks/useClient";
 import { useUserStore } from "@/store/store";
 import { loginProps } from "@/types/authentication";
+import Cookies from "js-cookie";
 
 export default async function logIn({ email, password }: loginProps): Promise<{
   success: boolean;
@@ -29,10 +30,12 @@ export default async function logIn({ email, password }: loginProps): Promise<{
     }
 
     if (token) {
-      sessionStorage.setItem("token", token);
+      Cookies.set("access_token", token, {
+        expires: 1, // expires in 1 day
+        secure: true, // HTTPS only
+        sameSite: "Lax",
+      });
     }
-
-    alert(status);
 
     if (status !== 200) {
       return { success: false, message: "Login failed" };

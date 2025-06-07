@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -42,6 +42,13 @@ export default function Navbar() {
   const allConversations = getAllConversations();
   const conversation = allConversations[0];
 
+  // Initialize messages when conversation changes
+  useEffect(() => {
+    if (conversation && messages.length === 0) {
+      setMessages(conversation.messages);
+    }
+  }, [conversation, messages.length]);
+
   const handleSendMessage = (content: string) => {
     if (!conversation) return;
 
@@ -55,7 +62,7 @@ export default function Navbar() {
       senderName: "You",
     };
 
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, newMessage]);
 
     // Simulate admin response after a delay
     setTimeout(() => {
@@ -70,7 +77,7 @@ export default function Navbar() {
         senderName: "Admin",
       };
 
-      setMessages((prevMessages) => [...prevMessages, adminResponse]);
+      setMessages(prev => [...prev, adminResponse]);
     }, 1000);
   };
 
@@ -257,6 +264,9 @@ export default function Navbar() {
               <MessageCircle className="h-5 w-5" />
               Customer Support
             </DialogTitle>
+            <DialogDescription>
+              Chat with our support team for help with your orders and questions
+            </DialogDescription>
           </DialogHeader>
 
           <div
@@ -284,9 +294,7 @@ export default function Navbar() {
             >
               {conversation ? (
                 <ChatInterface
-                  messages={
-                    messages.length > 0 ? messages : conversation.messages
-                  }
+                  messages={messages}
                   onSendMessage={handleSendMessage}
                   currentUserId="user-current"
                 />

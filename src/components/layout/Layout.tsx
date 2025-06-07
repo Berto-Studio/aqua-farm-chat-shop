@@ -1,3 +1,4 @@
+
 import { Outlet } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -6,26 +7,28 @@ import { getUsers } from "@/services/users/getUsers";
 import { useUserStore } from "@/store/store";
 
 export default function Layout() {
-  const { isLoggedIn } = useUserStore();
+  const { isLoggedIn, user } = useUserStore();
 
   const fetchUserData = async () => {
     try {
       const response = await getUsers();
       const { success, data } = response;
-      if (response.success) {
+      if (success && data && data.length > 0) {
         useUserStore.getState().setUser(data[0]);
       } else {
-        console.error("Failed to fetch users:", response.message);
+        console.log("No user data available or fetch failed");
       }
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.log("Error fetching user data, continuing with existing user state");
     }
   };
+
   useEffect(() => {
-    if (isLoggedIn) {
+    // Only fetch user data if logged in and no user data exists
+    if (isLoggedIn && !user) {
       fetchUserData();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, user]);
 
   return (
     <div className="flex flex-col min-h-screen">

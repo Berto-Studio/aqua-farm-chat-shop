@@ -35,7 +35,7 @@ export default function AdminChat() {
       senderName: "Admin"
     };
     
-    setMessages([...messages, newMessage]);
+    setMessages(prev => [...prev, newMessage]);
   };
 
   return (

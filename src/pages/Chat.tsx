@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/chat/ChatInterface";
@@ -9,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { getConversationById, getAllConversations } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
@@ -77,6 +79,9 @@ export default function Chat() {
             <MessageCircle className="h-5 w-5" />
             Customer Support
           </DialogTitle>
+          <DialogDescription>
+            Get help with your orders and questions about our products
+          </DialogDescription>
           <DialogClose asChild>
             <Button
               variant="ghost"

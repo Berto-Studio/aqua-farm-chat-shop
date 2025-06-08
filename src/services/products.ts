@@ -2,11 +2,71 @@
 import { apiRequest } from "@/hooks/useClient";
 import { Product } from "@/types/product";
 
+interface ApiProduct {
+  id: number;
+  title: string;
+  description: string;
+  price: number;
+  quantity: number;
+  image_url: string;
+  type_id: number;
+  is_alive?: number;
+  is_fresh?: number;
+  farmer_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ProductsResponse {
-  data: Product[];
+  data: ApiProduct[];
   message: string;
   status: number;
 }
+
+// Transform API product to our Product interface
+const transformApiProduct = (apiProduct: ApiProduct): Product => {
+  // Map type_id to category
+  const getCategoryFromTypeId = (typeId: number): Product["category"] => {
+    switch (typeId) {
+      case 1:
+        return "Live Stock";
+      case 2:
+        return "Vegetables";
+      case 3:
+        return "Fruits";
+      default:
+        return "Fish";
+    }
+  };
+
+  // Determine age based on is_alive/is_fresh or default to mature
+  const getAge = (apiProduct: ApiProduct): Product["age"] => {
+    // For live stock, if is_alive is 1, consider it young, otherwise mature
+    if (apiProduct.is_alive === 1) {
+      return "young";
+    }
+    // For fresh products, if is_fresh is 1, consider it young, otherwise mature
+    if (apiProduct.is_fresh === 1) {
+      return "young";
+    }
+    return "mature";
+  };
+
+  return {
+    id: apiProduct.id.toString(),
+    name: apiProduct.title,
+    description: apiProduct.description,
+    price: apiProduct.price,
+    category: getCategoryFromTypeId(apiProduct.type_id),
+    age: getAge(apiProduct),
+    image: apiProduct.image_url,
+    stock: apiProduct.quantity,
+    weightPerUnit: "1 unit", // Default value since not provided by API
+    rating: 4.5, // Default rating since not provided by API
+    discount: undefined, // Not provided by API
+    isFeatured: false, // Default value since not provided by API
+  };
+};
 
 export default async function GetProducts(): Promise<{
   success: boolean;
@@ -17,9 +77,12 @@ export default async function GetProducts(): Promise<{
   try {
     const response = await apiRequest<ProductsResponse>("products/", "GET");
 
+    // Transform API products to our Product interface
+    const transformedProducts = response.data?.map(transformApiProduct) || [];
+
     return {
       success: true,
-      data: response.data || [],
+      data: transformedProducts,
       message: response.message || "Success",
       status: response.status || 200,
     };

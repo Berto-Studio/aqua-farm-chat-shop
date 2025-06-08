@@ -1,4 +1,4 @@
-export type ProductCategory = "livestock" | "fish" | "vegetable" | "fruit";
+export type ProductCategory = "Live Stock" | "Fish" | "Vegetables" | "Fruits";
 export type ProductAge = "young" | "mature";
 
 export interface Product {

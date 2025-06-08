@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ArrowDownUp, Filter } from "lucide-react";
-import { products as allProducts } from "@/data/products";
 import ProductGrid from "@/components/product/ProductGrid";
 import SearchDropdown from "@/components/layout/SearchDropdown";
 import CategoryFilter from "@/components/product/CategoryFilter";
+import { useProducts } from "@/hooks/useProducts";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -26,6 +26,8 @@ export default function Products() {
 
   // Filter states
   const [sortOption, setSortOption] = useState("featured");
+
+  const { data: allProducts, isLoading, error } = useProducts();
 
   // Filter products by category
   const filteredProducts = allProducts.filter((product) => {

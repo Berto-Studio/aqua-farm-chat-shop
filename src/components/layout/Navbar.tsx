@@ -62,7 +62,7 @@ export default function Navbar() {
       senderName: "You",
     };
 
-    setMessages(prev => [...prev, newMessage]);
+    setMessages((prev) => [...prev, newMessage]);
 
     // Simulate admin response after a delay
     setTimeout(() => {
@@ -77,7 +77,7 @@ export default function Navbar() {
         senderName: "Admin",
       };
 
-      setMessages(prev => [...prev, adminResponse]);
+      setMessages((prev) => [...prev, adminResponse]);
     }, 1000);
   };
 
@@ -196,13 +196,16 @@ export default function Navbar() {
                     <User className="h-5 w-5" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56 bg-background border-border">
+                <DropdownMenuContent
+                  align="end"
+                  className="w-56 bg-background border-border"
+                >
                   {isLoggedIn ? (
                     <>
                       <DropdownMenuItem asChild>
                         <Link to="/profile" className="cursor-pointer">
                           <User className="mr-2 h-4 w-4" />
-                          <span>{user?.name || "Profile"}</span>
+                          <span>{user?.full_name || "Profile"}</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>

@@ -8,8 +8,6 @@ import Layout from "./components/layout/Layout";
 import AdminLayout from "./components/admin/AdminLayout";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
-import Profile from "./pages/Profile";
-import Products from "./pages/Products";
 import ProductDetail from "./pages/products/ProductDetail";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
@@ -27,6 +25,8 @@ import NotFound from "./pages/NotFound";
 import Register from "./pages/authentication/register";
 import Login from "./pages/authentication/login";
 import ProtectedRoute from "./components/protected/protectedRoute";
+import Profile from "./pages/Profile";
+import Products from "./pages/products/products";
 
 const queryClient = new QueryClient();
 

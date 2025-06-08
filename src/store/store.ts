@@ -1,13 +1,18 @@
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import Cookies from "js-cookie";
 
 type User = {
   id: string;
-  name: string;
-  email: string;
+  full_name?: string;
+  email?: string;
   role?: string;
+  is_active?: boolean;
+  username?: string;
+  user_type?: string;
+  phone?: number;
+  address?: string;
+  image_url?: string;
 };
 
 type UserState = {
@@ -37,13 +42,13 @@ export const useUserStore = create<UserState>()(
       checkAuthStatus: () => {
         const token = Cookies.get("access_token");
         const { isLoggedIn } = get();
-        
+
         if (!token && isLoggedIn) {
           // Token expired but store shows logged in - logout
           get().logout();
           return false;
         }
-        
+
         return !!token && isLoggedIn;
       },
     }),

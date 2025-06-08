@@ -1,4 +1,3 @@
-
 import { apiRequest } from "@/hooks/useClient";
 import { useUserStore } from "@/store/store";
 import { loginProps } from "@/types/authentication";
@@ -22,10 +21,10 @@ export default async function logIn({ email, password }: loginProps): Promise<{
   status?: number;
 }> {
   const { setLoading, setUser } = useUserStore.getState();
-  
+
   try {
     setLoading(true);
-    
+
     const response = await apiRequest<LoginResponse>("auth/login", "POST", {
       email,
       password,
@@ -44,9 +43,9 @@ export default async function logIn({ email, password }: loginProps): Promise<{
     // Set user data in store
     setUser({
       id: data.id,
-      name: data.name,
       email: data.email,
       role: data.role,
+      full_name: data.name,
     });
 
     // Store token securely
@@ -59,9 +58,10 @@ export default async function logIn({ email, password }: loginProps): Promise<{
     return { success: true, message: "Login successful", status };
   } catch (error) {
     console.error("Login error:", error);
-    return { 
-      success: false, 
-      message: error instanceof Error ? error.message : "An unexpected error occurred" 
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "An unexpected error occurred",
     };
   } finally {
     setLoading(false);

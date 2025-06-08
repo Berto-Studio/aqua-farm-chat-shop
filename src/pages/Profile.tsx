@@ -1,36 +1,69 @@
-
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { User, ShoppingBag, Map, Clock } from "lucide-react";
+import { useUserStore } from "@/store/store";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   email: z.string().email({ message: "Please enter a valid email address." }),
-  phone: z.string().min(10, { message: "Phone number must be at least 10 digits." }),
+  phone: z
+    .number()
+    .min(10, { message: "Phone number must be at least 10 digits." }),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 export default function Profile() {
+  const { user } = useUserStore();
+
   const [orders, setOrders] = useState([
-    { id: "ORD-123456", date: "2025-05-10", status: "Delivered", total: "$125.99" },
-    { id: "ORD-123457", date: "2025-05-08", status: "Processing", total: "$75.50" },
-    { id: "ORD-123458", date: "2025-05-05", status: "Delivered", total: "$210.25" },
+    {
+      id: "ORD-123456",
+      date: "2025-05-10",
+      status: "Delivered",
+      total: "$125.99",
+    },
+    {
+      id: "ORD-123457",
+      date: "2025-05-08",
+      status: "Processing",
+      total: "$75.50",
+    },
+    {
+      id: "ORD-123458",
+      date: "2025-05-05",
+      status: "Delivered",
+      total: "$210.25",
+    },
   ]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: "John Smith",
-      email: "john.smith@example.com",
-      phone: "1234567890",
+      name: user.full_name,
+      email: user.email,
+      phone: user.phone,
     },
   });
 
@@ -42,7 +75,7 @@ export default function Profile() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">My Profile</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-1">
           <Card>
@@ -50,7 +83,7 @@ export default function Profile() {
               <div className="mx-auto bg-primary/10 p-6 rounded-full mb-2">
                 <User className="h-12 w-12 text-primary" />
               </div>
-              <CardTitle>John Smith</CardTitle>
+              <CardTitle>{user.full_name}</CardTitle>
               <CardDescription>Customer since May 2025</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -60,7 +93,7 @@ export default function Profile() {
               </div>
               <div className="flex items-center">
                 <Map className="mr-2 h-4 w-4 text-muted-foreground" />
-                <span>123 Fish Street, Aqua City</span>
+                <span>{user.address}</span>
               </div>
               <div className="flex items-center">
                 <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
@@ -69,14 +102,14 @@ export default function Profile() {
             </CardContent>
           </Card>
         </div>
-        
+
         <div className="md:col-span-2">
           <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid grid-cols-2 mb-4">
               <TabsTrigger value="profile">Profile Details</TabsTrigger>
               <TabsTrigger value="orders">Order History</TabsTrigger>
             </TabsList>
-            
+
             <TabsContent value="profile">
               <Card>
                 <CardHeader>
@@ -87,7 +120,10 @@ export default function Profile() {
                 </CardHeader>
                 <CardContent>
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <form
+                      onSubmit={form.handleSubmit(onSubmit)}
+                      className="space-y-4"
+                    >
                       <FormField
                         control={form.control}
                         name="name"
@@ -133,7 +169,7 @@ export default function Profile() {
                 </CardContent>
               </Card>
             </TabsContent>
-            
+
             <TabsContent value="orders">
               <Card>
                 <CardHeader>
@@ -156,17 +192,28 @@ export default function Profile() {
                       </thead>
                       <tbody>
                         {orders.map((order) => (
-                          <tr key={order.id} className="border-b hover:bg-muted/50">
+                          <tr
+                            key={order.id}
+                            className="border-b hover:bg-muted/50"
+                          >
                             <td className="py-3 px-2">{order.id}</td>
                             <td className="py-3 px-2">{order.date}</td>
                             <td className="py-3 px-2">
-                              <span className={`px-2 py-1 rounded-full text-xs ${order.status === "Delivered" ? "bg-green-100 text-green-800" : "bg-amber-100 text-amber-800"}`}>
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs ${
+                                  order.status === "Delivered"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-amber-100 text-amber-800"
+                                }`}
+                              >
                                 {order.status}
                               </span>
                             </td>
                             <td className="py-3 px-2">{order.total}</td>
                             <td className="py-3 px-2 text-right">
-                              <Button variant="outline" size="sm">View</Button>
+                              <Button variant="outline" size="sm">
+                                View
+                              </Button>
                             </td>
                           </tr>
                         ))}

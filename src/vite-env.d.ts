@@ -1,18 +1,21 @@
+
 /// <reference types="vite/client" />
 
+type Category = {
+  id: number;
+  name: string;
+  description: string;
+};
+
 type RequestResponse = {
-  data: {
-    id: number;
-    name: string;
-    description: string;
-  } | null;
+  data: Category[] | null;
   message: string;
   status: number;
 };
 
 type PromisTypes = {
   success: boolean;
-  data?: RequestResponse.data | [];
+  data?: Category[] | [];
   message?: string;
   status?: number;
 };

@@ -10,7 +10,8 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import FeaturedProductsSlider from "@/components/product/FeaturedProductsSlider";
-import { getFeaturedProducts } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const HeroCarouselItems = [
   {
@@ -18,21 +19,26 @@ const HeroCarouselItems = [
     description:
       "High-quality catfish fingerlings and mature fish for your farm",
     image: "/catfishbg.webp",
-    link: "/products/catfish",
+    link: "/products?category=fish",
     color: "from-shopBlack/80 to-shopBlack",
   },
   {
     title: "Healthy Tilapia",
     description: "Farm-raised tilapia for optimal growth and yield",
     image: "/tilapiabg.jpg",
-    link: "/products/tilapia",
+    link: "/products?category=fish",
     color: "from-shopBlack/80 to-shopBlack",
   },
 ];
 
 export default function Index() {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const featuredProducts = getFeaturedProducts();
+  const { data: allProducts = [], isLoading } = useProducts();
+  
+  // Get featured products (top rated products with rating 4.8+)
+  const featuredProducts = allProducts
+    .filter(product => product.rating >= 4.8 || product.isFeatured)
+    .slice(0, 8);
 
   return (
     <div>
@@ -73,7 +79,7 @@ export default function Index() {
           Shop by Category
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Link to="/products/catfish" className="group">
+          <Link to="/products?category=fish" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -92,12 +98,12 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products/catfish" className="group">
+          <Link to="/products?category=live%20stock" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-blue-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
                 src="/live-stock-bg.jpg"
-                alt="Fish"
+                alt="Live Stock"
                 className="w-full h-full object-cover"
               />
               <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
@@ -113,20 +119,20 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products/tilapia" className="group">
+          <Link to="/products?category=vegetables" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-shopBlack/80 to-shopBlack opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
                 src="/vegitables-fruits-bg.jpg"
-                alt="vegitables and fruits"
+                alt="vegetables and fruits"
                 className="w-full h-full object-cover"
               />
               <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
                 <h3 className="text-2xl md:text-3xl font-bold mb-2">
-                  Vegitables & Fruits
+                  Vegetables & Fruits
                 </h3>
                 <p className="text-lg text-center">
-                  Nutritious Vegitables and fruits available
+                  Nutritious vegetables and fruits available
                 </p>
                 <Button variant="secondary" className="mt-4">
                   View Products
@@ -143,7 +149,23 @@ export default function Index() {
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
             Featured Products
           </h2>
-          <FeaturedProductsSlider products={featuredProducts} />
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div key={index} className="space-y-4">
+                  <Skeleton className="h-48 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-1/2" />
+                </div>
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <FeaturedProductsSlider products={featuredProducts} />
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">No featured products available</p>
+            </div>
+          )}
           <div className="mt-8 text-center">
             <Button asChild size="lg">
               <Link to="/products">View All Products</Link>

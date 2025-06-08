@@ -179,7 +179,7 @@ export default function ProductDetail() {
                 <AlertCircle className="mr-2 h-5 w-5 text-primary mt-0.5" />
                 <div>
                   <p className="text-sm font-medium">
-                    Ordering {product.category} fish?
+                    Ordering {product.category} products?
                   </p>
                   <p className="text-sm text-muted-foreground">
                     You will be added to our queue and we will contact you when
@@ -214,7 +214,7 @@ export default function ProductDetail() {
                 <ul className="list-disc pl-5 space-y-2">
                   <li>
                     Species:{" "}
-                    {product.category === "fish"
+                    {product.category === "Fish"
                       ? "Clarias gariepinus (African Catfish)"
                       : "Oreochromis niloticus (Nile Tilapia)"}
                   </li>

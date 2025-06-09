@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +40,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const stockVariant =
     stock > 0 ? (stock > 50 ? "default" : "secondary") : "destructive";
 
+  const formattedAnimalStage =
+    animal_stage === 0 ? "Young" : animal_stage === 1 ? "Mature" : "Unknown";
+
   return (
     <Card className="overflow-hidden h-[450px] w-full max-w-[300px] mx-auto flex flex-col transition-transform hover:scale-[1.02]">
       <Link to={`/products/${id}`} className="relative">
@@ -52,13 +54,19 @@ export default function ProductCard({ product }: ProductCardProps) {
           />
         </div>
         <div className="absolute top-2 left-2 flex flex-col gap-2">
-          <Badge variant="secondary" className="capitalize">
+          <Badge variant="secondary" className="capitalize w-fit">
             {category}
           </Badge>
-          <Badge variant="outline" className="bg-white capitalize">
-            {animal_stage !== 0 ? "Mature" : "Young"}
-          </Badge>
-          {discount && <Badge variant="destructive">{discount}% OFF</Badge>}
+          {formattedAnimalStage === "Unknown" ? (
+            <Badge variant="outline" className="bg-white capitalize w-fit">
+              {formattedAnimalStage}
+            </Badge>
+          ) : null}
+          {discount && (
+            <Badge variant="destructive" className="w-fit">
+              {discount}% OFF
+            </Badge>
+          )}
         </div>
       </Link>
       <CardContent className="pt-4 flex-grow">

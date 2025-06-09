@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
-import { products } from "@/data/products";
+import { useProducts } from "@/hooks/useProducts";
 
 export default function SearchDropdown() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
   const ref = useRef<HTMLDivElement>(null);
+  
+  // Use the backend products data
+  const { data: products = [], isLoading } = useProducts();
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -31,7 +34,8 @@ export default function SearchDropdown() {
     ? [] 
     : products.filter((product) =>
         product.name.toLowerCase().includes(query.toLowerCase()) ||
-        product.category.toLowerCase().includes(query.toLowerCase())
+        product.category.toLowerCase().includes(query.toLowerCase()) ||
+        product.description.toLowerCase().includes(query.toLowerCase())
       );
 
   const handleSelect = (productId: string) => {
@@ -77,24 +81,30 @@ export default function SearchDropdown() {
           <Command>
             <CommandList>
               <CommandInput placeholder="Search products..." value={query} onValueChange={setQuery} />
-              <CommandEmpty>No products found.</CommandEmpty>
-              <CommandGroup heading="Products">
-                {filteredProducts.map((product) => (
-                  <CommandItem
-                    key={product.id}
-                    onSelect={() => handleSelect(product.id)}
-                    className="flex items-center gap-2 cursor-pointer"
-                  >
-                    <div className="h-8 w-8 overflow-hidden rounded-sm">
-                      <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{product.name}</p>
-                      <p className="text-xs text-muted-foreground capitalize">{product.category}</p>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              {isLoading ? (
+                <div className="py-6 text-center text-sm">Loading products...</div>
+              ) : (
+                <>
+                  <CommandEmpty>No products found.</CommandEmpty>
+                  <CommandGroup heading="Products">
+                    {filteredProducts.map((product) => (
+                      <CommandItem
+                        key={product.id}
+                        onSelect={() => handleSelect(product.id)}
+                        className="flex items-center gap-2 cursor-pointer"
+                      >
+                        <div className="h-8 w-8 overflow-hidden rounded-sm">
+                          <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{product.name}</p>
+                          <p className="text-xs text-muted-foreground capitalize">{product.category}</p>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </>
+              )}
             </CommandList>
           </Command>
         </div>

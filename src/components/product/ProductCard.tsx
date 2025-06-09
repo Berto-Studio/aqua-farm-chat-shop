@@ -40,8 +40,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   const stockVariant =
     stock > 0 ? (stock > 50 ? "default" : "secondary") : "destructive";
 
-  const formattedAnimalStage =
-    animal_stage === 0 ? "Young" : animal_stage === 1 ? "Mature" : "Unknown";
+  const formattedAnimalStage = (() => {
+    if (animal_stage === 0) {
+      return "Young";
+    } else if (animal_stage === 1) {
+      return "Mature";
+    } else {
+      return "Unknown";
+    }
+  })();
 
   return (
     <Card className="overflow-hidden h-[450px] w-full max-w-[300px] mx-auto flex flex-col transition-transform hover:scale-[1.02]">
@@ -57,7 +64,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Badge variant="secondary" className="capitalize w-fit">
             {category}
           </Badge>
-          {formattedAnimalStage === "Unknown" ? (
+          {formattedAnimalStage !== "Unknown" ? (
             <Badge variant="outline" className="bg-white capitalize w-fit">
               {formattedAnimalStage}
             </Badge>

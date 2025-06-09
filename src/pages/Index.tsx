@@ -79,7 +79,7 @@ export default function Index() {
           Shop by Category
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link to="/products?category=fish" className="group">
+          <Link to="/products?category=Fish" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -98,7 +98,7 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products?category=live%20stock" className="group">
+          <Link to="/products?category=Live%20Stock" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-blue-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -119,7 +119,7 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products?category=vegetables" className="group">
+          <Link to="/products?category=Vegetables" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-gray-500/80 to-gray-500/80 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -140,7 +140,7 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products?category=fruits" className="group">
+          <Link to="/products?category=Fruits" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-shopBlack/80 to-shopBlack opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img

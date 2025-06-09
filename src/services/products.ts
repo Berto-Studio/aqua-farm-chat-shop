@@ -69,6 +69,9 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
       : "1 unit",
     rating: apiProduct.rating || 4.5, // Use actual rating from API, fallback to 4.5
     discount: apiProduct.discount_percentage || undefined,
+    animal_stage: apiProduct.animal_stage
+      ? parseInt(apiProduct.animal_stage, 10)
+      : undefined, // Convert animal_stage to number if present
     isFeatured: (apiProduct.rating || 0) >= 4.8, // Set featured based on rating
   };
 };

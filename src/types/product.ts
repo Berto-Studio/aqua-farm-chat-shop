@@ -14,5 +14,5 @@ export interface Product {
   rating: number;
   discount?: number;
   isFeatured?: boolean;
-  animal_stage?: number; // Optional field for live stock
+  animal_stage?: number;
 }

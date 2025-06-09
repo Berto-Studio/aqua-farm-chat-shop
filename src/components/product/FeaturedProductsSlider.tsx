@@ -24,7 +24,7 @@ export default function FeaturedProductsSlider({
         <Badge variant="secondary">Rating 4.8+</Badge>
       </div>
 
-      <Carousel className="w-full">
+      <Carousel className="w-full flex justify-center">
         <CarouselContent>
           {products.map((product) => (
             <CarouselItem

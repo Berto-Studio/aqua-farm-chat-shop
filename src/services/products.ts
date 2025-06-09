@@ -1,4 +1,3 @@
-
 import { apiRequest } from "@/hooks/useClient";
 import { Product } from "@/types/product";
 
@@ -17,6 +16,7 @@ interface ApiProduct {
   updated_at: string;
   rating?: number; // Add rating field from API
   weight_per_unit?: number; // Add weight_per_unit field from API
+  animal_stage?: string; // Optional field for live stock
   discount_percentage?: number; // Add discount_percentage field from API
 }
 
@@ -64,7 +64,9 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
     age: getAge(apiProduct),
     image: apiProduct.image_url,
     stock: apiProduct.quantity,
-    weightPerUnit: apiProduct.weight_per_unit ? `${apiProduct.weight_per_unit} unit` : "1 unit",
+    weightPerUnit: apiProduct.weight_per_unit
+      ? `${apiProduct.weight_per_unit} unit`
+      : "1 unit",
     rating: apiProduct.rating || 4.5, // Use actual rating from API, fallback to 4.5
     discount: apiProduct.discount_percentage || undefined,
     isFeatured: (apiProduct.rating || 0) >= 4.8, // Set featured based on rating

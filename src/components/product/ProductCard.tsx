@@ -10,8 +10,17 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
-  const { id, name, price, image, category, age, discount, rating, stock } =
-    product;
+  const {
+    id,
+    name,
+    price,
+    image,
+    category,
+    animal_stage,
+    discount,
+    rating,
+    stock,
+  } = product;
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -32,7 +41,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     stock > 0 ? (stock > 50 ? "default" : "secondary") : "destructive";
 
   return (
-    <Card className="overflow-hidden h-[450px] flex flex-col transition-transform hover:scale-[1.02]">
+    <Card className="overflow-hidden h-[450px] w-[300px] flex flex-col transition-transform hover:scale-[1.02]">
       <Link to={`/products/${id}`} className="relative">
         <div className="h-48 overflow-hidden">
           <img
@@ -46,7 +55,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             {category}
           </Badge>
           <Badge variant="outline" className="bg-white capitalize">
-            {age}
+            {animal_stage !== 0 ? "Mature" : "Young"}
           </Badge>
           {discount && <Badge variant="destructive">{discount}% OFF</Badge>}
         </div>

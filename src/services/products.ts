@@ -15,6 +15,9 @@ interface ApiProduct {
   farmer_id: string;
   created_at: string;
   updated_at: string;
+  rating?: number; // Add rating field from API
+  weight_per_unit?: number; // Add weight_per_unit field from API
+  discount_percentage?: number; // Add discount_percentage field from API
 }
 
 interface ProductsResponse {
@@ -61,10 +64,10 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
     age: getAge(apiProduct),
     image: apiProduct.image_url,
     stock: apiProduct.quantity,
-    weightPerUnit: "1 unit", // Default value since not provided by API
-    rating: 4.5, // Default rating since not provided by API
-    discount: undefined, // Not provided by API
-    isFeatured: false, // Default value since not provided by API
+    weightPerUnit: apiProduct.weight_per_unit ? `${apiProduct.weight_per_unit} unit` : "1 unit",
+    rating: apiProduct.rating || 4.5, // Use actual rating from API, fallback to 4.5
+    discount: apiProduct.discount_percentage || undefined,
+    isFeatured: (apiProduct.rating || 0) >= 4.8, // Set featured based on rating
   };
 };
 

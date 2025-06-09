@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -27,6 +28,8 @@ import Login from "./pages/authentication/login";
 import ProtectedRoute from "./components/protected/protectedRoute";
 import Profile from "./pages/Profile";
 import Products from "./pages/products/products";
+import FarmerRegister from "./pages/farmers/FarmerRegister";
+import FarmerDashboard from "./pages/farmers/FarmerDashboard";
 
 const queryClient = new QueryClient();
 
@@ -93,6 +96,17 @@ const App = () => (
               <Route path="settings" element={<AdminSettings />} />
               <Route path="chat" element={<AdminChat />} />
             </Route>
+
+            {/* Farmer Routes */}
+            <Route path="/farmer-register" element={<FarmerRegister />} />
+            <Route 
+              path="/farmer-dashboard" 
+              element={
+                <ProtectedRoute>
+                  <FarmerDashboard />
+                </ProtectedRoute>
+              } 
+            />
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

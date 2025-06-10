@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
 
 export default function FarmerAnalytics() {
   // Mock analytics data
@@ -40,22 +40,22 @@ export default function FarmerAnalytics() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-foreground">Analytics Overview</h2>
-        <p className="text-muted-foreground">Track your sales performance and product analytics</p>
+        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Analytics Overview</h2>
+        <p className="text-muted-foreground text-sm sm:text-base">Track your sales performance and product analytics</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card className="border-0 shadow-sm">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Sales Trend</CardTitle>
-            <CardDescription>Sales volume over the last 6 months</CardDescription>
+            <CardDescription className="text-sm">Sales volume over the last 6 months</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
+          <CardContent className="p-4 sm:p-6 pt-0">
             <ChartContainer config={chartConfig}>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={280}>
                 <AreaChart data={monthlyData}>
                   <defs>
                     <linearGradient id="salesGradient" x1="0" y1="0" x2="0" y2="1">
@@ -90,13 +90,13 @@ export default function FarmerAnalytics() {
         </Card>
 
         <Card className="border-0 shadow-sm">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Revenue Insights</CardTitle>
-            <CardDescription>Monthly revenue in GHS</CardDescription>
+            <CardDescription className="text-sm">Monthly revenue in GHS</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
+          <CardContent className="p-4 sm:p-6 pt-0">
             <ChartContainer config={chartConfig}>
-              <ResponsiveContainer width="100%" height={320}>
+              <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyData} barCategoryGap="20%">
                   <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                   <XAxis 
@@ -123,14 +123,14 @@ export default function FarmerAnalytics() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card className="border-0 shadow-sm">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Category Distribution</CardTitle>
-            <CardDescription>Sales distribution across product categories</CardDescription>
+            <CardDescription className="text-sm">Sales distribution across product categories</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <ResponsiveContainer width="100%" height={320}>
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
                   data={categoryData}
@@ -138,7 +138,7 @@ export default function FarmerAnalytics() {
                   cy="50%"
                   labelLine={false}
                   label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
+                  outerRadius={90}
                   fill="#8884d8"
                   dataKey="value"
                   stroke="none"
@@ -154,25 +154,25 @@ export default function FarmerAnalytics() {
         </Card>
 
         <Card className="border-0 shadow-sm">
-          <CardHeader>
+          <CardHeader className="pb-4">
             <CardTitle className="text-lg font-semibold">Top Products</CardTitle>
-            <CardDescription>Best performing products by revenue</CardDescription>
+            <CardDescription className="text-sm">Best performing products by revenue</CardDescription>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="space-y-4">
+          <CardContent className="p-4 sm:p-6 pt-0">
+            <div className="space-y-3 sm:space-y-4">
               {topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                <div key={product.name} className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-100">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{product.name}</p>
-                      <p className="text-sm text-muted-foreground">{product.sales} units sold</p>
+                      <p className="font-semibold text-foreground text-sm sm:text-base">{product.name}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">{product.sales} units sold</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600 text-lg">GHS {product.revenue}</p>
+                    <p className="font-bold text-green-600 text-sm sm:text-lg">GHS {product.revenue}</p>
                     <p className="text-xs text-muted-foreground">Total Revenue</p>
                   </div>
                 </div>

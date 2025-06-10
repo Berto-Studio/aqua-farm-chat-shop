@@ -41,6 +41,22 @@ export default function FarmerAnalytics() {
       label: "Revenue",
       color: "#10b981",
     },
+    vegetables: {
+      label: "Vegetables",
+      color: "hsl(var(--primary))",
+    },
+    fruits: {
+      label: "Fruits",
+      color: "#10b981",
+    },
+    livestock: {
+      label: "Live Stock",
+      color: "#f59e0b",
+    },
+    fish: {
+      label: "Fish",
+      color: "#ef4444",
+    },
   };
 
   // Theme-aware colors
@@ -138,26 +154,28 @@ export default function FarmerAnalytics() {
             <CardDescription className="text-sm">Sales distribution across product categories</CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
-            <ResponsiveContainer width="100%" height={280}>
-              <PieChart>
-                <Pie
-                  data={categoryData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={90}
-                  fill="#8884d8"
-                  dataKey="value"
-                  stroke="none"
-                >
-                  {categoryData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <ChartTooltip content={<ChartTooltipContent />} />
-              </PieChart>
-            </ResponsiveContainer>
+            <ChartContainer config={chartConfig}>
+              <ResponsiveContainer width="100%" height={280}>
+                <PieChart>
+                  <Pie
+                    data={categoryData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    outerRadius={90}
+                    fill="#8884d8"
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {categoryData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                </PieChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </CardContent>
         </Card>
 

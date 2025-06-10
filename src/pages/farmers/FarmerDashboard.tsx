@@ -29,12 +29,12 @@ export default function FarmerDashboard() {
     trend?: 'up' | 'down';
     trendValue?: string;
   }) => (
-    <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300">
-      <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50/50" />
+    <Card className="relative overflow-hidden border shadow-sm hover:shadow-md transition-all duration-300 bg-card">
+      <div className="absolute inset-0 bg-gradient-to-br from-card to-muted/30" />
       <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3">
         <div className="space-y-1">
           <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
-          <div className="text-2xl font-bold text-foreground">{value}</div>
+          <div className="text-2xl font-bold text-card-foreground">{value}</div>
         </div>
         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
           {icon}
@@ -45,7 +45,7 @@ export default function FarmerDashboard() {
           <p className="text-xs text-muted-foreground">{description}</p>
           {trend && trendValue && (
             <div className={`flex items-center gap-1 text-xs font-medium ${
-              trend === 'up' ? 'text-green-600' : 'text-red-600'
+              trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             }`}>
               {trend === 'up' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
               {trendValue}
@@ -57,11 +57,11 @@ export default function FarmerDashboard() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-6 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
             Farmer Dashboard
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">Manage your products and track your sales performance</p>
@@ -102,11 +102,11 @@ export default function FarmerDashboard() {
         </div>
 
         {/* Main Content */}
-        <Card className="border-0 shadow-sm">
+        <Card className="border shadow-sm bg-card">
           <CardContent className="p-0">
             <Tabs defaultValue="products" className="w-full">
-              <div className="border-b border-border/40 px-6 pt-6">
-                <TabsList className="grid w-full grid-cols-3 h-12 bg-muted/30">
+              <div className="border-b border-border px-6 pt-6">
+                <TabsList className="grid w-full grid-cols-3 h-12 bg-muted">
                   <TabsTrigger value="products" className="text-sm font-medium">My Products</TabsTrigger>
                   <TabsTrigger value="analytics" className="text-sm font-medium">Analytics</TabsTrigger>
                   <TabsTrigger value="orders" className="text-sm font-medium">Orders</TabsTrigger>
@@ -116,7 +116,7 @@ export default function FarmerDashboard() {
               <TabsContent value="products" className="space-y-6 p-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-2xl font-bold text-foreground">My Products</h2>
+                    <h2 className="text-2xl font-bold text-card-foreground">My Products</h2>
                     <p className="text-muted-foreground">Manage your product inventory</p>
                   </div>
                   <Button onClick={() => setShowAddProduct(true)} className="gap-2 h-11 px-6">
@@ -139,18 +139,18 @@ export default function FarmerDashboard() {
               <TabsContent value="orders" className="p-6">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-foreground">Recent Orders</h2>
+                    <h2 className="text-2xl font-bold text-card-foreground">Recent Orders</h2>
                     <p className="text-muted-foreground">Orders from your customers</p>
                   </div>
                   <div className="space-y-4">
                     {[1, 2, 3].map((order) => (
-                      <Card key={order} className="border-0 shadow-sm hover:shadow-md transition-all duration-300">
+                      <Card key={order} className="border shadow-sm hover:shadow-md transition-all duration-300 bg-card">
                         <CardContent className="flex items-center justify-between p-6">
                           <div className="space-y-1">
-                            <p className="font-semibold text-foreground">Order #{order}001</p>
+                            <p className="font-semibold text-card-foreground">Order #{order}001</p>
                             <p className="text-sm text-muted-foreground">2 items • GHS 45.00</p>
                           </div>
-                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                          <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800">
                             Pending
                           </Badge>
                         </CardContent>

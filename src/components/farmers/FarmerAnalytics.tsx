@@ -2,8 +2,12 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, PieChart, Pie, Cell, Area, AreaChart } from "recharts";
+import { useTheme } from "next-themes";
 
 export default function FarmerAnalytics() {
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
+
   // Mock analytics data
   const monthlyData = [
     { month: "Jan", sales: 400, revenue: 2400 },
@@ -39,18 +43,22 @@ export default function FarmerAnalytics() {
     },
   };
 
+  // Theme-aware colors
+  const gridColor = isDark ? "#374151" : "#f1f5f9";
+  const textColor = isDark ? "#9ca3af" : "#64748b";
+
   return (
     <div className="space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
-        <h2 className="text-xl sm:text-2xl font-bold text-foreground">Analytics Overview</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-card-foreground">Analytics Overview</h2>
         <p className="text-muted-foreground text-sm sm:text-base">Track your sales performance and product analytics</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card className="border-0 shadow-sm">
+        <Card className="border shadow-sm bg-card">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold">Sales Trend</CardTitle>
+            <CardTitle className="text-lg font-semibold text-card-foreground">Sales Trend</CardTitle>
             <CardDescription className="text-sm">Sales volume over the last 6 months</CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
@@ -63,17 +71,17 @@ export default function FarmerAnalytics() {
                       <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                   <XAxis 
                     dataKey="month" 
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tick={{ fontSize: 12, fill: textColor }}
                   />
                   <YAxis 
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tick={{ fontSize: 12, fill: textColor }}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Area 
@@ -89,26 +97,26 @@ export default function FarmerAnalytics() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm">
+        <Card className="border shadow-sm bg-card">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold">Revenue Insights</CardTitle>
+            <CardTitle className="text-lg font-semibold text-card-foreground">Revenue Insights</CardTitle>
             <CardDescription className="text-sm">Monthly revenue in GHS</CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
             <ChartContainer config={chartConfig}>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyData} barCategoryGap="20%">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <CartesianGrid strokeDasharray="3 3" stroke={gridColor} />
                   <XAxis 
                     dataKey="month" 
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tick={{ fontSize: 12, fill: textColor }}
                   />
                   <YAxis 
                     axisLine={false}
                     tickLine={false}
-                    tick={{ fontSize: 12, fill: '#64748b' }}
+                    tick={{ fontSize: 12, fill: textColor }}
                   />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar 
@@ -124,9 +132,9 @@ export default function FarmerAnalytics() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <Card className="border-0 shadow-sm">
+        <Card className="border shadow-sm bg-card">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold">Category Distribution</CardTitle>
+            <CardTitle className="text-lg font-semibold text-card-foreground">Category Distribution</CardTitle>
             <CardDescription className="text-sm">Sales distribution across product categories</CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
@@ -153,26 +161,26 @@ export default function FarmerAnalytics() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 shadow-sm">
+        <Card className="border shadow-sm bg-card">
           <CardHeader className="pb-4">
-            <CardTitle className="text-lg font-semibold">Top Products</CardTitle>
+            <CardTitle className="text-lg font-semibold text-card-foreground">Top Products</CardTitle>
             <CardDescription className="text-sm">Best performing products by revenue</CardDescription>
           </CardHeader>
           <CardContent className="p-4 sm:p-6 pt-0">
             <div className="space-y-3 sm:space-y-4">
               {topProducts.map((product, index) => (
-                <div key={product.name} className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gradient-to-r from-gray-50 to-white border border-gray-100">
+                <div key={product.name} className="flex items-center justify-between p-3 sm:p-4 rounded-xl bg-gradient-to-r from-muted/50 to-card border border-border">
                   <div className="flex items-center gap-2 sm:gap-3">
                     <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
                       {index + 1}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground text-sm sm:text-base">{product.name}</p>
+                      <p className="font-semibold text-card-foreground text-sm sm:text-base">{product.name}</p>
                       <p className="text-xs sm:text-sm text-muted-foreground">{product.sales} units sold</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600 text-sm sm:text-lg">GHS {product.revenue}</p>
+                    <p className="font-bold text-green-600 dark:text-green-400 text-sm sm:text-lg">GHS {product.revenue}</p>
                     <p className="text-xs text-muted-foreground">Total Revenue</p>
                   </div>
                 </div>

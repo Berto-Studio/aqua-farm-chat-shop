@@ -39,55 +39,57 @@ export default function ProductsList() {
   ]);
 
   const getStatusBadge = (status: string, stock: number) => {
-    if (stock === 0) return <Badge variant="destructive">Out of Stock</Badge>;
-    if (stock < 10) return <Badge variant="secondary">Low Stock</Badge>;
-    return <Badge variant="default">Active</Badge>;
+    if (stock === 0) return <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200">Out of Stock</Badge>;
+    if (stock < 10) return <Badge variant="secondary" className="bg-yellow-50 text-yellow-700 border-yellow-200">Low Stock</Badge>;
+    return <Badge variant="default" className="bg-green-50 text-green-700 border-green-200">Active</Badge>;
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Product Inventory</CardTitle>
+    <Card className="border-0 shadow-sm">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-xl font-semibold">Product Inventory</CardTitle>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Product Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Stock</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Total Sales</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>{product.category}</TableCell>
-                <TableCell>GHS {product.price.toFixed(2)}</TableCell>
-                <TableCell>{product.stock}</TableCell>
-                <TableCell>{getStatusBadge(product.status, product.stock)}</TableCell>
-                <TableCell>{product.sales}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button variant="ghost" size="icon">
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon">
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
+      <CardContent className="p-0">
+        <div className="overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow className="border-b border-gray-100 bg-gray-50/50">
+                <TableHead className="font-semibold text-gray-700 py-4">Product Name</TableHead>
+                <TableHead className="font-semibold text-gray-700">Category</TableHead>
+                <TableHead className="font-semibold text-gray-700">Price</TableHead>
+                <TableHead className="font-semibold text-gray-700">Stock</TableHead>
+                <TableHead className="font-semibold text-gray-700">Status</TableHead>
+                <TableHead className="font-semibold text-gray-700">Total Sales</TableHead>
+                <TableHead className="font-semibold text-gray-700">Actions</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => (
+                <TableRow key={product.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                  <TableCell className="font-medium py-4">{product.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{product.category}</TableCell>
+                  <TableCell className="font-semibold">GHS {product.price.toFixed(2)}</TableCell>
+                  <TableCell className="text-muted-foreground">{product.stock}</TableCell>
+                  <TableCell>{getStatusBadge(product.status, product.stock)}</TableCell>
+                  <TableCell className="font-medium">{product.sales}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-1">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-blue-50 hover:text-blue-600">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-green-50 hover:text-green-600">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-red-50 hover:text-red-600">
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

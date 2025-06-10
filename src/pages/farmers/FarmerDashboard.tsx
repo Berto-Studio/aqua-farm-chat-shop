@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, Package, TrendingUp, Eye } from "lucide-react";
+import { Plus, DollarSign, Package, TrendingUp, Eye, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import AddProductForm from "@/components/farmers/AddProductForm";
 import ProductsList from "@/components/farmers/ProductsList";
@@ -21,111 +21,147 @@ export default function FarmerDashboard() {
     pendingOrders: 5,
   };
 
+  const StatCard = ({ title, value, description, icon, trend, trendValue }: {
+    title: string;
+    value: string | number;
+    description: string;
+    icon: React.ReactNode;
+    trend?: 'up' | 'down';
+    trendValue?: string;
+  }) => (
+    <Card className="relative overflow-hidden border-0 shadow-sm hover:shadow-md transition-all duration-300">
+      <div className="absolute inset-0 bg-gradient-to-br from-white to-gray-50/50" />
+      <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3">
+        <div className="space-y-1">
+          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <div className="text-2xl font-bold text-foreground">{value}</div>
+        </div>
+        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+          {icon}
+        </div>
+      </CardHeader>
+      <CardContent className="relative pt-0">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">{description}</p>
+          {trend && trendValue && (
+            <div className={`flex items-center gap-1 text-xs font-medium ${
+              trend === 'up' ? 'text-green-600' : 'text-red-600'
+            }`}>
+              {trend === 'up' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+              {trendValue}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
+      <div className="container mx-auto px-6 py-8">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Farmer Dashboard</h1>
-          <p className="text-gray-600 mt-2">Manage your products and track your sales</p>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+            Farmer Dashboard
+          </h1>
+          <p className="text-muted-foreground mt-2 text-lg">Manage your products and track your sales performance</p>
         </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Products</CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{farmerStats.totalProducts}</div>
-              <p className="text-xs text-muted-foreground">Active listings</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sales</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">GHS {farmerStats.totalSales.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">All time earnings</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">GHS {farmerStats.monthlyRevenue.toFixed(2)}</div>
-              <p className="text-xs text-muted-foreground">This month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Pending Orders</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{farmerStats.pendingOrders}</div>
-              <p className="text-xs text-muted-foreground">Awaiting fulfillment</p>
-            </CardContent>
-          </Card>
+          <StatCard
+            title="Total Products"
+            value={farmerStats.totalProducts}
+            description="Active listings"
+            icon={<Package className="h-5 w-5 text-primary" />}
+            trend="up"
+            trendValue="+12%"
+          />
+          <StatCard
+            title="Total Sales"
+            value={`GHS ${farmerStats.totalSales.toFixed(2)}`}
+            description="All time earnings"
+            icon={<DollarSign className="h-5 w-5 text-primary" />}
+            trend="up"
+            trendValue="+8.2%"
+          />
+          <StatCard
+            title="Monthly Revenue"
+            value={`GHS ${farmerStats.monthlyRevenue.toFixed(2)}`}
+            description="This month"
+            icon={<TrendingUp className="h-5 w-5 text-primary" />}
+            trend="up"
+            trendValue="+15%"
+          />
+          <StatCard
+            title="Pending Orders"
+            value={farmerStats.pendingOrders}
+            description="Awaiting fulfillment"
+            icon={<Eye className="h-5 w-5 text-primary" />}
+          />
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="products" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="products">My Products</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            <TabsTrigger value="orders">Orders</TabsTrigger>
-          </TabsList>
+        <Card className="border-0 shadow-sm">
+          <CardContent className="p-0">
+            <Tabs defaultValue="products" className="w-full">
+              <div className="border-b border-border/40 px-6 pt-6">
+                <TabsList className="grid w-full grid-cols-3 h-12 bg-muted/30">
+                  <TabsTrigger value="products" className="text-sm font-medium">My Products</TabsTrigger>
+                  <TabsTrigger value="analytics" className="text-sm font-medium">Analytics</TabsTrigger>
+                  <TabsTrigger value="orders" className="text-sm font-medium">Orders</TabsTrigger>
+                </TabsList>
+              </div>
 
-          <TabsContent value="products" className="space-y-6">
-            <div className="flex justify-between items-center">
-              <h2 className="text-2xl font-bold">My Products</h2>
-              <Button onClick={() => setShowAddProduct(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Add Product
-              </Button>
-            </div>
-
-            {showAddProduct ? (
-              <AddProductForm onClose={() => setShowAddProduct(false)} />
-            ) : (
-              <ProductsList />
-            )}
-          </TabsContent>
-
-          <TabsContent value="analytics">
-            <FarmerAnalytics />
-          </TabsContent>
-
-          <TabsContent value="orders">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-                <CardDescription>Orders from your customers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((order) => (
-                    <div key={order} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <p className="font-medium">Order #{order}001</p>
-                        <p className="text-sm text-gray-600">2 items • GHS 45.00</p>
-                      </div>
-                      <Badge variant="outline">Pending</Badge>
-                    </div>
-                  ))}
+              <TabsContent value="products" className="space-y-6 p-6">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">My Products</h2>
+                    <p className="text-muted-foreground">Manage your product inventory</p>
+                  </div>
+                  <Button onClick={() => setShowAddProduct(true)} className="gap-2 h-11 px-6">
+                    <Plus className="h-4 w-4" />
+                    Add Product
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+
+                {showAddProduct ? (
+                  <AddProductForm onClose={() => setShowAddProduct(false)} />
+                ) : (
+                  <ProductsList />
+                )}
+              </TabsContent>
+
+              <TabsContent value="analytics" className="p-6">
+                <FarmerAnalytics />
+              </TabsContent>
+
+              <TabsContent value="orders" className="p-6">
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-foreground">Recent Orders</h2>
+                    <p className="text-muted-foreground">Orders from your customers</p>
+                  </div>
+                  <div className="space-y-4">
+                    {[1, 2, 3].map((order) => (
+                      <Card key={order} className="border-0 shadow-sm hover:shadow-md transition-all duration-300">
+                        <CardContent className="flex items-center justify-between p-6">
+                          <div className="space-y-1">
+                            <p className="font-semibold text-foreground">Order #{order}001</p>
+                            <p className="text-sm text-muted-foreground">2 items • GHS 45.00</p>
+                          </div>
+                          <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                            Pending
+                          </Badge>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

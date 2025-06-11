@@ -1,3 +1,4 @@
+
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -30,8 +31,12 @@ export default function ProductCategoryFields({
 
     if (categoryName === "livestock" || categoryName === "live stock") {
       return [
-        { value: "1", label: "Young" },
-        { value: "0", label: "Mature" },
+        { value: "1", label: "Cow" },
+        { value: "2", label: "Pig" },
+        { value: "3", label: "Goat" },
+        { value: "4", label: "Sheep" },
+        { value: "5", label: "Chicken" },
+        { value: "6", label: "Duck" },
       ];
     } else if (categoryName === "fish") {
       return [
@@ -58,6 +63,20 @@ export default function ProductCategoryFields({
     return categoryName === "livestock" || categoryName === "live stock";
   };
 
+  const shouldShowAgeField = () => {
+    const selectedCategory = categories.find(
+      (cat) => cat.id.toString() === formData.category
+    );
+    const categoryName = selectedCategory?.name?.toLowerCase();
+    
+    // Show for livestock and fish, hide for vegetables and fruits
+    return (
+      categoryName === "livestock" || 
+      categoryName === "live stock" || 
+      categoryName === "fish"
+    );
+  };
+
   const getAgeLabel = () => {
     const selectedCategory = categories.find(
       (cat) => cat.id.toString() === formData.category
@@ -75,24 +94,26 @@ export default function ProductCategoryFields({
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="space-y-2">
-        <Label htmlFor="age">{getAgeLabel()}</Label>
-        <Select
-          onValueChange={(value) => onInputChange("age", value)}
-          disabled={!formData.category}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select option" />
-          </SelectTrigger>
-          <SelectContent>
-            {getAgeOptions().map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {shouldShowAgeField() && (
+        <div className="space-y-2">
+          <Label htmlFor="age">{getAgeLabel()}</Label>
+          <Select
+            onValueChange={(value) => onInputChange("age", value)}
+            disabled={!formData.category}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select option" />
+            </SelectTrigger>
+            <SelectContent>
+              {getAgeOptions()?.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       {shouldShowAnimalStage() && (
         <div className="space-y-2">
           <Label htmlFor="animalStage">Animal Maturity</Label>

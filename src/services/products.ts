@@ -149,7 +149,7 @@ export async function CreateProduct(product: Product): Promise<{
     if (response.status !== 201) {
       return {
         success: false,
-        message: response.message || "Failed to create product",
+        message: "Failed to create product",
         status: response.status,
       };
     }
@@ -173,9 +173,7 @@ export async function CreateProduct(product: Product): Promise<{
   }
 }
 
-export async function UpdateProduct(
-  product: Product
-): Promise<{
+export async function UpdateProduct(product: Product): Promise<{
   success: boolean;
   data?: Product;
   message: string;

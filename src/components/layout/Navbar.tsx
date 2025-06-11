@@ -211,7 +211,7 @@ export default function Navbar() {
                       {user.user_type === "farmer" && (
                         <DropdownMenuItem asChild>
                           <Link
-                            to={user.is_admin ? "/admin" : "/farmer/dashboard"}
+                            to={user.is_admin ? "/admin" : "/farmer-dashboard"}
                             className="cursor-pointer"
                           >
                             Dashboard

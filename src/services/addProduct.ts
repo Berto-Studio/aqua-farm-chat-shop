@@ -33,7 +33,7 @@ export default async function AddProduct(productData: AddProductRequest): Promis
     formData.append('quantity', productData.quantity.toString());
     formData.append('type_id', productData.type_id.toString());
     
-    if (productData.weight_per_unit) {
+    if (productData.weight_per_unit !== undefined) {
       formData.append('weight_per_unit', productData.weight_per_unit.toString());
     }
     
@@ -49,7 +49,7 @@ export default async function AddProduct(productData: AddProductRequest): Promis
       formData.append('animal_stage', productData.animal_stage);
     }
     
-    if (productData.discount_percentage) {
+    if (productData.discount_percentage !== undefined && productData.discount_percentage > 0) {
       formData.append('discount_percentage', productData.discount_percentage.toString());
     }
     
@@ -57,7 +57,11 @@ export default async function AddProduct(productData: AddProductRequest): Promis
       formData.append('image', productData.image);
     }
 
+    console.log("Sending FormData to API...");
+    
     const response = await apiRequest<any>("products/", "POST", formData, true);
+    
+    console.log("API Response:", response);
     
     return { 
       success: true, 

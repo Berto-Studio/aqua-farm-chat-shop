@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,34 +60,49 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     setIsLoading(true);
 
     try {
-      const { data, loading, error } = await AddProduct({
+      // Map form data to API request format
+      const productRequest: AddProductRequest = {
         title: formData.name,
         description: formData.description,
         price: Number(formData.price),
         type_id: Number(formData.category),
         quantity: Number(formData.stock),
-        weightPerUnit: formData.weightPerUnit,
-        age: formData.age,
-        animalStage: formData.animalStage,
-        discount: formData.discount ? Number(formData.discount) : undefined,
-        image: selectedImage,
-      } as AddProductRequest);
-      if (loading) {
-        toast({
-          title: "Adding Product",
-          description: "Please wait while we add your product.",
-        });
+        weight_per_unit: formData.weightPerUnit ? Number(formData.weightPerUnit) : undefined,
+        animal_stage: formData.animalStage,
+        discount_percentage: formData.discount ? Number(formData.discount) : undefined,
+        image: selectedImage || undefined,
+      };
+
+      // Set livestock/fish specific fields based on category
+      const selectedCategory = categories.find(
+        (cat) => cat.id.toString() === formData.category
+      );
+      const categoryName = selectedCategory?.name?.toLowerCase();
+
+      if (categoryName === "livestock" || categoryName === "live stock") {
+        productRequest.is_alive = 1;
+        productRequest.is_fresh = 0;
+      } else if (categoryName === "fish") {
+        productRequest.is_alive = 1;
+        productRequest.is_fresh = 1;
+      } else {
+        productRequest.is_alive = 0;
+        productRequest.is_fresh = 1;
       }
-      if (error) {
-        throw new Error(error);
-      }
-      if (data) {
+
+      console.log("Submitting product data:", productRequest);
+
+      const response = await AddProduct(productRequest);
+      
+      if (response.success) {
         toast({
           title: "Product Added",
           description: "Your product has been successfully added.",
           variant: "success",
         });
         onClose();
+      } else {
+        throw new Error(response.message);
       }
     } catch (error) {
       console.error("Error adding product:", error);

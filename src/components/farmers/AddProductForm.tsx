@@ -67,27 +67,26 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         price: Number(formData.price),
         type_id: Number(formData.category),
         quantity: Number(formData.stock),
-        weight_per_unit: formData.weightPerUnit ? Number(formData.weightPerUnit) : undefined,
-        animal_stage: formData.animalStage,
+        weight_per_unit: formData.weightPerUnit ? Number(formData.weightPerUnit) : 1.0,
+        animal_stage: formData.animalStage ? Number(formData.animalStage) : undefined,
         discount_percentage: formData.discount ? Number(formData.discount) : undefined,
-        image: selectedImage || undefined,
+        image_url: selectedImage ? `/products/uploaded/${selectedImage.name}` : "/products/placeholder.jpg",
+        rating: 4.0,
       };
 
-      // Set livestock/fish specific fields based on category
-      const selectedCategory = categories.find(
-        (cat) => cat.id.toString() === formData.category
-      );
-      const categoryName = selectedCategory?.name?.toLowerCase();
-
-      if (categoryName === "livestock" || categoryName === "live stock") {
-        productRequest.is_alive = 1;
-        productRequest.is_fresh = 0;
-      } else if (categoryName === "fish") {
-        productRequest.is_alive = 1;
-        productRequest.is_fresh = 1;
-      } else {
-        productRequest.is_alive = 0;
-        productRequest.is_fresh = 1;
+      // Set livestock/fish specific fields based on category type_id
+      // 1=livestock, 2=vegetables, 3=fruits, 4=fish
+      const typeId = Number(formData.category);
+      
+      if (typeId === 1) { // livestock
+        productRequest.is_live = true;
+        productRequest.is_fresh = false;
+      } else if (typeId === 4) { // fish
+        productRequest.is_live = true;
+        productRequest.is_fresh = true;
+      } else { // vegetables (2) or fruits (3)
+        productRequest.is_live = false;
+        productRequest.is_fresh = true;
       }
 
       console.log("Submitting product data:", productRequest);

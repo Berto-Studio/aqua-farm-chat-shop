@@ -1,15 +1,15 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { X, Upload } from "lucide-react";
+import { X } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import AddProduct, { AddProductRequest } from "@/services/addProduct";
+import ProductBasicInfo from "./ProductBasicInfo";
+import ProductPricingInfo from "./ProductPricingInfo";
+import ProductCategoryFields from "./ProductCategoryFields";
+import ProductImageUpload from "./ProductImageUpload";
 
 interface AddProductFormProps {
   onClose: () => void;
@@ -52,41 +52,6 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     if (file) {
       setSelectedImage(file);
     }
-  };
-
-  const getAgeOptions = () => {
-    const selectedCategory = categories.find(cat => cat.id.toString() === formData.category);
-    const categoryName = selectedCategory?.name?.toLowerCase();
-    
-    if (categoryName === "livestock" || categoryName === "live stock") {
-      return [
-        { value: "1", label: "Young" },
-        { value: "0", label: "Mature" }
-      ];
-    } else if (categoryName === "fish") {
-      return [
-        { value: "1", label: "Fingerlings" },
-        { value: "0", label: "Mature" }
-      ];
-    } else {
-      return [
-        { value: "1", label: "Fresh" },
-        { value: "0", label: "Not Fresh" }
-      ];
-    }
-  };
-
-  const getAnimalStageOptions = () => {
-    return [
-      { value: "0", label: "Young" },
-      { value: "1", label: "Mature" }
-    ];
-  };
-
-  const shouldShowAnimalStage = () => {
-    const selectedCategory = categories.find(cat => cat.id.toString() === formData.category);
-    const categoryName = selectedCategory?.name?.toLowerCase();
-    return categoryName === "livestock" || categoryName === "live stock";
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,155 +119,28 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
-              <Input
-                id="name"
-                placeholder="Fresh Tomatoes"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select onValueChange={(value) => handleInputChange("category", value)} disabled={categoriesLoading}>
-                <SelectTrigger>
-                  <SelectValue placeholder={categoriesLoading ? "Loading categories..." : "Select category"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <ProductBasicInfo
+            formData={formData}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
+            onInputChange={handleInputChange}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe your product..."
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              rows={3}
-              required
-            />
-          </div>
+          <ProductPricingInfo
+            formData={formData}
+            onInputChange={handleInputChange}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price (GHS)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                placeholder="25.00"
-                value={formData.price}
-                onChange={(e) => handleInputChange("price", e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stock">Stock Quantity</Label>
-              <Input
-                id="stock"
-                type="number"
-                placeholder="100"
-                value={formData.stock}
-                onChange={(e) => handleInputChange("stock", e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="weightPerUnit">Weight per Unit</Label>
-              <Input
-                id="weightPerUnit"
-                type="number"
-                step="0.01"
-                placeholder="1.5"
-                value={formData.weightPerUnit}
-                onChange={(e) => handleInputChange("weightPerUnit", e.target.value)}
-              />
-            </div>
-          </div>
+          <ProductCategoryFields
+            formData={formData}
+            categories={categories}
+            onInputChange={handleInputChange}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="age">
-                {formData.category && categories.find(cat => cat.id.toString() === formData.category)?.name?.toLowerCase() === "fish" 
-                  ? "Fish Stage" 
-                  : formData.category && (categories.find(cat => cat.id.toString() === formData.category)?.name?.toLowerCase().includes("livestock") || categories.find(cat => cat.id.toString() === formData.category)?.name?.toLowerCase().includes("live stock"))
-                  ? "Animal Stage"
-                  : "Freshness"}
-              </Label>
-              <Select onValueChange={(value) => handleInputChange("age", value)} disabled={!formData.category}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select option" />
-                </SelectTrigger>
-                <SelectContent>
-                  {getAgeOptions().map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {shouldShowAnimalStage() && (
-              <div className="space-y-2">
-                <Label htmlFor="animalStage">Animal Maturity</Label>
-                <Select onValueChange={(value) => handleInputChange("animalStage", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select maturity" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {getAnimalStageOptions().map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="discount">Discount (%)</Label>
-              <Input
-                id="discount"
-                type="number"
-                placeholder="10"
-                value={formData.discount}
-                onChange={(e) => handleInputChange("discount", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Product Image</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-sm text-gray-600">
-                {selectedImage ? selectedImage.name : "Click to upload product image"}
-              </p>
-              <input 
-                type="file" 
-                className="hidden" 
-                accept="image/*" 
-                onChange={handleImageChange}
-                id="image-upload"
-              />
-              <label htmlFor="image-upload" className="cursor-pointer">
-                <Button type="button" variant="outline" className="mt-2">
-                  Choose File
-                </Button>
-              </label>
-            </div>
-          </div>
+          <ProductImageUpload
+            selectedImage={selectedImage}
+            onImageChange={handleImageChange}
+          />
 
           <div className="flex gap-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/components/ui/use-toast";
 import { X, Upload } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
-import AddProduct from "@/services/addProduct";
+import AddProduct, { AddProductRequest } from "@/services/addProduct";
 
 interface AddProductFormProps {
   onClose: () => void;
@@ -97,8 +97,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       const selectedCategory = categories.find(cat => cat.id.toString() === formData.category);
       const categoryName = selectedCategory?.name?.toLowerCase();
       
-      // Prepare the product data
-      const productData = {
+      // Prepare the product data with proper typing
+      const productData: AddProductRequest = {
         title: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),

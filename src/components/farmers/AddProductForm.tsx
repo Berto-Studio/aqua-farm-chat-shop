@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,19 +29,20 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { data: categoriesResponse, isLoading: categoriesLoading } = useCategories();
+  const { data: categoriesResponse, isLoading: categoriesLoading } =
+    useCategories();
 
   const categories = categoriesResponse?.data || [];
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => {
+    setFormData((prev) => {
       const newData = { ...prev, [field]: value };
-      
+
       // Reset age when category changes
       if (field === "category") {
         newData.age = "";
       }
-      
+
       return newData;
     });
   };
@@ -59,49 +59,41 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     setIsLoading(true);
 
     try {
-      const selectedCategory = categories.find(cat => cat.id.toString() === formData.category);
-      const categoryName = selectedCategory?.name?.toLowerCase();
-      
-      // Prepare the product data with proper typing
-      const productData: AddProductRequest = {
+      const { data, loading, error } = await AddProduct({
         title: formData.name,
         description: formData.description,
-        price: parseFloat(formData.price),
-        quantity: parseInt(formData.stock),
-        type_id: parseInt(formData.category),
-        weight_per_unit: parseFloat(formData.weightPerUnit) || undefined,
-        discount_percentage: formData.discount ? parseFloat(formData.discount) : undefined,
-        animal_stage: formData.animalStage || undefined,
-        image: selectedImage || undefined,
-      };
-
-      // Set is_alive or is_fresh based on category and age
-      if (categoryName === "livestock" || categoryName === "live stock") {
-        productData.is_alive = parseInt(formData.age);
-      } else if (categoryName === "fish") {
-        productData.is_alive = parseInt(formData.age);
-      } else {
-        productData.is_fresh = parseInt(formData.age);
-      }
-
-      console.log("Adding product:", productData);
-      
-      const response = await AddProduct(productData);
-      
-      if (response.success) {
+        price: Number(formData.price),
+        type_id: Number(formData.category),
+        quantity: Number(formData.stock),
+        weightPerUnit: formData.weightPerUnit,
+        age: formData.age,
+        animalStage: formData.animalStage,
+        discount: formData.discount ? Number(formData.discount) : undefined,
+        image: selectedImage,
+      } as AddProductRequest);
+      if (loading) {
         toast({
-          title: "Product Added Successfully!",
-          description: "Your product is now available for sale.",
+          title: "Adding Product",
+          description: "Please wait while we add your product.",
+        });
+      }
+      if (error) {
+        throw new Error(error);
+      }
+      if (data) {
+        toast({
+          title: "Product Added",
+          description: "Your product has been successfully added.",
+          variant: "success",
         });
         onClose();
-      } else {
-        throw new Error(response.message);
       }
     } catch (error) {
       console.error("Error adding product:", error);
       toast({
         title: "Failed to Add Product",
-        description: error instanceof Error ? error.message : "Please try again later.",
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -143,7 +135,12 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
           />
 
           <div className="flex gap-4">
-            <Button type="button" variant="outline" onClick={onClose} className="flex-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              className="flex-1"
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1">

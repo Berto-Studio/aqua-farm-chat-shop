@@ -1,13 +1,15 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
-import { X, Upload } from "lucide-react";
+import { X } from "lucide-react";
+import { useCategories } from "@/hooks/useCategories";
+import AddProduct, { AddProductRequest } from "@/services/addProduct";
+import ProductBasicInfo from "./ProductBasicInfo";
+import ProductPricingInfo from "./ProductPricingInfo";
+import ProductCategoryFields from "./ProductCategoryFields";
+import ProductImageUpload from "./ProductImageUpload";
 
 interface AddProductFormProps {
   onClose: () => void;
@@ -25,11 +27,31 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     animalStage: "",
     discount: "",
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { data: categoriesResponse, isLoading: categoriesLoading } = useCategories();
+
+  const categories = categoriesResponse?.data || [];
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => {
+      const newData = { ...prev, [field]: value };
+      
+      // Reset age when category changes
+      if (field === "category") {
+        newData.age = "";
+      }
+      
+      return newData;
+    });
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedImage(file);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,22 +59,49 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     setIsLoading(true);
 
     try {
-      // Here you would send data to your backend
-      console.log("Adding product:", formData);
+      const selectedCategory = categories.find(cat => cat.id.toString() === formData.category);
+      const categoryName = selectedCategory?.name?.toLowerCase();
       
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Prepare the product data with proper typing
+      const productData: AddProductRequest = {
+        title: formData.name,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        quantity: parseInt(formData.stock),
+        type_id: parseInt(formData.category),
+        weight_per_unit: parseFloat(formData.weightPerUnit) || undefined,
+        discount_percentage: formData.discount ? parseFloat(formData.discount) : undefined,
+        animal_stage: formData.animalStage || undefined,
+        image: selectedImage || undefined,
+      };
+
+      // Set is_alive or is_fresh based on category and age
+      if (categoryName === "livestock" || categoryName === "live stock") {
+        productData.is_alive = parseInt(formData.age);
+      } else if (categoryName === "fish") {
+        productData.is_alive = parseInt(formData.age);
+      } else {
+        productData.is_fresh = parseInt(formData.age);
+      }
+
+      console.log("Adding product:", productData);
       
-      toast({
-        title: "Product Added Successfully!",
-        description: "Your product is now available for sale.",
-      });
+      const response = await AddProduct(productData);
       
-      onClose();
+      if (response.success) {
+        toast({
+          title: "Product Added Successfully!",
+          description: "Your product is now available for sale.",
+        });
+        onClose();
+      } else {
+        throw new Error(response.message);
+      }
     } catch (error) {
+      console.error("Error adding product:", error);
       toast({
         title: "Failed to Add Product",
-        description: "Please try again later.",
+        description: error instanceof Error ? error.message : "Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -70,126 +119,28 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Product Name</Label>
-              <Input
-                id="name"
-                placeholder="Fresh Tomatoes"
-                value={formData.name}
-                onChange={(e) => handleInputChange("name", e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
-              <Select onValueChange={(value) => handleInputChange("category", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Live Stock">Live Stock</SelectItem>
-                  <SelectItem value="Fish">Fish</SelectItem>
-                  <SelectItem value="Vegetables">Vegetables</SelectItem>
-                  <SelectItem value="Fruits">Fruits</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          <ProductBasicInfo
+            formData={formData}
+            categories={categories}
+            categoriesLoading={categoriesLoading}
+            onInputChange={handleInputChange}
+          />
 
-          <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
-            <Textarea
-              id="description"
-              placeholder="Describe your product..."
-              value={formData.description}
-              onChange={(e) => handleInputChange("description", e.target.value)}
-              rows={3}
-              required
-            />
-          </div>
+          <ProductPricingInfo
+            formData={formData}
+            onInputChange={handleInputChange}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price (GHS)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                placeholder="25.00"
-                value={formData.price}
-                onChange={(e) => handleInputChange("price", e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stock">Stock Quantity</Label>
-              <Input
-                id="stock"
-                type="number"
-                placeholder="100"
-                value={formData.stock}
-                onChange={(e) => handleInputChange("stock", e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="weightPerUnit">Weight per Unit</Label>
-              <Input
-                id="weightPerUnit"
-                placeholder="1 kg"
-                value={formData.weightPerUnit}
-                onChange={(e) => handleInputChange("weightPerUnit", e.target.value)}
-                required
-              />
-            </div>
-          </div>
+          <ProductCategoryFields
+            formData={formData}
+            categories={categories}
+            onInputChange={handleInputChange}
+          />
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="age">Age Category</Label>
-              <Select onValueChange={(value) => handleInputChange("age", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select age" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="young">Young</SelectItem>
-                  <SelectItem value="mature">Mature</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="animalStage">Animal Stage</Label>
-              <Select onValueChange={(value) => handleInputChange("animalStage", value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select stage" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Young</SelectItem>
-                  <SelectItem value="1">Mature</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="discount">Discount (%)</Label>
-              <Input
-                id="discount"
-                type="number"
-                placeholder="10"
-                value={formData.discount}
-                onChange={(e) => handleInputChange("discount", e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Product Image</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-sm text-gray-600">Click to upload product image</p>
-              <input type="file" className="hidden" accept="image/*" />
-            </div>
-          </div>
+          <ProductImageUpload
+            selectedImage={selectedImage}
+            onImageChange={handleImageChange}
+          />
 
           <div className="flex gap-4">
             <Button type="button" variant="outline" onClick={onClose} className="flex-1">

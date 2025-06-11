@@ -6,9 +6,9 @@ import Cookies from "js-cookie";
 interface LoginResponse {
   data: {
     id: string;
-    name: string;
+    full_name: string;
     email: string;
-    role?: string;
+    user_type?: string;
   } | null;
   access_token: string;
   status: number;
@@ -44,8 +44,8 @@ export default async function logIn({ email, password }: loginProps): Promise<{
     setUser({
       id: data.id,
       email: data.email,
-      role: data.role,
-      full_name: data.name,
+      user_type: data.user_type,
+      full_name: data.full_name,
     });
 
     // Store token securely

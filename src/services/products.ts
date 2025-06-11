@@ -2,7 +2,6 @@ import { apiRequest } from "@/hooks/useClient";
 import { Product } from "@/types/product";
 
 interface ApiProduct {
-  id: number;
   title: string;
   description: string;
   price: number;
@@ -56,7 +55,6 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
   };
 
   return {
-    id: apiProduct.id.toString(),
     name: apiProduct.title,
     description: apiProduct.description,
     price: apiProduct.price,
@@ -101,6 +99,143 @@ export default async function GetProducts(): Promise<{
       data: [],
       message:
         error instanceof Error ? error.message : "Failed to fetch products",
+      status: 500,
+    };
+  }
+}
+
+export async function CreateProduct(product: Product): Promise<{
+  success: boolean;
+  data?: Product;
+  message: string;
+  status: number;
+}> {
+  try {
+    const apiProduct: ApiProduct = {
+      title: product.name,
+      description: product.description,
+      price: product.price,
+      quantity: product.stock,
+      image_url: product.image,
+      type_id: (() => {
+        switch (product.category) {
+          case "Live Stock":
+            return 1;
+          case "Vegetables":
+            return 2;
+          case "Fruits":
+            return 3;
+          default:
+            return 4; // Fish
+        }
+      })(),
+      is_alive: product.age === "young" ? 1 : 0,
+      is_fresh: product.age === "young" ? 1 : 0,
+      farmer_id: "", // Set farmer_id as needed
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      rating: product.rating || undefined,
+      weight_per_unit: parseFloat(product.weightPerUnit),
+      animal_stage: product.animal_stage?.toString() || undefined,
+      discount_percentage: product.discount || undefined,
+    };
+
+    const response = await apiRequest<ProductsResponse>(
+      "products/",
+      "POST",
+      apiProduct
+    );
+
+    if (response.status !== 201) {
+      return {
+        success: false,
+        message: response.message || "Failed to create product",
+        status: response.status,
+      };
+    }
+
+    const createdProduct = transformApiProduct(response.data[0]);
+
+    return {
+      success: true,
+      data: createdProduct,
+      message: "Product created successfully",
+      status: response.status,
+    };
+  } catch (error) {
+    console.error("Error creating product:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to create product",
+      status: 500,
+    };
+  }
+}
+
+export async function UpdateProduct(
+  product: Product
+): Promise<{
+  success: boolean;
+  data?: Product;
+  message: string;
+  status: number;
+}> {
+  try {
+    const apiProduct: ApiProduct = {
+      title: product.name,
+      description: product.description,
+      price: product.price,
+      quantity: product.stock,
+      image_url: product.image,
+      type_id: (() => {
+        switch (product.category) {
+          case "Live Stock":
+            return 1;
+          case "Vegetables":
+            return 2;
+          case "Fruits":
+            return 3;
+          default:
+            return 4; // Fish
+        }
+      })(),
+      is_alive: product.age === "young" ? 1 : 0,
+      is_fresh: product.age === "young" ? 1 : 0,
+      farmer_id: "", // Set farmer_id as needed
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      rating: product.rating || undefined,
+      weight_per_unit: parseFloat(product.weightPerUnit),
+      animal_stage: product.animal_stage?.toString() || undefined,
+      discount_percentage: product.discount || undefined,
+    };
+    const response = await apiRequest<ProductResponse>(
+      `products/${product.id}`,
+      "PUT",
+      apiProduct
+    );
+    if (response.status !== 200) {
+      return {
+        success: false,
+        message: response.message || "Failed to update product",
+        status: response.status,
+      };
+    }
+    const updatedProduct = transformApiProduct(response.data[0]);
+
+    return {
+      success: true,
+      data: updatedProduct,
+      message: "Product updated successfully",
+      status: response.status,
+    };
+  } catch (error) {
+    console.error("Error updating product:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to update product",
       status: 500,
     };
   }

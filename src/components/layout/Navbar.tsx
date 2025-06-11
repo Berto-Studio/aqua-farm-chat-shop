@@ -208,6 +208,16 @@ export default function Navbar() {
                           <span>{user?.full_name || "Profile"}</span>
                         </Link>
                       </DropdownMenuItem>
+                      {user.user_type === "farmer" && (
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to={user.is_admin ? "/admin" : "/farmer/dashboard"}
+                            className="cursor-pointer"
+                          >
+                            Dashboard
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem asChild>
                         <Link to="/settings" className="cursor-pointer">
                           Settings

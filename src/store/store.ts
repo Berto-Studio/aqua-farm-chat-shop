@@ -13,6 +13,7 @@ type User = {
   phone?: number;
   address?: string;
   image_url?: string;
+  is_admin?: boolean;
 };
 
 type UserState = {

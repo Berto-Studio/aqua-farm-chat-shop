@@ -1,8 +1,9 @@
+
 export type ProductCategory = "Live Stock" | "Fish" | "Vegetables" | "Fruits";
 export type ProductAge = "young" | "mature";
 
 export interface Product {
-  id?: number;
+  id?: string; // Changed from number to string
   name: string;
   description: string;
   price: number;

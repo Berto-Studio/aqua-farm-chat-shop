@@ -90,7 +90,7 @@ export default function SearchDropdown() {
                     {filteredProducts.map((product) => (
                       <CommandItem
                         key={product.id}
-                        onSelect={() => handleSelect(product.id)}
+                        onSelect={() => handleSelect(product.id || "")}
                         className="flex items-center gap-2 cursor-pointer"
                       >
                         <div className="h-8 w-8 overflow-hidden rounded-sm">

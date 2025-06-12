@@ -29,6 +29,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const [image, setImage] = useState<File | null>(null);
   const { data: categoriesResponse, isLoading: categoriesLoading } =
     useCategories();
 
@@ -50,7 +51,14 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      console.log("Image selected:", file.name, "Size:", file.size, "Type:", file.type);
+      console.log(
+        "Image selected:",
+        file.name,
+        "Size:",
+        file.size,
+        "Type:",
+        file.type
+      );
       setSelectedImage(file);
     }
   };
@@ -62,10 +70,10 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     console.log("Form submission started");
     console.log("Selected image:", selectedImage);
-    
+
     if (!selectedImage) {
       toast({
         title: "Image Required",
@@ -95,7 +103,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
           ? Number(formData.discount)
           : undefined,
         rating: 4.0,
-        image: selectedImage, // Pass the actual file
+        image: image, // Pass the actual file
       };
 
       // Set livestock/fish specific fields based on category type_id
@@ -118,7 +126,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
       console.log("Submitting product data:", {
         ...productRequest,
-        image: `File: ${selectedImage.name} (${selectedImage.size} bytes)`
+        image: `File: ${selectedImage.name} (${selectedImage.size} bytes)`,
       });
 
       const response = await AddProduct(productRequest);
@@ -174,11 +182,14 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
             onInputChange={handleInputChange}
           />
 
-          <ProductImageUpload
+          {/* <ProductImageUpload
             selectedImage={selectedImage}
             onImageChange={handleImageChange}
             onImageRemove={handleImageRemove}
-          />
+          /> */}
+          <div>
+            <input type="file" name="image" id="image" />
+          </div>
 
           <div className="flex gap-4">
             <Button

@@ -6,11 +6,10 @@ interface ApiProduct {
   description: string;
   price: number;
   quantity: number;
-  image_url: string;
+  image: string;
   type_id: number;
   is_alive?: number;
   is_fresh?: number;
-  farmer_id: string;
   created_at: string;
   updated_at: string;
   rating?: number; // Add rating field from API
@@ -60,7 +59,7 @@ const transformApiProduct = (apiProduct: ApiProduct): Product => {
     price: apiProduct.price,
     category: getCategoryFromTypeId(apiProduct.type_id),
     age: getAge(apiProduct),
-    image: apiProduct.image_url,
+    image: apiProduct.image,
     stock: apiProduct.quantity,
     weightPerUnit: apiProduct.weight_per_unit
       ? `${apiProduct.weight_per_unit} unit`
@@ -116,7 +115,7 @@ export async function CreateProduct(product: Product): Promise<{
       description: product.description,
       price: product.price,
       quantity: product.stock,
-      image_url: product.image,
+      image: product.image,
       type_id: (() => {
         switch (product.category) {
           case "Live Stock":
@@ -126,12 +125,11 @@ export async function CreateProduct(product: Product): Promise<{
           case "Fruits":
             return 3;
           default:
-            return 4; // Fish
+            return 4;
         }
       })(),
       is_alive: product.age === "young" ? 1 : 0,
       is_fresh: product.age === "young" ? 1 : 0,
-      farmer_id: "", // Set farmer_id as needed
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       rating: product.rating || undefined,
@@ -185,7 +183,7 @@ export async function UpdateProduct(product: Product): Promise<{
       description: product.description,
       price: product.price,
       quantity: product.stock,
-      image_url: product.image,
+      image: product.image,
       type_id: (() => {
         switch (product.category) {
           case "Live Stock":
@@ -200,7 +198,6 @@ export async function UpdateProduct(product: Product): Promise<{
       })(),
       is_alive: product.age === "young" ? 1 : 0,
       is_fresh: product.age === "young" ? 1 : 0,
-      farmer_id: "", // Set farmer_id as needed
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       rating: product.rating || undefined,

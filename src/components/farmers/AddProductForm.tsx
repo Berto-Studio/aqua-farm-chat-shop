@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -52,9 +51,11 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-    } else {
-      setSelectedImage(null);
     }
+  };
+
+  const handleImageRemove = () => {
+    setSelectedImage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -168,6 +169,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
           <ProductImageUpload
             selectedImage={selectedImage}
             onImageChange={handleImageChange}
+            onImageRemove={handleImageRemove}
           />
 
           <div className="flex gap-4">

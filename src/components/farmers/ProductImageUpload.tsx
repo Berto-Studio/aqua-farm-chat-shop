@@ -6,22 +6,20 @@ import { Upload, X } from "lucide-react";
 interface ProductImageUploadProps {
   selectedImage: File | null;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageRemove: () => void;
 }
 
 export default function ProductImageUpload({
   selectedImage,
   onImageChange,
+  onImageRemove,
 }: ProductImageUploadProps) {
   const handleRemoveImage = () => {
     const input = document.getElementById('image-upload') as HTMLInputElement;
     if (input) {
       input.value = '';
     }
-    // Create a fake event to trigger the change handler with no file
-    const fakeEvent = {
-      target: { files: null }
-    } as React.ChangeEvent<HTMLInputElement>;
-    onImageChange(fakeEvent);
+    onImageRemove();
   };
 
   const handleButtonClick = () => {

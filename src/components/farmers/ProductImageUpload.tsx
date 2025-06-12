@@ -24,6 +24,13 @@ export default function ProductImageUpload({
     onImageChange(fakeEvent);
   };
 
+  const handleButtonClick = () => {
+    const input = document.getElementById('image-upload') as HTMLInputElement;
+    if (input) {
+      input.click();
+    }
+  };
+
   return (
     <div className="space-y-2">
       <Label>Product Image *</Label>
@@ -61,11 +68,14 @@ export default function ProductImageUpload({
           id="image-upload"
           required
         />
-        <label htmlFor="image-upload" className="cursor-pointer">
-          <Button type="button" variant="outline" className="mt-2">
-            {selectedImage ? "Change Image" : "Choose File"}
-          </Button>
-        </label>
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="mt-2"
+          onClick={handleButtonClick}
+        >
+          {selectedImage ? "Change Image" : "Choose File"}
+        </Button>
       </div>
     </div>
   );

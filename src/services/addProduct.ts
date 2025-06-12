@@ -13,7 +13,7 @@ export interface AddProductRequest {
   animal_stage?: number;
   discount_percentage?: number;
   rating?: number;
-  image: File; // Changed to File type
+  image: File;
 }
 
 export interface AddProductResponse {
@@ -23,38 +23,50 @@ export interface AddProductResponse {
   status: number;
 }
 
+// Helper function to convert file to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = error => reject(error);
+  });
+};
+
 export default async function AddProduct(productData: AddProductRequest): Promise<AddProductResponse> {
   try {
-    // Create FormData to handle file upload
-    const formData = new FormData();
+    // Convert image to base64
+    const imageBase64 = await fileToBase64(productData.image);
     
-    // Append all the product data
-    formData.append('title', productData.title);
-    formData.append('description', productData.description);
-    formData.append('price', productData.price.toString());
-    formData.append('quantity', productData.quantity.toString());
-    formData.append('type_id', productData.type_id.toString());
-    formData.append('weight_per_unit', (productData.weight_per_unit || 1.0).toString());
-    formData.append('is_live', (productData.is_live || false).toString());
-    formData.append('is_fresh', (productData.is_fresh !== undefined ? productData.is_fresh : true).toString());
-    formData.append('rating', (productData.rating || 4.0).toString());
-    
-    // Append optional fields only if they exist
+    // Prepare JSON payload
+    const payload = {
+      title: productData.title,
+      description: productData.description,
+      price: productData.price,
+      quantity: productData.quantity,
+      type_id: productData.type_id,
+      weight_per_unit: productData.weight_per_unit || 1.0,
+      is_live: productData.is_live || false,
+      is_fresh: productData.is_fresh !== undefined ? productData.is_fresh : true,
+      rating: productData.rating || 4.0,
+      image_base64: imageBase64,
+      image_name: productData.image.name,
+      image_type: productData.image.type
+    };
+
+    // Add optional fields only if they exist
     if (productData.discount_percentage !== undefined && productData.discount_percentage !== null) {
-      formData.append('discount_percentage', productData.discount_percentage.toString());
+      payload.discount_percentage = productData.discount_percentage;
     }
     
     if (productData.animal_stage !== undefined && productData.animal_stage !== null) {
-      formData.append('animal_stage', productData.animal_stage.toString());
+      payload.animal_stage = productData.animal_stage;
     }
-    
-    // Append the image file
-    formData.append('image', productData.image);
 
-    console.log("Sending FormData to API");
+    console.log("Sending JSON payload to API");
     
-    // Send FormData (isFormData = true)
-    const response = await apiRequest<any>("products/", "POST", formData, true);
+    // Send as JSON (isFormData = false)
+    const response = await apiRequest<any>("products/", "POST", payload, false);
     
     console.log("API Response:", response);
     

@@ -1,3 +1,4 @@
+
 import { useUserStore } from "@/store/store";
 import Cookies from "js-cookie";
 
@@ -17,12 +18,13 @@ export const apiRequest = async <T>(
   const token = getToken();
   const headers: HeadersInit = {
     Authorization: `Bearer ${token || ""}`,
-    "Content-Type": "application/x-www-form-urlencoded",
   };
 
+  // Only set Content-Type for non-FormData requests
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
+  // For FormData, let the browser set the Content-Type automatically (includes boundary for multipart/form-data)
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,

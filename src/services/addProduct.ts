@@ -12,8 +12,8 @@ export interface AddProductRequest {
   is_fresh?: boolean;
   animal_stage?: number;
   discount_percentage?: number;
-  image_url?: string;
   rating?: number;
+  image: File; // Changed to File type
 }
 
 export interface AddProductResponse {
@@ -25,24 +25,36 @@ export interface AddProductResponse {
 
 export default async function AddProduct(productData: AddProductRequest): Promise<AddProductResponse> {
   try {
-    const requestBody = {
-      title: productData.title,
-      description: productData.description,
-      price: productData.price,
-      quantity: productData.quantity,
-      type_id: productData.type_id,
-      weight_per_unit: productData.weight_per_unit || 1.0,
-      is_live: productData.is_live || false,
-      is_fresh: productData.is_fresh !== undefined ? productData.is_fresh : true,
-      image_url: productData.image_url || "/products/placeholder.jpg",
-      rating: productData.rating || 4.0,
-      discount_percentage: productData.discount_percentage || null,
-      animal_stage: productData.animal_stage || null,
-    };
-
-    console.log("Sending JSON data to API:", requestBody);
+    // Create FormData to handle file upload
+    const formData = new FormData();
     
-    const response = await apiRequest<any>("products/", "POST", requestBody, false);
+    // Append all the product data
+    formData.append('title', productData.title);
+    formData.append('description', productData.description);
+    formData.append('price', productData.price.toString());
+    formData.append('quantity', productData.quantity.toString());
+    formData.append('type_id', productData.type_id.toString());
+    formData.append('weight_per_unit', (productData.weight_per_unit || 1.0).toString());
+    formData.append('is_live', (productData.is_live || false).toString());
+    formData.append('is_fresh', (productData.is_fresh !== undefined ? productData.is_fresh : true).toString());
+    formData.append('rating', (productData.rating || 4.0).toString());
+    
+    // Append optional fields only if they exist
+    if (productData.discount_percentage !== undefined && productData.discount_percentage !== null) {
+      formData.append('discount_percentage', productData.discount_percentage.toString());
+    }
+    
+    if (productData.animal_stage !== undefined && productData.animal_stage !== null) {
+      formData.append('animal_stage', productData.animal_stage.toString());
+    }
+    
+    // Append the image file
+    formData.append('image', productData.image);
+
+    console.log("Sending FormData to API");
+    
+    // Send FormData (isFormData = true)
+    const response = await apiRequest<any>("products/", "POST", formData, true);
     
     console.log("API Response:", response);
     

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -51,11 +52,23 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
+    } else {
+      setSelectedImage(null);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!selectedImage) {
+      toast({
+        title: "Image Required",
+        description: "Please select an image for your product.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -75,10 +88,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         discount_percentage: formData.discount
           ? Number(formData.discount)
           : undefined,
-        image_url: selectedImage
-          ? `/products/uploaded/${selectedImage.name}`
-          : "/products/placeholder.jpg",
         rating: 4.0,
+        image: selectedImage, // Pass the actual file
       };
 
       // Set livestock/fish specific fields based on category type_id

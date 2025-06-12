@@ -38,8 +38,23 @@ export default async function AddProduct(productData: AddProductRequest): Promis
     // Convert image to base64
     const imageBase64 = await fileToBase64(productData.image);
     
-    // Prepare JSON payload
-    const payload = {
+    // Prepare JSON payload with all possible properties
+    const payload: {
+      title: string;
+      description: string;
+      price: number;
+      quantity: number;
+      type_id: number;
+      weight_per_unit: number;
+      is_live: boolean;
+      is_fresh: boolean;
+      rating: number;
+      image_base64: string;
+      image_name: string;
+      image_type: string;
+      discount_percentage?: number;
+      animal_stage?: number;
+    } = {
       title: productData.title,
       description: productData.description,
       price: productData.price,

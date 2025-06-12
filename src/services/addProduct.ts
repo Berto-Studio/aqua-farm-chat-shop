@@ -35,8 +35,11 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 export default async function AddProduct(productData: AddProductRequest): Promise<AddProductResponse> {
   try {
+    console.log("Starting to add product with image:", productData.image.name);
+    
     // Convert image to base64
     const imageBase64 = await fileToBase64(productData.image);
+    console.log("Image converted to base64, length:", imageBase64.length);
     
     // Prepare JSON payload with all possible properties
     const payload: {
@@ -78,7 +81,10 @@ export default async function AddProduct(productData: AddProductRequest): Promis
       payload.animal_stage = productData.animal_stage;
     }
 
-    console.log("Sending JSON payload to API");
+    console.log("Final payload being sent:", {
+      ...payload,
+      image_base64: `[BASE64 DATA - ${imageBase64.length} characters]`
+    });
     
     // Send as JSON (isFormData = false)
     const response = await apiRequest<any>("products/", "POST", payload, false);

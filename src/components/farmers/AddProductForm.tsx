@@ -50,16 +50,21 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      console.log("Image selected:", file.name, "Size:", file.size, "Type:", file.type);
       setSelectedImage(file);
     }
   };
 
   const handleImageRemove = () => {
+    console.log("Image removed");
     setSelectedImage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    console.log("Form submission started");
+    console.log("Selected image:", selectedImage);
     
     if (!selectedImage) {
       toast({
@@ -111,7 +116,10 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         productRequest.is_fresh = true;
       }
 
-      console.log("Submitting product data:", productRequest);
+      console.log("Submitting product data:", {
+        ...productRequest,
+        image: `File: ${selectedImage.name} (${selectedImage.size} bytes)`
+      });
 
       const response = await AddProduct(productRequest);
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -67,24 +66,35 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         price: Number(formData.price),
         type_id: Number(formData.category),
         quantity: Number(formData.stock),
-        weight_per_unit: formData.weightPerUnit ? Number(formData.weightPerUnit) : 1.0,
-        animal_stage: formData.animalStage ? Number(formData.animalStage) : undefined,
-        discount_percentage: formData.discount ? Number(formData.discount) : undefined,
-        image_url: selectedImage ? `/products/uploaded/${selectedImage.name}` : "/products/placeholder.jpg",
+        weight_per_unit: formData.weightPerUnit
+          ? Number(formData.weightPerUnit)
+          : 1.0,
+        animal_stage: formData.animalStage
+          ? Number(formData.animalStage)
+          : undefined,
+        discount_percentage: formData.discount
+          ? Number(formData.discount)
+          : undefined,
+        image_url: selectedImage
+          ? `/products/uploaded/${selectedImage.name}`
+          : "/products/placeholder.jpg",
         rating: 4.0,
       };
 
       // Set livestock/fish specific fields based on category type_id
       // 1=livestock, 2=vegetables, 3=fruits, 4=fish
       const typeId = Number(formData.category);
-      
-      if (typeId === 1) { // livestock
+
+      if (typeId === 1) {
+        // livestock
         productRequest.is_live = true;
         productRequest.is_fresh = false;
-      } else if (typeId === 4) { // fish
+      } else if (typeId === 4) {
+        // fish
         productRequest.is_live = true;
         productRequest.is_fresh = true;
-      } else { // vegetables (2) or fruits (3)
+      } else {
+        // vegetables (2) or fruits (3)
         productRequest.is_live = false;
         productRequest.is_fresh = true;
       }
@@ -92,7 +102,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       console.log("Submitting product data:", productRequest);
 
       const response = await AddProduct(productRequest);
-      
+
       if (response.success) {
         toast({
           title: "Product Added",

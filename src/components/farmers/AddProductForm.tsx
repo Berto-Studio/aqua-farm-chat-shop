@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,14 +23,13 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     category: "Live Stock",
     price: 0,
     quantity: 0,
-    image: null,
-    animaltype: "",
+    weight_per_unit: 0,
+    rating: 4.0,
+    discount_percentage: 0,
+    animal_type: undefined,
+    animal_stage: undefined,
     is_alive: false,
     is_fresh: false,
-    rating: 4.0,
-    weight_per_unit: 0,
-    animal_stage: 0,
-    discount_percentage: 0,
   });
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
@@ -47,11 +47,13 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
+      setFormData(prev => ({ ...prev, image: file }));
     }
   };
 
   const handleImageRemove = () => {
     setSelectedImage(null);
+    setFormData(prev => ({ ...prev, image: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,25 +71,23 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     setIsLoading(true);
 
     try {
-      const selectedCategory = categories.find(
-        (c) => c.id.toString() === formData.category
-      );
-
       const productData: Product = {
         title: formData.title,
         description: formData.description,
-        price: formData.price,
-        quantity: formData.quantity,
+        price: Number(formData.price),
+        quantity: Number(formData.quantity),
         category: formData.category,
         image: selectedImage,
-        animaltype: formData.animaltype,
-        animal_stage: formData.animal_stage,
-        weight_per_unit: formData.weight_per_unit?.toString() ?? "0",
+        weight_per_unit: Number(formData.weight_per_unit),
         rating: formData.rating || 4.0,
-        discount_percentage: formData.discount_percentage || 0,
-        is_alive: formData.is_alive,
-        is_fresh: formData.is_fresh,
+        discount_percentage: formData.discount_percentage ? Number(formData.discount_percentage) : undefined,
+        animal_type: formData.animal_type ? Number(formData.animal_type) : undefined,
+        animal_stage: formData.animal_stage ? Number(formData.animal_stage) : undefined,
+        is_alive: formData.category === "Live Stock" || formData.category === "Fish",
+        is_fresh: formData.category === "Vegetables" || formData.category === "Fruits",
       };
+
+      console.log("Submitting product data:", productData);
 
       const response = await CreateProduct(productData);
 
@@ -95,13 +95,13 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         toast({
           title: "Product Added",
           description: "Your product has been successfully added.",
-          variant: "success",
         });
         onClose();
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
+      console.error("Error adding product:", error);
       toast({
         title: "Failed to Add Product",
         description:

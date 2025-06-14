@@ -4,75 +4,58 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { X } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
-import AddProduct, { AddProductRequest } from "@/services/addProduct";
+import { CreateProduct } from "@/services/products";
 import ProductBasicInfo from "./ProductBasicInfo";
 import ProductPricingInfo from "./ProductPricingInfo";
 import ProductCategoryFields from "./ProductCategoryFields";
 import ProductImageUpload from "./ProductImageUpload";
+import { Product } from "@/types/product";
 
 interface AddProductFormProps {
   onClose: () => void;
 }
 
 export default function AddProductForm({ onClose }: AddProductFormProps) {
-  const [formData, setFormData] = useState({
-    name: "",
+  const [formData, setFormData] = useState<Product>({
+    title: "",
     description: "",
-    price: "",
-    category: "",
-    stock: "",
-    weightPerUnit: "",
-    age: "",
-    animalStage: "",
-    discount: "",
+    category: "Live Stock",
+    price: 0,
+    quantity: 0,
+    image: null,
+    animaltype: "",
+    is_alive: false,
+    is_fresh: false,
+    rating: 4.0,
+    weight_per_unit: 0,
+    animal_stage: 0,
+    discount_percentage: 0,
   });
+
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const [image, setImage] = useState<File | null>(null);
   const { data: categoriesResponse, isLoading: categoriesLoading } =
     useCategories();
-
   const categories = categoriesResponse?.data || [];
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => {
-      const newData = { ...prev, [field]: value };
-
-      // Reset age when category changes
-      if (field === "category") {
-        newData.age = "";
-      }
-
-      return newData;
-    });
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      console.log(
-        "Image selected:",
-        file.name,
-        "Size:",
-        file.size,
-        "Type:",
-        file.type
-      );
       setSelectedImage(file);
     }
   };
 
   const handleImageRemove = () => {
-    console.log("Image removed");
     setSelectedImage(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    console.log("Form submission started");
-    console.log("Selected image:", selectedImage);
 
     if (!selectedImage) {
       toast({
@@ -86,50 +69,27 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     setIsLoading(true);
 
     try {
-      // Map form data to API request format
-      const productRequest: AddProductRequest = {
-        title: formData.name,
+      const selectedCategory = categories.find(
+        (c) => c.id.toString() === formData.category
+      );
+
+      const productData: Product = {
+        title: formData.title,
         description: formData.description,
-        price: Number(formData.price),
-        type_id: Number(formData.category),
-        quantity: Number(formData.stock),
-        weight_per_unit: formData.weightPerUnit
-          ? Number(formData.weightPerUnit)
-          : 1.0,
-        animal_stage: formData.animalStage
-          ? Number(formData.animalStage)
-          : undefined,
-        discount_percentage: formData.discount
-          ? Number(formData.discount)
-          : undefined,
-        rating: 4.0,
-        image: image, // Pass the actual file
+        price: formData.price,
+        quantity: formData.quantity,
+        category: formData.category,
+        image: selectedImage,
+        animaltype: formData.animaltype,
+        animal_stage: formData.animal_stage,
+        weight_per_unit: formData.weight_per_unit?.toString() ?? "0",
+        rating: formData.rating || 4.0,
+        discount_percentage: formData.discount_percentage || 0,
+        is_alive: formData.is_alive,
+        is_fresh: formData.is_fresh,
       };
 
-      // Set livestock/fish specific fields based on category type_id
-      // 1=livestock, 2=vegetables, 3=fruits, 4=fish
-      const typeId = Number(formData.category);
-
-      if (typeId === 1) {
-        // livestock
-        productRequest.is_live = true;
-        productRequest.is_fresh = false;
-      } else if (typeId === 4) {
-        // fish
-        productRequest.is_live = true;
-        productRequest.is_fresh = true;
-      } else {
-        // vegetables (2) or fruits (3)
-        productRequest.is_live = false;
-        productRequest.is_fresh = true;
-      }
-
-      console.log("Submitting product data:", {
-        ...productRequest,
-        image: `File: ${selectedImage.name} (${selectedImage.size} bytes)`,
-      });
-
-      const response = await AddProduct(productRequest);
+      const response = await CreateProduct(productData);
 
       if (response.success) {
         toast({
@@ -142,7 +102,6 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         throw new Error(response.message);
       }
     } catch (error) {
-      console.error("Error adding product:", error);
       toast({
         title: "Failed to Add Product",
         description:
@@ -182,14 +141,11 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
             onInputChange={handleInputChange}
           />
 
-          {/* <ProductImageUpload
+          <ProductImageUpload
             selectedImage={selectedImage}
             onImageChange={handleImageChange}
             onImageRemove={handleImageRemove}
-          /> */}
-          <div>
-            <input type="file" name="image" id="image" />
-          </div>
+          />
 
           <div className="flex gap-4">
             <Button

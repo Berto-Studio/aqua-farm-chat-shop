@@ -1,4 +1,3 @@
-
 import { useUserStore } from "@/store/store";
 import Cookies from "js-cookie";
 
@@ -18,6 +17,7 @@ export const apiRequest = async <T>(
   const token = getToken();
   const headers: HeadersInit = {
     Authorization: `Bearer ${token || ""}`,
+    "Content-Type": "multipart/form-data",
   };
 
   // Only set Content-Type for non-FormData requests

@@ -12,14 +12,14 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const {
     id,
-    name,
+    title,
     price,
     image,
     category,
     animal_stage,
-    discount,
+    discount_percentage,
     rating,
-    stock,
+    quantity,
   } = product;
 
   const formattedPrice = new Intl.NumberFormat("en-US", {
@@ -27,18 +27,22 @@ export default function ProductCard({ product }: ProductCardProps) {
     currency: "GHS",
   }).format(price);
 
-  const discountedPrice = discount
+  const discountedPrice = discount_percentage
     ? new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "GHS",
-      }).format(price * (1 - discount / 100))
+      }).format(price * (1 - discount_percentage / 100))
     : null;
 
-  const stockStatus =
-    stock > 0 ? (stock > 50 ? "In Stock" : "Low Stock") : "Out of Stock";
+  const quantityStatus =
+    quantity > 0
+      ? quantity > 50
+        ? "In quantity"
+        : "Low quantity"
+      : "Out of quantity";
 
-  const stockVariant =
-    stock > 0 ? (stock > 50 ? "default" : "secondary") : "destructive";
+  const quantityVariant =
+    quantity > 0 ? (quantity > 50 ? "default" : "secondary") : "destructive";
 
   const formattedAnimalStage = (() => {
     if (animal_stage === 0) {
@@ -55,8 +59,8 @@ export default function ProductCard({ product }: ProductCardProps) {
       <Link to={`/products/${id}`} className="relative">
         <div className="h-48 overflow-hidden">
           <img
-            src={image}
-            alt={name}
+            src={product.image_url}
+            alt={title}
             className="w-full h-full object-cover transition-transform hover:scale-105"
           />
         </div>
@@ -69,9 +73,9 @@ export default function ProductCard({ product }: ProductCardProps) {
               {formattedAnimalStage}
             </Badge>
           ) : null}
-          {discount && (
+          {discount_percentage && (
             <Badge variant="destructive" className="w-fit">
-              {discount}% OFF
+              {discount_percentage}% OFF
             </Badge>
           )}
         </div>
@@ -79,12 +83,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       <CardContent className="pt-4 flex-grow">
         <Link to={`/products/${id}`}>
           <h3 className="font-semibold text-lg line-clamp-1 hover:text-primary transition-colors">
-            {name}
+            {title}
           </h3>
         </Link>
         <div className="flex items-center justify-between mt-2">
           <div>
-            {discount ? (
+            {discount_percentage ? (
               <div className="flex flex-col">
                 <span className="text-muted-foreground line-through text-sm">
                   {formattedPrice}
@@ -105,13 +109,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
         <div className="mt-2">
-          <Badge variant={stockVariant} className="text-xs">
-            {stockStatus} ({stock})
+          <Badge variant={quantityVariant} className="text-xs">
+            {quantityStatus} ({quantity})
           </Badge>
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">
-        <Button className="w-full gap-2" disabled={stock === 0}>
+        <Button className="w-full gap-2" disabled={quantity === 0}>
           <ShoppingCart className="h-4 w-4" />
           Buy now
         </Button>

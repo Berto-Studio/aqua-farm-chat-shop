@@ -1,5 +1,5 @@
-
 import { Label } from "@/components/ui/label";
+import { useEffect } from "react";
 import {
   Select,
   SelectContent,
@@ -7,13 +7,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Product } from "@/types/product";
 
 interface ProductCategoryFieldsProps {
-  formData: {
-    category: string;
-    age: string;
-    animalStage: string;
-  };
+  formData: Product;
   categories: Array<{ id: number; name: string }>;
   onInputChange: (field: string, value: string) => void;
 }
@@ -24,10 +21,7 @@ export default function ProductCategoryFields({
   onInputChange,
 }: ProductCategoryFieldsProps) {
   const getAgeOptions = () => {
-    const selectedCategory = categories.find(
-      (cat) => cat.id.toString() === formData.category
-    );
-    const categoryName = selectedCategory?.name?.toLowerCase();
+    const categoryName = formData?.category?.toLowerCase();
 
     if (categoryName === "livestock" || categoryName === "live stock") {
       return [
@@ -47,6 +41,8 @@ export default function ProductCategoryFields({
       return;
     }
   };
+
+  useEffect(() => {}, [formData]);
 
   const getAnimalStageOptions = () => {
     return [
@@ -68,71 +64,66 @@ export default function ProductCategoryFields({
       (cat) => cat.id.toString() === formData.category
     );
     const categoryName = selectedCategory?.name?.toLowerCase();
-    
-    // Show for livestock and fish, hide for vegetables and fruits
+
     return (
-      categoryName === "livestock" || 
-      categoryName === "live stock" || 
+      categoryName === "livestock" ||
+      categoryName === "live stock" ||
       categoryName === "fish"
     );
   };
 
-  const getAgeLabel = () => {
-    const selectedCategory = categories.find(
-      (cat) => cat.id.toString() === formData.category
-    );
-    const categoryName = selectedCategory?.name?.toLowerCase();
-
-    if (categoryName === "fish") {
-      return "Fish Stage";
-    } else if (categoryName === "livestock" || categoryName === "live stock") {
-      return "Animal Type";
-    } else {
-      return;
-    }
-  };
+  // const getAgeLabel = () => {
+  //   if (formData?.category === "fish") {
+  //     return "Fish Stage";
+  //   } else if (
+  //     formData?.category === "livestock" ||
+  //     formData.category === "live stock"
+  //   ) {
+  //     return "Animal Type";
+  //   } else {
+  //     return;
+  //   }
+  // };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      {shouldShowAgeField() && (
-        <div className="space-y-2">
-          <Label htmlFor="age">{getAgeLabel()}</Label>
-          <Select
-            onValueChange={(value) => onInputChange("age", value)}
-            disabled={!formData.category}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select option" />
-            </SelectTrigger>
-            <SelectContent>
-              {getAgeOptions()?.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
-      {shouldShowAnimalStage() && (
-        <div className="space-y-2">
-          <Label htmlFor="animalStage">Animal Maturity</Label>
-          <Select
-            onValueChange={(value) => onInputChange("animalStage", value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select maturity" />
-            </SelectTrigger>
-            <SelectContent>
-              {getAnimalStageOptions().map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {/* {shouldShowAgeField() && ( */}
+      <div className="space-y-2">
+        <Label htmlFor="age">Animal Age</Label>
+        <Select
+          onValueChange={(value) => onInputChange("age", value)}
+          disabled={!formData.category}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select option" />
+          </SelectTrigger>
+          <SelectContent>
+            {getAgeOptions()?.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {/* )} */}
+      {/* {shouldShowAnimalStage() && ( */}
+      <div className="space-y-2">
+        <Label htmlFor="animalStage">Animal Maturity</Label>
+        <Select onValueChange={(value) => onInputChange("animalStage", value)}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select maturity" />
+          </SelectTrigger>
+          <SelectContent>
+            {getAnimalStageOptions().map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      {/* )} */}
     </div>
   );
 }

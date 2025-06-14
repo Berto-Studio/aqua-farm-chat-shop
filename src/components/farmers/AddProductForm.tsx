@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { CreateProduct } from "@/services/products";
 import { useQueryClient } from "@tanstack/react-query";
+import { uploadImageToCloudinary } from "@/services/cloudinary";
 import ProductBasicInfo from "./ProductBasicInfo";
 import ProductPricingInfo from "./ProductPricingInfo";
 import ProductCategoryFields from "./ProductCategoryFields";
@@ -35,6 +36,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: categoriesResponse, isLoading: categoriesLoading } =
@@ -49,13 +51,11 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-      setFormData(prev => ({ ...prev, image: file }));
     }
   };
 
   const handleImageRemove = () => {
     setSelectedImage(null);
-    setFormData(prev => ({ ...prev, image: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,15 +71,24 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     }
 
     setIsLoading(true);
+    setIsUploadingImage(true);
 
     try {
+      // Upload image to Cloudinary first
+      console.log("Uploading image to Cloudinary...");
+      const imageUrl = await uploadImageToCloudinary(selectedImage);
+      console.log("Image uploaded, URL:", imageUrl);
+      
+      setIsUploadingImage(false);
+
+      // Prepare product data with image URL
       const productData: Product = {
         title: formData.title,
         description: formData.description,
         price: Number(formData.price),
         quantity: Number(formData.quantity),
         category: formData.category,
-        image: selectedImage,
+        image: imageUrl, // Send URL instead of file
         weight_per_unit: Number(formData.weight_per_unit),
         rating: formData.rating || 4.0,
         discount_percentage: formData.discount_percentage ? Number(formData.discount_percentage) : undefined,
@@ -89,7 +98,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         is_fresh: formData.category === "Vegetables" || formData.category === "Fruits",
       };
 
-      console.log("Submitting product data:", productData);
+      console.log("Submitting product data with image URL:", productData);
 
       const response = await CreateProduct(productData);
 
@@ -116,6 +125,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       });
     } finally {
       setIsLoading(false);
+      setIsUploadingImage(false);
     }
   };
 
@@ -163,7 +173,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Adding Product..." : "Add Product"}
+              {isUploadingImage ? "Uploading Image..." : isLoading ? "Adding Product..." : "Add Product"}
             </Button>
           </div>
         </form>

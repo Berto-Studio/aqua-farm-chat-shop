@@ -7,6 +7,7 @@ import { X } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { UpdateProduct } from "@/services/products";
 import { useQueryClient } from "@tanstack/react-query";
+import { uploadImageToCloudinary } from "@/services/cloudinary";
 import ProductBasicInfo from "./ProductBasicInfo";
 import ProductPricingInfo from "./ProductPricingInfo";
 import ProductCategoryFields from "./ProductCategoryFields";
@@ -22,6 +23,7 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
   const [formData, setFormData] = useState<Product>(product);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: categoriesResponse, isLoading: categoriesLoading } = useCategories();
@@ -35,7 +37,6 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
     const file = e.target.files?.[0];
     if (file) {
       setSelectedImage(file);
-      setFormData(prev => ({ ...prev, image: file }));
     }
   };
 
@@ -49,6 +50,17 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
     setIsLoading(true);
 
     try {
+      let imageUrl = formData.image_url; // Keep existing image URL by default
+
+      // Upload new image to Cloudinary if selected
+      if (selectedImage) {
+        setIsUploadingImage(true);
+        console.log("Uploading new image to Cloudinary...");
+        imageUrl = await uploadImageToCloudinary(selectedImage);
+        console.log("New image uploaded, URL:", imageUrl);
+        setIsUploadingImage(false);
+      }
+
       const productData: Partial<Product> = {
         title: formData.title,
         description: formData.description,
@@ -64,9 +76,9 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
         is_fresh: formData.category === "Vegetables" || formData.category === "Fruits",
       };
 
-      // Only include image if a new one was selected
-      if (selectedImage) {
-        productData.image = selectedImage;
+      // Include image URL if we have one (either new or existing)
+      if (imageUrl) {
+        productData.image = imageUrl;
       }
 
       console.log("Updating product data:", productData);
@@ -95,6 +107,7 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
       });
     } finally {
       setIsLoading(false);
+      setIsUploadingImage(false);
     }
   };
 
@@ -143,7 +156,7 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isLoading ? "Updating Product..." : "Update Product"}
+              {isUploadingImage ? "Uploading Image..." : isLoading ? "Updating Product..." : "Update Product"}
             </Button>
           </div>
         </form>

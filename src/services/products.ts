@@ -73,59 +73,30 @@ export async function CreateProduct(product: Product): Promise<{
   status: number;
 }> {
   try {
-    // Create FormData to send file
-    const formData = new FormData();
-    
-    // Add all product fields
-    formData.append('title', product.title);
-    formData.append('description', product.description);
-    formData.append('price', product.price.toString());
-    formData.append('quantity', product.quantity.toString());
-    formData.append('category', product.category);
-    formData.append('weight_per_unit', product.weight_per_unit.toString());
-    formData.append('rating', (product.rating || 4.0).toString());
-    
-    if (product.discount_percentage) {
-      formData.append('discount_percentage', product.discount_percentage.toString());
-    }
+    // Now we send JSON data with image URL instead of FormData
+    const productData = {
+      title: product.title,
+      description: product.description,
+      price: Number(product.price),
+      quantity: Number(product.quantity),
+      category: product.category,
+      image_url: product.image, // Send as image_url since it's now a URL string
+      weight_per_unit: Number(product.weight_per_unit),
+      rating: product.rating || 4.0,
+      discount_percentage: product.discount_percentage ? Number(product.discount_percentage) : undefined,
+      animal_type: product.animal_type ? Number(product.animal_type) : undefined,
+      animal_stage: product.animal_stage ? Number(product.animal_stage) : undefined,
+      is_alive: product.category === "Live Stock" || product.category === "Fish",
+      is_fresh: product.category === "Vegetables" || product.category === "Fruits",
+    };
 
-    // Add animal_type if provided
-    if (product.animal_type !== undefined) {
-      formData.append('animal_type', product.animal_type.toString());
-    }
-
-    // Handle livestock and fish specific fields
-    if (product.category === "Live Stock" || product.category === "Fish") {
-      formData.append('is_live', 'true');
-      if (product.animal_stage !== undefined) {
-        formData.append('animal_stage', product.animal_stage.toString());
-      }
-    } else {
-      formData.append('is_fresh', 'true');
-    }
-
-    // Add image file - this is the crucial part
-    if (product.image && (product.image instanceof File || product.image instanceof Blob)) {
-      formData.append('image', product.image);
-      console.log("Image file added to FormData:", {
-        name: product.image instanceof File ? product.image.name : 'blob',
-        size: product.image.size,
-        type: product.image.type
-      });
-    } else {
-      throw new Error("Image file is required");
-    }
-
-    console.log("FormData entries:");
-    for (const [key, value] of formData.entries()) {
-      console.log(key, value instanceof File ? `File: ${value.name}` : value);
-    }
+    console.log("Sending product data to backend:", productData);
 
     const response = await apiRequest<ProductResponse>(
       "products/",
       "POST",
-      formData,
-      true // isFormData = true
+      productData
+      // No longer using FormData, so no need for isFormData flag
     );
 
     return {

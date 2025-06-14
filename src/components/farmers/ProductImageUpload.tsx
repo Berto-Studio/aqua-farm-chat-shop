@@ -1,80 +1,84 @@
 
-import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload, X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { X, Upload, Package } from "lucide-react";
 
 interface ProductImageUploadProps {
   selectedImage: File | null;
   onImageChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onImageRemove: () => void;
+  currentImageUrl?: string;
 }
 
 export default function ProductImageUpload({
   selectedImage,
   onImageChange,
   onImageRemove,
+  currentImageUrl
 }: ProductImageUploadProps) {
-  const handleRemoveImage = () => {
-    const input = document.getElementById('image-upload') as HTMLInputElement;
-    if (input) {
-      input.value = '';
-    }
-    onImageRemove();
-  };
-
-  const handleButtonClick = () => {
-    const input = document.getElementById('image-upload') as HTMLInputElement;
-    if (input) {
-      input.click();
-    }
-  };
+  const hasImage = selectedImage || currentImageUrl;
+  const imageUrl = selectedImage ? URL.createObjectURL(selectedImage) : currentImageUrl;
 
   return (
-    <div className="space-y-2">
-      <Label>Product Image *</Label>
-      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-        {selectedImage ? (
-          <div className="space-y-2">
-            <div className="flex items-center justify-center space-x-2">
-              <span className="text-sm text-gray-600">{selectedImage.name}</span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={handleRemoveImage}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <p className="text-xs text-gray-500">
-              Size: {(selectedImage.size / 1024 / 1024).toFixed(2)} MB
-            </p>
+    <div className="space-y-4">
+      <Label htmlFor="image">Product Image</Label>
+      
+      {hasImage ? (
+        <div className="relative">
+          <div className="aspect-square w-48 rounded-lg overflow-hidden border-2 border-dashed border-muted-foreground/25">
+            <img
+              src={imageUrl}
+              alt="Product preview"
+              className="w-full h-full object-cover"
+            />
           </div>
-        ) : (
-          <>
-            <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-sm text-gray-600">
-              Click to upload product image
+          <Button
+            type="button"
+            variant="destructive"
+            size="icon"
+            className="absolute -top-2 -right-2 h-6 w-6"
+            onClick={onImageRemove}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      ) : (
+        <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center">
+          <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+          <div className="space-y-2">
+            <p className="text-sm text-muted-foreground">
+              Upload a product image
             </p>
-          </>
-        )}
-        <input 
-          type="file" 
-          className="hidden" 
-          accept="image/*" 
-          onChange={onImageChange}
-          id="image-upload"
-          required
-        />
-        <Button 
-          type="button" 
-          variant="outline" 
-          className="mt-2"
-          onClick={handleButtonClick}
-        >
-          {selectedImage ? "Change Image" : "Choose File"}
-        </Button>
-      </div>
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={onImageChange}
+              className="max-w-xs mx-auto"
+            />
+          </div>
+        </div>
+      )}
+      
+      {hasImage && (
+        <div className="flex gap-2">
+          <Input
+            type="file"
+            accept="image/*"
+            onChange={onImageChange}
+            className="max-w-xs"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => document.querySelector<HTMLInputElement>('input[type="file"]')?.click()}
+          >
+            <Upload className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

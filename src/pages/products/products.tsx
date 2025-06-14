@@ -45,9 +45,9 @@ export default function Products() {
       case "price-desc":
         return b.price - a.price;
       case "name-asc":
-        return a.name.localeCompare(b.name);
+        return a.title.localeCompare(b.title);
       case "name-desc":
-        return b.name.localeCompare(a.name);
+        return b.title.localeCompare(a.title);
       case "featured":
       default:
         return (b.isFeatured ? 1 : 0) - (a.isFeatured ? 1 : 0);

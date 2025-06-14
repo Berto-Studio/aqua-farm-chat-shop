@@ -47,7 +47,7 @@ export default function ProductDetail() {
   };
 
   const incrementQuantity = () => {
-    if (quantity < product.stock) {
+    if (quantity < product.quantity) {
       setQuantity(quantity + 1);
     }
   };
@@ -57,12 +57,14 @@ export default function ProductDetail() {
     currency: "USD",
   }).format(product.price);
 
-  const discountedPrice = product.discount
+  const discountedPrice = product.discount_percentage
     ? new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: "USD",
-      }).format(product.price * (1 - product.discount / 100))
+      }).format(product.price * (1 - product.discount_percentage / 100))
     : null;
+
+  const productAge = product.animal_stage === 0 ? "young" : product.animal_stage === 1 ? "mature" : "N/A";
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -80,8 +82,8 @@ export default function ProductDetail() {
         <div className="bg-white rounded-lg overflow-hidden shadow-sm">
           <AspectRatio ratio={4 / 3}>
             <img
-              src={product.image}
-              alt={product.name}
+              src={product.image_url || (typeof product.image === 'string' ? product.image : '')}
+              alt={product.title}
               className="w-full h-full object-cover"
             />
           </AspectRatio>
@@ -93,29 +95,29 @@ export default function ProductDetail() {
               {product.category}
             </Badge>
             <Badge variant="outline" className="capitalize">
-              {product.age}
+              {productAge}
             </Badge>
-            {product.discount && (
-              <Badge variant="destructive">{product.discount}% OFF</Badge>
+            {product.discount_percentage && (
+              <Badge variant="destructive">{product.discount_percentage}% OFF</Badge>
             )}
           </div>
 
-          <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
+          <h1 className="text-3xl font-bold mb-2">{product.title}</h1>
 
           <div className="flex items-center mb-4">
             <div className="flex items-center text-amber-500 mr-2">
               <Star className="w-5 h-5 fill-current" />
               <span className="ml-1 font-medium">
-                {product.rating.toFixed(1)}
+                {(product.rating || 0).toFixed(1)}
               </span>
             </div>
             <span className="text-muted-foreground">
-              ({Math.floor(product.rating * 10)} reviews)
+              ({Math.floor((product.rating || 0) * 10)} reviews)
             </span>
           </div>
 
           <div className="mb-4">
-            {product.discount ? (
+            {product.discount_percentage ? (
               <div className="flex items-center">
                 <span className="text-muted-foreground line-through text-sm mr-2">
                   {formattedPrice}
@@ -133,13 +135,13 @@ export default function ProductDetail() {
             <div className="flex items-center gap-2">
               <Package className="h-5 w-5 text-muted-foreground" />
               <span>
-                <strong>Stock:</strong> {product.stock} available
+                <strong>Stock:</strong> {product.quantity} available
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Ruler className="h-5 w-5 text-muted-foreground" />
               <span>
-                <strong>Unit:</strong> {product.weightPerUnit}
+                <strong>Unit:</strong> {product.weight_per_unit}
               </span>
             </div>
           </div>
@@ -161,7 +163,7 @@ export default function ProductDetail() {
               <button
                 onClick={incrementQuantity}
                 className="px-3 py-2 border-l hover:bg-gray-100 transition-colors"
-                disabled={quantity >= product.stock}
+                disabled={quantity >= product.quantity}
               >
                 +
               </button>
@@ -220,15 +222,15 @@ export default function ProductDetail() {
                   </li>
                   <li>
                     Age Group:{" "}
-                    {product.age === "young"
+                    {productAge === "young"
                       ? "Juvenile (2-6 months)"
                       : "Adult (6+ months)"}
                   </li>
                   <li>
                     Typical Size:{" "}
-                    {product.age === "young" ? "2-6 inches" : "8-12 inches"}
+                    {productAge === "young" ? "2-6 inches" : "8-12 inches"}
                   </li>
-                  <li>Packaging: {product.weightPerUnit}</li>
+                  <li>Packaging: {product.weight_per_unit}</li>
                 </ul>
               </div>
               <div>

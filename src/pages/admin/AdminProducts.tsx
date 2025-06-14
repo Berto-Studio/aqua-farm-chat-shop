@@ -28,7 +28,7 @@ export default function AdminProducts() {
   const [searchTerm, setSearchTerm] = useState("");
   
   const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
@@ -116,49 +116,52 @@ export default function AdminProducts() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredProducts.map((product) => (
-              <TableRow key={product.id}>
-                <TableCell>
-                  <div className="h-10 w-10 rounded-md overflow-hidden">
-                    <img 
-                      src={product.image} 
-                      alt={product.name} 
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                </TableCell>
-                <TableCell className="font-medium">{product.name}</TableCell>
-                <TableCell>
-                  <Badge variant="outline" className="capitalize">
-                    {product.category}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge variant="secondary" className="capitalize">
-                    {product.age}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-right">
-                  ${product.price.toFixed(2)}
-                  {product.discount && (
-                    <span className="text-red-500 text-xs ml-2">-{product.discount}%</span>
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {product.stock} units
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-center gap-2">
-                    <Button size="sm" variant="ghost">
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button size="sm" variant="ghost">
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+            {filteredProducts.map((product) => {
+              const productAge = product.animal_stage === 0 ? "young" : product.animal_stage === 1 ? "mature" : "N/A";
+              return (
+                <TableRow key={product.id}>
+                  <TableCell>
+                    <div className="h-10 w-10 rounded-md overflow-hidden">
+                      <img 
+                        src={product.image_url || (typeof product.image === 'string' ? product.image : '')} 
+                        alt={product.title} 
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  </TableCell>
+                  <TableCell className="font-medium">{product.title}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="capitalize">
+                      {product.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="secondary" className="capitalize">
+                      {productAge}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${product.price.toFixed(2)}
+                    {product.discount_percentage && (
+                      <span className="text-red-500 text-xs ml-2">-{product.discount_percentage}%</span>
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {product.quantity} units
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-center gap-2">
+                      <Button size="sm" variant="ghost">
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="ghost">
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

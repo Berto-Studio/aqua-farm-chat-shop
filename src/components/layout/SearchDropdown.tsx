@@ -33,7 +33,7 @@ export default function SearchDropdown() {
   const filteredProducts = query === "" 
     ? [] 
     : products.filter((product) =>
-        product.name.toLowerCase().includes(query.toLowerCase()) ||
+        product.title.toLowerCase().includes(query.toLowerCase()) ||
         product.category.toLowerCase().includes(query.toLowerCase()) ||
         product.description.toLowerCase().includes(query.toLowerCase())
       );
@@ -94,10 +94,10 @@ export default function SearchDropdown() {
                         className="flex items-center gap-2 cursor-pointer"
                       >
                         <div className="h-8 w-8 overflow-hidden rounded-sm">
-                          <img src={product.image} alt={product.name} className="h-full w-full object-cover" />
+                          <img src={product.image_url || (typeof product.image === 'string' ? product.image : '')} alt={product.title} className="h-full w-full object-cover" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{product.name}</p>
+                          <p className="text-sm font-medium">{product.title}</p>
                           <p className="text-xs text-muted-foreground capitalize">{product.category}</p>
                         </div>
                       </CommandItem>

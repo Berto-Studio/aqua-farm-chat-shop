@@ -1,6 +1,5 @@
 
 export type ProductCategory = "Live Stock" | "Fish" | "Vegetables" | "Fruits";
-export type ProductAge = "young" | "mature";
 
 export interface Product {
   id?: string;
@@ -9,7 +8,7 @@ export interface Product {
   price: number;
   category: ProductCategory;
   animal_type?: number; // 1=livestock, 2=vegetables, 3=fruits, 4=fish
-  image?: Blob | File;
+  image?: Blob | File | string; // Allow both file uploads and URL strings
   quantity: number;
   weight_per_unit: string | number;
   rating?: number;
@@ -19,4 +18,11 @@ export interface Product {
   is_alive?: boolean;
   is_fresh?: boolean;
   image_url?: string;
+  
+  // Legacy/computed properties for backward compatibility
+  name?: string; // Computed from title
+  age?: "young" | "mature"; // Computed from animal_stage
+  stock?: number; // Alias for quantity
+  discount?: number; // Alias for discount_percentage
+  weightPerUnit?: string; // Alias for weight_per_unit
 }

@@ -1,7 +1,6 @@
 
 import GetProducts from "@/services/products";
 import { useQuery } from "@tanstack/react-query";
-import { Product } from "@/types/product";
 
 export const useProducts = () => {
   return useQuery({
@@ -13,5 +12,7 @@ export const useProducts = () => {
       }
       return response.data;
     },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 };

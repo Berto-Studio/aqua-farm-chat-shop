@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { X } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { CreateProduct } from "@/services/products";
+import { useQueryClient } from "@tanstack/react-query";
 import ProductBasicInfo from "./ProductBasicInfo";
 import ProductPricingInfo from "./ProductPricingInfo";
 import ProductCategoryFields from "./ProductCategoryFields";
@@ -35,6 +36,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const { data: categoriesResponse, isLoading: categoriesLoading } =
     useCategories();
   const categories = categoriesResponse?.data || [];
@@ -96,6 +98,10 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
           title: "Product Added",
           description: "Your product has been successfully added.",
         });
+        
+        // Invalidate and refetch products query
+        queryClient.invalidateQueries({ queryKey: ["products"] });
+        
         onClose();
       } else {
         throw new Error(response.message);

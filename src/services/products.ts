@@ -1,3 +1,4 @@
+
 import { apiRequest } from "@/hooks/useClient";
 import { Product } from "@/types/product";
 
@@ -73,14 +74,14 @@ export async function CreateProduct(product: Product): Promise<{
   status: number;
 }> {
   try {
-    // Now we send JSON data with image URL instead of FormData
+    // Prepare product data with proper field mapping
     const productData = {
       title: product.title,
       description: product.description,
       price: Number(product.price),
       quantity: Number(product.quantity),
       category: product.category,
-      image_url: product.image, // Send as image_url since it's now a URL string
+      image_url: product.image, // Send the Cloudinary URL as image_url
       weight_per_unit: Number(product.weight_per_unit),
       rating: product.rating || 4.0,
       discount_percentage: product.discount_percentage ? Number(product.discount_percentage) : undefined,
@@ -96,7 +97,6 @@ export async function CreateProduct(product: Product): Promise<{
       "products/",
       "POST",
       productData
-      // No longer using FormData, so no need for isFormData flag
     );
 
     return {

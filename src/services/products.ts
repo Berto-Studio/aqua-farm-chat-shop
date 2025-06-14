@@ -1,6 +1,6 @@
-
 import { apiRequest } from "@/hooks/useClient";
 import { Product } from "@/types/product";
+import { deleteImageFromCloudinary } from "./cloudinary";
 
 interface ProductsResponse {
   data: Product[];
@@ -223,10 +223,30 @@ export async function DeleteProduct(id: string): Promise<{
   status: number;
 }> {
   try {
+    // First, get the product to retrieve its image URL
+    const productResponse = await GetProduct(id);
+    let imageUrl: string | undefined;
+    
+    if (productResponse.success && productResponse.data?.image_url) {
+      imageUrl = productResponse.data.image_url;
+    }
+
+    // Delete the product from the backend
     const response = await apiRequest<{ message: string; status: number }>(
       `products/${id}`,
       "DELETE"
     );
+
+    // If product deletion was successful and there's an image, delete it from Cloudinary
+    if (imageUrl) {
+      console.log('Attempting to delete image from Cloudinary:', imageUrl);
+      const imageDeleted = await deleteImageFromCloudinary(imageUrl);
+      if (imageDeleted) {
+        console.log('Image successfully deleted from Cloudinary');
+      } else {
+        console.log('Failed to delete image from Cloudinary (non-critical)');
+      }
+    }
 
     return {
       success: true,
@@ -250,10 +270,39 @@ export async function DeleteAllProducts(): Promise<{
   status: number;
 }> {
   try {
+    // First, get all products to retrieve their image URLs
+    const productsResponse = await GetProducts();
+    const imageUrls: string[] = [];
+    
+    if (productsResponse.success && productsResponse.data) {
+      productsResponse.data.forEach(product => {
+        if (product.image_url) {
+          imageUrls.push(product.image_url);
+        }
+      });
+    }
+
+    // Delete all products from the backend
     const response = await apiRequest<{ message: string; status: number }>(
       "products/",
       "DELETE"
     );
+
+    // If products deletion was successful, delete all images from Cloudinary
+    if (imageUrls.length > 0) {
+      console.log(`Attempting to delete ${imageUrls.length} images from Cloudinary`);
+      
+      const deletePromises = imageUrls.map(imageUrl => 
+        deleteImageFromCloudinary(imageUrl)
+      );
+      
+      const results = await Promise.allSettled(deletePromises);
+      const successCount = results.filter(result => 
+        result.status === 'fulfilled' && result.value === true
+      ).length;
+      
+      console.log(`Successfully deleted ${successCount}/${imageUrls.length} images from Cloudinary`);
+    }
 
     return {
       success: true,

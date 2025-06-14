@@ -1,4 +1,3 @@
-
 import { apiRequest } from "@/hooks/useClient";
 import { Product } from "@/types/product";
 
@@ -64,17 +63,9 @@ export async function CreateProduct(product: Product): Promise<{
       formData.append('discount_percentage', product.discount_percentage.toString());
     }
 
-    // Map category to animal_type number
-    const categoryToAnimalType: { [key: string]: number } = {
-      "Live Stock": 1,
-      "Vegetables": 2,
-      "Fruits": 3,
-      "Fish": 4,
-    };
-    
-    const animalTypeNumber = categoryToAnimalType[product.category];
-    if (animalTypeNumber) {
-      formData.append('animal_type', animalTypeNumber.toString());
+    // Add animal_type if provided
+    if (product.animal_type !== undefined) {
+      formData.append('animal_type', product.animal_type.toString());
     }
 
     // Handle livestock and fish specific fields
@@ -87,17 +78,22 @@ export async function CreateProduct(product: Product): Promise<{
       formData.append('is_fresh', 'true');
     }
 
-    // Add image file
-    if (product.image) {
+    // Add image file - this is the crucial part
+    if (product.image && (product.image instanceof File || product.image instanceof Blob)) {
       formData.append('image', product.image);
+      console.log("Image file added to FormData:", {
+        name: product.image instanceof File ? product.image.name : 'blob',
+        size: product.image.size,
+        type: product.image.type
+      });
+    } else {
+      throw new Error("Image file is required");
     }
 
-    console.log("Creating product with FormData:", {
-      title: product.title,
-      category: product.category,
-      animal_type: animalTypeNumber,
-      has_image: !!product.image
-    });
+    console.log("FormData entries:");
+    for (const [key, value] of formData.entries()) {
+      console.log(key, value instanceof File ? `File: ${value.name}` : value);
+    }
 
     const response = await apiRequest<ProductResponse>(
       "products/",

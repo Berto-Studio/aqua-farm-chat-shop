@@ -13,7 +13,7 @@ export const apiRequest = async <T>(
   endpoint: string,
   method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
   body?: unknown,
-  isFormData: boolean = false // Add this flag
+  isFormData: boolean = false
 ): Promise<T> => {
   const token = getToken();
   const headers: HeadersInit = {
@@ -21,10 +21,18 @@ export const apiRequest = async <T>(
   };
 
   // Only set Content-Type for non-FormData requests
+  // For FormData, let the browser set the Content-Type automatically with boundary
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
-  // For FormData, let the browser set the Content-Type automatically (includes boundary for multipart/form-data)
+
+  console.log("Making API request:", {
+    url: `${API_BASE_URL}${endpoint}`,
+    method,
+    isFormData,
+    bodyType: body?.constructor?.name,
+    hasFile: isFormData && body instanceof FormData ? Array.from(body.entries()).some(([, value]) => value instanceof File) : false
+  });
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
@@ -35,6 +43,9 @@ export const apiRequest = async <T>(
         : JSON.stringify(body)
       : undefined,
   });
+
+  console.log("Response status:", response.status);
+  console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     let errorMessage = "Something went wrong";

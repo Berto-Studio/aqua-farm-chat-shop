@@ -20,8 +20,8 @@ export const apiRequest = async <T>(
     Authorization: `Bearer ${token || ""}`,
   };
 
-  // Only set Content-Type for non-FormData requests
-  // For FormData, let the browser set the Content-Type automatically with boundary
+  // IMPORTANT: Only set Content-Type for non-FormData requests
+  // For FormData, DO NOT set Content-Type - let the browser handle it automatically
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
   }
@@ -31,8 +31,21 @@ export const apiRequest = async <T>(
     method,
     isFormData,
     bodyType: body?.constructor?.name,
-    hasFile: isFormData && body instanceof FormData ? Array.from(body.entries()).some(([, value]) => value instanceof File) : false
+    hasFile: isFormData && body instanceof FormData ? Array.from(body.entries()).some(([, value]) => value instanceof File) : false,
+    headers: headers
   });
+
+  // Log FormData contents if it's FormData
+  if (isFormData && body instanceof FormData) {
+    console.log("FormData contents:");
+    for (const [key, value] of body.entries()) {
+      if (value instanceof File) {
+        console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+      } else {
+        console.log(`${key}: ${value}`);
+      }
+    }
+  }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,

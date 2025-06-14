@@ -22,10 +22,7 @@ export default function ProductCategoryFields({
   onInputChange,
 }: ProductCategoryFieldsProps) {
   const getAnimalTypeOptions = () => {
-    const selectedCategory = categories.find(
-      (cat) => cat.id.toString() === formData.category
-    );
-    const categoryName = selectedCategory?.name?.toLowerCase();
+    const categoryName = formData.category.toLowerCase();
 
     if (categoryName === "livestock" || categoryName === "live stock") {
       return [
@@ -55,10 +52,7 @@ export default function ProductCategoryFields({
   };
 
   const shouldShowAnimalFields = () => {
-    const selectedCategory = categories.find(
-      (cat) => cat.id.toString() === formData.category
-    );
-    const categoryName = selectedCategory?.name?.toLowerCase();
+    const categoryName = formData.category.toLowerCase();
     return (
       categoryName === "livestock" ||
       categoryName === "live stock" ||
@@ -67,10 +61,7 @@ export default function ProductCategoryFields({
   };
 
   const getAnimalTypeLabel = () => {
-    const selectedCategory = categories.find(
-      (cat) => cat.id.toString() === formData.category
-    );
-    const categoryName = selectedCategory?.name?.toLowerCase();
+    const categoryName = formData.category.toLowerCase();
     
     if (categoryName === "livestock" || categoryName === "live stock") {
       return "Animal Type";
@@ -89,6 +80,7 @@ export default function ProductCategoryFields({
       <div className="space-y-2">
         <Label htmlFor="animal_type">{getAnimalTypeLabel()}</Label>
         <Select
+          value={formData.animal_type?.toString() || ""}
           onValueChange={(value) => onInputChange("animal_type", value)}
           disabled={!formData.category}
         >
@@ -107,7 +99,10 @@ export default function ProductCategoryFields({
 
       <div className="space-y-2">
         <Label htmlFor="animal_stage">Animal Stage</Label>
-        <Select onValueChange={(value) => onInputChange("animal_stage", value)}>
+        <Select 
+          value={formData.animal_stage?.toString() || ""}
+          onValueChange={(value) => onInputChange("animal_stage", value)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select stage" />
           </SelectTrigger>

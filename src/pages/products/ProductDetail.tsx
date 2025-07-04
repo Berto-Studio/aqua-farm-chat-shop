@@ -1,4 +1,5 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -15,21 +16,66 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
-import { getProductById } from "@/data/products";
+import { GetProduct } from "@/services/products";
+import { Product } from "@/types/product";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProductDetail() {
-  const { productId } = useParams<{ productId: string }>();
-  const product = getProductById("0");
+  const { id } = useParams<{ id: string }>();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
 
-  if (!product) {
+  useEffect(() => {
+    const fetchProduct = async () => {
+      if (!id) {
+        setError("Product ID not found");
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const response = await GetProduct(id);
+        
+        if (response.success && response.data) {
+          setProduct(response.data);
+        } else {
+          setError(response.message || "Product not found");
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load product");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProduct();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <Skeleton className="h-96 w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+            <Skeleton className="h-6 w-1/4" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !product) {
     return (
       <div className="container mx-auto px-4 py-16 text-center">
         <AlertCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
         <h1 className="text-2xl font-bold mb-4">Product Not Found</h1>
-        <p className="mb-8">
-          Sorry, we couldn't find the product you're looking for.
-        </p>
+        <p className="mb-8">{error || "Sorry, we couldn't find the product you're looking for."}</p>
         <Button asChild>
           <Link to="/products">
             <ArrowLeft className="mr-2 h-4 w-4" />

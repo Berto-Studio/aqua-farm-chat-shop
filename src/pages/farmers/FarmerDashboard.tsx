@@ -7,13 +7,15 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, DollarSign, Package, TrendingUp, Eye, ArrowUp, ArrowDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import AddProductForm from "@/components/farmers/AddProductForm";
-import ProductsList from "@/components/farmers/ProductsList";
+import PaginatedProductsList from "@/components/farmers/PaginatedProductsList";
 import FarmerAnalytics from "@/components/farmers/FarmerAnalytics";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function FarmerDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
+  const { user } = useAuth();
 
-  // Mock farmer data
+  // Mock farmer stats
   const farmerStats = {
     totalProducts: 12,
     totalSales: 2540.50,
@@ -64,7 +66,9 @@ export default function FarmerDashboard() {
           <h1 className="text-4xl font-bold bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
             Farmer Dashboard
           </h1>
-          <p className="text-muted-foreground mt-2 text-lg">Manage your products and track your sales performance</p>
+          <p className="text-muted-foreground mt-2 text-lg">
+            Welcome back, {user?.full_name || 'Farmer'}! Manage your products and track your sales performance
+          </p>
         </div>
 
         {/* Stats Cards */}
@@ -128,7 +132,7 @@ export default function FarmerDashboard() {
                 {showAddProduct ? (
                   <AddProductForm onClose={() => setShowAddProduct(false)} />
                 ) : (
-                  <ProductsList />
+                  <PaginatedProductsList />
                 )}
               </TabsContent>
 

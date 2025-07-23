@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import Cookies from "js-cookie";
@@ -57,21 +56,21 @@ export const useUserStore = create<UserState>()(
       validateUser: async () => {
         const { user, logout } = get();
         const token = Cookies.get("access_token");
-        
-        if (!token || !user?.id) {
-          logout();
-          return false;
-        }
+
+        // if (!token || !user?.id) {
+        //   logout();
+        //   return false;
+        // }
 
         try {
           const { GetUser } = await import("@/services/user");
           const response = await GetUser(user.id);
-          
+
           if (!response.success) {
             logout();
             return false;
           }
-          
+
           return true;
         } catch (error) {
           console.error("User validation failed:", error);

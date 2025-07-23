@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,7 +77,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       console.log("Uploading image to Cloudinary...");
       const imageUrl = await uploadImageToCloudinary(selectedImage);
       console.log("Image uploaded, URL:", imageUrl);
-      
+
       setIsUploadingImage(false);
 
       // Prepare product data with image URL
@@ -91,11 +90,19 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         image: imageUrl, // Send URL instead of file
         weight_per_unit: Number(formData.weight_per_unit),
         rating: formData.rating || 4.0,
-        discount_percentage: formData.discount_percentage ? Number(formData.discount_percentage) : undefined,
-        animal_type: formData.animal_type ? Number(formData.animal_type) : undefined,
-        animal_stage: formData.animal_stage ? Number(formData.animal_stage) : undefined,
-        is_alive: formData.category === "Live Stock" || formData.category === "Fish",
-        is_fresh: formData.category === "Vegetables" || formData.category === "Fruits",
+        discount_percentage: formData.discount_percentage
+          ? Number(formData.discount_percentage)
+          : undefined,
+        animal_type: formData.animal_type
+          ? Number(formData.animal_type)
+          : undefined,
+        animal_stage: formData.animal_stage
+          ? Number(formData.animal_stage)
+          : undefined,
+        is_alive:
+          formData.category === "Live Stock" || formData.category === "Fish",
+        is_fresh:
+          formData.category === "Vegetables" || formData.category === "Fruits",
       };
 
       console.log("Submitting product data with image URL:", productData);
@@ -107,10 +114,10 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
           title: "Product Added",
           description: "Your product has been successfully added.",
         });
-        
+
         // Invalidate and refetch products query
         queryClient.invalidateQueries({ queryKey: ["products"] });
-        
+
         onClose();
       } else {
         throw new Error(response.message);
@@ -173,7 +180,11 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isUploadingImage ? "Uploading Image..." : isLoading ? "Adding Product..." : "Add Product"}
+              {isUploadingImage
+                ? "Uploading Image..."
+                : isLoading
+                ? "Adding Product..."
+                : "Add Product"}
             </Button>
           </div>
         </form>

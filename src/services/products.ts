@@ -84,11 +84,19 @@ export async function CreateProduct(product: Product): Promise<{
       image_url: product.image, // Send the Cloudinary URL as image_url
       weight_per_unit: Number(product.weight_per_unit),
       rating: product.rating || 4.0,
-      discount_percentage: product.discount_percentage ? Number(product.discount_percentage) : undefined,
-      animal_type: product.animal_type ? Number(product.animal_type) : undefined,
-      animal_stage: product.animal_stage ? Number(product.animal_stage) : undefined,
-      is_alive: product.category === "Live Stock" || product.category === "Fish",
-      is_fresh: product.category === "Vegetables" || product.category === "Fruits",
+      discount_percentage: product.discount_percentage
+        ? Number(product.discount_percentage)
+        : undefined,
+      animal_type: product.animal_type
+        ? Number(product.animal_type)
+        : undefined,
+      animal_stage: product.animal_stage
+        ? Number(product.animal_stage)
+        : undefined,
+      is_alive:
+        product.category === "Live Stock" || product.category === "Fish",
+      is_fresh:
+        product.category === "Vegetables" || product.category === "Fruits",
     };
 
     console.log("Sending product data to backend:", productData);
@@ -116,96 +124,44 @@ export async function CreateProduct(product: Product): Promise<{
   }
 }
 
-export async function UpdateProduct(id: string, product: Partial<Product>): Promise<{
+export async function UpdateProduct(
+  id: string,
+  product: Partial<Product>
+): Promise<{
   success: boolean;
   data?: Product;
   message: string;
   status: number;
 }> {
   try {
-    // Check if we need to send as FormData (if image is a File/Blob)
-    const hasImageFile = product.image && (product.image instanceof File || product.image instanceof Blob);
-    
-    if (hasImageFile) {
-      // Create FormData for file upload
-      const formData = new FormData();
-      
-      // Add all product fields
-      if (product.title) formData.append('title', product.title);
-      if (product.description) formData.append('description', product.description);
-      if (product.price !== undefined) formData.append('price', product.price.toString());
-      if (product.quantity !== undefined) formData.append('quantity', product.quantity.toString());
-      if (product.category) formData.append('category', product.category);
-      if (product.weight_per_unit !== undefined) formData.append('weight_per_unit', product.weight_per_unit.toString());
-      if (product.rating !== undefined) formData.append('rating', product.rating.toString());
-      
-      if (product.discount_percentage !== undefined) {
-        formData.append('discount_percentage', product.discount_percentage.toString());
-      }
+    const apiProduct = {
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      quantity: product.quantity,
+      category: product.category,
+      animal_type: product.animal_type,
+      is_alive: product.is_alive,
+      is_fresh: product.is_fresh,
+      rating: product.rating,
+      weight_per_unit: product.weight_per_unit,
+      animal_stage: product.animal_stage,
+      discount_percentage: product.discount_percentage,
+      image_url: product.image_url,
+    };
 
-      // Add animal_type if provided
-      if (product.animal_type !== undefined) {
-        formData.append('animal_type', product.animal_type.toString());
-      }
+    const response = await apiRequest<ProductResponse>(
+      `products/${id}`,
+      "PUT",
+      apiProduct
+    );
 
-      // Handle livestock and fish specific fields
-      if (product.category === "Live Stock" || product.category === "Fish") {
-        formData.append('is_live', 'true');
-        if (product.animal_stage !== undefined) {
-          formData.append('animal_stage', product.animal_stage.toString());
-        }
-      } else if (product.category === "Vegetables" || product.category === "Fruits") {
-        formData.append('is_fresh', 'true');
-      }
-
-      // Add image file
-      if (product.image && (product.image instanceof File || product.image instanceof Blob)) {
-        formData.append('image', product.image);
-      }
-
-      const response = await apiRequest<ProductResponse>(
-        `products/${id}`,
-        "PUT",
-        formData,
-        true // isFormData = true
-      );
-
-      return {
-        success: true,
-        data: response.data,
-        message: response.message || "Product updated successfully",
-        status: response.status || 200,
-      };
-    } else {
-      // Send as JSON for non-file updates
-      const apiProduct = {
-        title: product.title,
-        description: product.description,
-        price: product.price,
-        quantity: product.quantity,
-        category: product.category,
-        animal_type: product.animal_type,
-        is_alive: product.is_alive,
-        is_fresh: product.is_fresh,
-        rating: product.rating,
-        weight_per_unit: product.weight_per_unit,
-        animal_stage: product.animal_stage,
-        discount_percentage: product.discount_percentage,
-      };
-
-      const response = await apiRequest<ProductResponse>(
-        `products/${id}`,
-        "PUT",
-        apiProduct
-      );
-
-      return {
-        success: true,
-        data: response.data,
-        message: response.message || "Product updated successfully",
-        status: response.status || 200,
-      };
-    }
+    return {
+      success: true,
+      data: response.data,
+      message: response.message || "Product updated successfully",
+      status: response.status || 200,
+    };
   } catch (error) {
     console.error("Error updating product:", error);
     return {
@@ -226,7 +182,7 @@ export async function DeleteProduct(id: string): Promise<{
     // First, get the product to retrieve its image URL
     const productResponse = await GetProduct(id);
     let imageUrl: string | undefined;
-    
+
     if (productResponse.success && productResponse.data?.image_url) {
       imageUrl = productResponse.data.image_url;
     }
@@ -239,12 +195,12 @@ export async function DeleteProduct(id: string): Promise<{
 
     // If product deletion was successful and there's an image, delete it from Cloudinary
     if (imageUrl) {
-      console.log('Attempting to delete image from Cloudinary:', imageUrl);
+      console.log("Attempting to delete image from Cloudinary:", imageUrl);
       const imageDeleted = await deleteImageFromCloudinary(imageUrl);
       if (imageDeleted) {
-        console.log('Image successfully deleted from Cloudinary');
+        console.log("Image successfully deleted from Cloudinary");
       } else {
-        console.log('Failed to delete image from Cloudinary (non-critical)');
+        console.log("Failed to delete image from Cloudinary (non-critical)");
       }
     }
 
@@ -273,9 +229,9 @@ export async function DeleteAllProducts(): Promise<{
     // First, get all products to retrieve their image URLs
     const productsResponse = await GetProducts();
     const imageUrls: string[] = [];
-    
+
     if (productsResponse.success && productsResponse.data) {
-      productsResponse.data.forEach(product => {
+      productsResponse.data.forEach((product) => {
         if (product.image_url) {
           imageUrls.push(product.image_url);
         }
@@ -290,18 +246,22 @@ export async function DeleteAllProducts(): Promise<{
 
     // If products deletion was successful, delete all images from Cloudinary
     if (imageUrls.length > 0) {
-      console.log(`Attempting to delete ${imageUrls.length} images from Cloudinary`);
-      
-      const deletePromises = imageUrls.map(imageUrl => 
+      console.log(
+        `Attempting to delete ${imageUrls.length} images from Cloudinary`
+      );
+
+      const deletePromises = imageUrls.map((imageUrl) =>
         deleteImageFromCloudinary(imageUrl)
       );
-      
+
       const results = await Promise.allSettled(deletePromises);
-      const successCount = results.filter(result => 
-        result.status === 'fulfilled' && result.value === true
+      const successCount = results.filter(
+        (result) => result.status === "fulfilled" && result.value === true
       ).length;
-      
-      console.log(`Successfully deleted ${successCount}/${imageUrls.length} images from Cloudinary`);
+
+      console.log(
+        `Successfully deleted ${successCount}/${imageUrls.length} images from Cloudinary`
+      );
     }
 
     return {
@@ -314,7 +274,9 @@ export async function DeleteAllProducts(): Promise<{
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to delete all products",
+        error instanceof Error
+          ? error.message
+          : "Failed to delete all products",
       status: 500,
     };
   }

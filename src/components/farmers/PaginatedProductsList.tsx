@@ -1,17 +1,16 @@
-
 import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import {
   Select,
@@ -49,12 +48,14 @@ export default function PaginatedProductsList() {
   // Filter and search products
   const filteredProducts = useMemo(() => {
     if (!products) return [];
-    
+
     return products.filter((product: Product) => {
-      const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           product.description.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
-      
+      const matchesSearch =
+        product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        categoryFilter === "all" || product.category === categoryFilter;
+
       return matchesSearch && matchesCategory;
     });
   }, [products, searchTerm, categoryFilter]);
@@ -68,7 +69,9 @@ export default function PaginatedProductsList() {
   // Get unique categories for filter
   const categories = useMemo(() => {
     if (!products) return [];
-    const uniqueCategories = [...new Set(products.map((p: Product) => p.category))];
+    const uniqueCategories = [
+      ...new Set(products.map((p: Product) => p.category)),
+    ];
     return uniqueCategories;
   }, [products]);
 
@@ -82,9 +85,11 @@ export default function PaginatedProductsList() {
           description: "Product has been successfully deleted.",
         });
         refetch();
-        
+
         // Adjust current page if needed
-        const newTotalPages = Math.ceil((filteredProducts.length - 1) / ITEMS_PER_PAGE);
+        const newTotalPages = Math.ceil(
+          (filteredProducts.length - 1) / ITEMS_PER_PAGE
+        );
         if (currentPage > newTotalPages && newTotalPages > 0) {
           setCurrentPage(newTotalPages);
         }
@@ -94,7 +99,8 @@ export default function PaginatedProductsList() {
     } catch (error) {
       toast({
         title: "Delete Failed",
-        description: error instanceof Error ? error.message : "Failed to delete product",
+        description:
+          error instanceof Error ? error.message : "Failed to delete product",
         variant: "destructive",
       });
     } finally {
@@ -119,7 +125,10 @@ export default function PaginatedProductsList() {
     } catch (error) {
       toast({
         title: "Delete All Failed",
-        description: error instanceof Error ? error.message : "Failed to delete all products",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete all products",
         variant: "destructive",
       });
     } finally {
@@ -170,7 +179,9 @@ export default function PaginatedProductsList() {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Error loading products: {error.message}</p>
+          <p className="text-muted-foreground">
+            Error loading products: {error.message}
+          </p>
           <Button onClick={() => refetch()} className="mt-4">
             Try Again
           </Button>
@@ -180,14 +191,18 @@ export default function PaginatedProductsList() {
   }
 
   if (editingProduct) {
-    return <EditProductForm product={editingProduct} onClose={handleCloseEdit} />;
+    return (
+      <EditProductForm product={editingProduct} onClose={handleCloseEdit} />
+    );
   }
 
   if (!products || products.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">No products found. Add your first product to get started!</p>
+          <p className="text-muted-foreground">
+            No products found. Add your first product to get started!
+          </p>
         </CardContent>
       </Card>
     );
@@ -198,12 +213,16 @@ export default function PaginatedProductsList() {
       {/* Header with filters */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
         <div>
-          <h3 className="text-lg font-semibold">Your Products ({filteredProducts.length})</h3>
+          <h3 className="text-lg font-semibold">
+            Your Products ({filteredProducts.length})
+          </h3>
           <p className="text-sm text-muted-foreground">
-            Showing {startIndex + 1}-{Math.min(endIndex, filteredProducts.length)} of {filteredProducts.length} products
+            Showing {startIndex + 1}-
+            {Math.min(endIndex, filteredProducts.length)} of{" "}
+            {filteredProducts.length} products
           </p>
         </div>
-        
+
         {products.length > 0 && (
           <Button
             variant="destructive"
@@ -227,7 +246,7 @@ export default function PaginatedProductsList() {
             className="pl-10"
           />
         </div>
-        
+
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <Select value={categoryFilter} onValueChange={handleCategoryChange}>
@@ -315,7 +334,9 @@ export default function PaginatedProductsList() {
                     {product.rating && (
                       <div className="flex items-center gap-1">
                         <span className="text-yellow-500">★</span>
-                        <span className="text-sm font-medium">{product.rating}</span>
+                        <span className="text-sm font-medium">
+                          {product.rating}
+                        </span>
                       </div>
                     )}
                   </TableCell>
@@ -352,28 +373,40 @@ export default function PaginatedProductsList() {
           <Pagination>
             <PaginationContent>
               <PaginationItem>
-                <PaginationPrevious 
+                <PaginationPrevious
                   onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  className={
+                    currentPage === 1
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
-              
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink
-                    onClick={() => handlePageChange(page)}
-                    isActive={currentPage === page}
-                    className="cursor-pointer"
-                  >
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
-              
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => handlePageChange(page)}
+                      isActive={currentPage === page}
+                      className="cursor-pointer"
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+
               <PaginationItem>
-                <PaginationNext 
-                  onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                <PaginationNext
+                  onClick={() =>
+                    handlePageChange(Math.min(totalPages, currentPage + 1))
+                  }
+                  className={
+                    currentPage === totalPages
+                      ? "pointer-events-none opacity-50"
+                      : "cursor-pointer"
+                  }
                 />
               </PaginationItem>
             </PaginationContent>

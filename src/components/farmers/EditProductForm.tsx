@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,14 +18,18 @@ interface EditProductFormProps {
   onClose: () => void;
 }
 
-export default function EditProductForm({ product, onClose }: EditProductFormProps) {
+export default function EditProductForm({
+  product,
+  onClose,
+}: EditProductFormProps) {
   const [formData, setFormData] = useState<Product>(product);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: categoriesResponse, isLoading: categoriesLoading } = useCategories();
+  const { data: categoriesResponse, isLoading: categoriesLoading } =
+    useCategories();
   const categories = categoriesResponse?.data || [];
 
   const handleInputChange = (field: string, value: string) => {
@@ -42,7 +45,7 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
 
   const handleImageRemove = () => {
     setSelectedImage(null);
-    setFormData(prev => ({ ...prev, image: undefined }));
+    setFormData((prev) => ({ ...prev, image: undefined }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,17 +72,21 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
         category: formData.category,
         weight_per_unit: Number(formData.weight_per_unit),
         rating: formData.rating || 4.0,
-        discount_percentage: formData.discount_percentage ? Number(formData.discount_percentage) : undefined,
-        animal_type: formData.animal_type ? Number(formData.animal_type) : undefined,
-        animal_stage: formData.animal_stage ? Number(formData.animal_stage) : undefined,
-        is_alive: formData.category === "Live Stock" || formData.category === "Fish",
-        is_fresh: formData.category === "Vegetables" || formData.category === "Fruits",
+        image_url: imageUrl, // Send URL instead of file
+        discount_percentage: formData.discount_percentage
+          ? Number(formData.discount_percentage)
+          : undefined,
+        animal_type: formData.animal_type
+          ? Number(formData.animal_type)
+          : undefined,
+        animal_stage: formData.animal_stage
+          ? Number(formData.animal_stage)
+          : undefined,
+        is_alive:
+          formData.category === "Live Stock" || formData.category === "Fish",
+        is_fresh:
+          formData.category === "Vegetables" || formData.category === "Fruits",
       };
-
-      // Include image URL if we have one (either new or existing)
-      if (imageUrl) {
-        productData.image = imageUrl;
-      }
 
       console.log("Updating product data:", productData);
 
@@ -90,10 +97,10 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
           title: "Product Updated",
           description: "Your product has been successfully updated.",
         });
-        
+
         // Invalidate and refetch products query
         queryClient.invalidateQueries({ queryKey: ["products"] });
-        
+
         onClose();
       } else {
         throw new Error(response.message);
@@ -102,7 +109,8 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
       console.error("Error updating product:", error);
       toast({
         title: "Failed to Update Product",
-        description: error instanceof Error ? error.message : "Please try again later.",
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
         variant: "destructive",
       });
     } finally {
@@ -156,7 +164,11 @@ export default function EditProductForm({ product, onClose }: EditProductFormPro
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isUploadingImage ? "Uploading Image..." : isLoading ? "Updating Product..." : "Update Product"}
+              {isUploadingImage
+                ? "Uploading Image..."
+                : isLoading
+                ? "Updating Product..."
+                : "Update Product"}
             </Button>
           </div>
         </form>

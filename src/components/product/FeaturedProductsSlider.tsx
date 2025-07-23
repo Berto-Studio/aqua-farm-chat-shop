@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Product } from "@/types/product";
 import ProductCard from "./ProductCard";
@@ -25,7 +24,7 @@ export default function FeaturedProductsSlider({
         <Badge variant="secondary">Rating 4.8+</Badge>
       </div>
 
-      <Carousel 
+      <Carousel
         className="w-full"
         opts={{
           align: "start",
@@ -36,7 +35,7 @@ export default function FeaturedProductsSlider({
           {products.map((product) => (
             <CarouselItem
               key={product.id}
-              className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 2xl:basis-1/5"
+              className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/3 2xl:basis-1/5"
             >
               <ProductCard product={product} />
             </CarouselItem>

@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,28 +24,33 @@ export default function ProductCard({ product }: ProductCardProps) {
     : null;
 
   return (
-    <Card className="group overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 bg-card">
+    <Card className="group overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 w-[300px]">
       <Link to={`/products/${product.id}`} className="block">
         <div className="relative overflow-hidden bg-muted">
           <AspectRatio ratio={4 / 3}>
             <img
-              src={product.image_url || (typeof product.image === 'string' ? product.image : '')}
+              src={
+                product.image_url ||
+                (typeof product.image === "string" ? product.image : "")
+              }
               alt={product.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
             />
           </AspectRatio>
-          {product.discount_percentage && (
-            <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground">
-              -{product.discount_percentage}% OFF
+          <div className="absolute top-2 left-2 flex flex-col items-start gap-2">
+            {product.discount_percentage && (
+              <Badge className=" bg-destructive text-destructive-foreground">
+                -{product.discount_percentage}% OFF
+              </Badge>
+            )}
+            <Badge variant="outline" className="text-xs capitalize bg-gray-100">
+              {product.category}
             </Badge>
-          )}
+          </div>
         </div>
 
         <CardContent className="p-4 space-y-3">
           <div className="space-y-1">
-            <Badge variant="outline" className="text-xs capitalize">
-              {product.category}
-            </Badge>
             <h3 className="font-semibold text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
               {product.title}
             </h3>

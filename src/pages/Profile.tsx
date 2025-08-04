@@ -24,7 +24,7 @@ import * as z from "zod";
 import { User, ShoppingBag, Map, Clock } from "lucide-react";
 import { useUserStore } from "@/store/store";
 import { GetUserOrders } from "@/services/orders";
-import { get } from "http";
+import OrderDetailsModal from "@/components/orders/OrderDetailsModal";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -40,6 +40,8 @@ export default function Profile() {
   const { user } = useUserStore();
 
   const [orders, setOrders] = useState<OrderProps[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -208,7 +210,14 @@ export default function Profile() {
                               GHS {order.total_price}
                             </td>
                             <td className="py-3 px-2 text-right">
-                              <Button variant="outline" size="sm">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  setSelectedOrderId(order.id);
+                                  setIsModalOpen(true);
+                                }}
+                              >
                                 View
                               </Button>
                             </td>
@@ -223,6 +232,18 @@ export default function Profile() {
           </Tabs>
         </div>
       </div>
+
+      {/* Order Details Modal */}
+      {selectedOrderId && (
+        <OrderDetailsModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedOrderId(null);
+          }}
+          orderId={selectedOrderId}
+        />
+      )}
     </div>
   );
 }

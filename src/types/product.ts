@@ -1,4 +1,3 @@
-
 export type ProductCategory = "Live Stock" | "Fish" | "Vegetables" | "Fruits";
 
 export interface Product {
@@ -18,11 +17,27 @@ export interface Product {
   is_alive?: boolean;
   is_fresh?: boolean;
   image_url?: string;
-  
+
   // Legacy/computed properties for backward compatibility
   name?: string; // Computed from title
   age?: "young" | "mature"; // Computed from animal_stage
   stock?: number; // Alias for quantity
   discount?: number; // Alias for discount_percentage
   weightPerUnit?: string; // Alias for weight_per_unit
+}
+
+export interface ProductStatsResponse {
+  data: {
+    totalProducts: number;
+    recentProducts: number;
+  };
+  message: string;
+  status: number;
+}
+
+export interface ResponseProps<T> {
+  success: boolean;
+  data?: T;
+  message: string;
+  status: number;
 }

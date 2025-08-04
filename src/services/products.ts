@@ -1,5 +1,5 @@
 import { apiRequest } from "@/hooks/useClient";
-import { Product } from "@/types/product";
+import { Product, ProductStatsResponse } from "@/types/product";
 import { deleteImageFromCloudinary } from "./cloudinary";
 
 interface ProductsResponse {
@@ -99,8 +99,6 @@ export async function CreateProduct(product: Product): Promise<{
         product.category === "Vegetables" || product.category === "Fruits",
     };
 
-    console.log("Sending product data to backend:", productData);
-
     const response = await apiRequest<ProductResponse>(
       "products/",
       "POST",
@@ -114,7 +112,6 @@ export async function CreateProduct(product: Product): Promise<{
       status: response.status || 201,
     };
   } catch (error) {
-    console.error("Error creating product:", error);
     return {
       success: false,
       message:
@@ -277,6 +274,60 @@ export async function DeleteAllProducts(): Promise<{
         error instanceof Error
           ? error.message
           : "Failed to delete all products",
+      status: 500,
+    };
+  }
+}
+
+export async function GetProductStats(): Promise<{
+  success: boolean;
+  data: {
+    totalProducts: number;
+    recentProducts: number;
+    percentageGrowth: string;
+  };
+  message: string;
+  status: number;
+}> {
+  try {
+    const response = await apiRequest<ProductStatsResponse>(
+      "products/stats/total-products",
+      "GET"
+    );
+
+    const { totalProducts, recentProducts } = response.data;
+
+    const percentageGrowth =
+      totalProducts && recentProducts
+        ? `+${(
+            (recentProducts / (totalProducts - recentProducts || 1)) *
+            100
+          ).toFixed(1)}%`
+        : "0%";
+
+    return {
+      success: true,
+      data: {
+        totalProducts,
+        recentProducts,
+        percentageGrowth,
+      },
+      message: response.message || "Stats fetched successfully",
+      status: response.status || 200,
+    };
+  } catch (error) {
+    console.error("Error fetching product stats:", error);
+    return {
+      success: false,
+      data: {
+        totalProducts: 0,
+        recentProducts: 0,
+        percentageGrowth: "0%",
+      },
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch product stats",
       status: 500,
     };
   }

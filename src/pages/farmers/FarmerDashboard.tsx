@@ -1,41 +1,79 @@
-
-import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, DollarSign, Package, TrendingUp, Eye, ArrowUp, ArrowDown } from "lucide-react";
+import {
+  Plus,
+  DollarSign,
+  Package,
+  TrendingUp,
+  Eye,
+  ArrowUp,
+  ArrowDown,
+} from "lucide-react";
 import { Link } from "react-router-dom";
 import AddProductForm from "@/components/farmers/AddProductForm";
 import PaginatedProductsList from "@/components/farmers/PaginatedProductsList";
 import FarmerAnalytics from "@/components/farmers/FarmerAnalytics";
 import { useAuth } from "@/hooks/useAuth";
+import { GetProductStats } from "@/services/products";
 
 export default function FarmerDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const { user } = useAuth();
+  const [total, setTotal] = useState<number>(0);
+  const [recent, setRecent] = useState<number>(0);
+  const [growth, setGrowth] = useState<string>("+0%");
+
+  useEffect(() => {
+    async function fetchStats() {
+      const res = await GetProductStats();
+      if (res.success) {
+        setTotal(res.data.totalProducts);
+        setRecent(res.data.recentProducts);
+        setGrowth(res.data.percentageGrowth);
+      }
+    }
+    fetchStats();
+  }, []);
 
   // Mock farmer stats
   const farmerStats = {
     totalProducts: 12,
-    totalSales: 2540.50,
-    monthlyRevenue: 850.00,
+    totalSales: 2540.5,
+    monthlyRevenue: 850.0,
     pendingOrders: 5,
   };
 
-  const StatCard = ({ title, value, description, icon, trend, trendValue }: {
+  const StatCard = ({
+    title,
+    value,
+    description,
+    icon,
+    trend,
+    trendValue,
+  }: {
     title: string;
     value: string | number;
     description: string;
     icon: React.ReactNode;
-    trend?: 'up' | 'down';
+    trend?: "up" | "down";
     trendValue?: string;
   }) => (
     <Card className="relative overflow-hidden border shadow-sm hover:shadow-md transition-all duration-300 bg-card">
       <div className="absolute inset-0 bg-gradient-to-br from-card to-muted/30" />
       <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-3">
         <div className="space-y-1">
-          <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            {title}
+          </CardTitle>
           <div className="text-2xl font-bold text-card-foreground">{value}</div>
         </div>
         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -46,10 +84,18 @@ export default function FarmerDashboard() {
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">{description}</p>
           {trend && trendValue && (
-            <div className={`flex items-center gap-1 text-xs font-medium ${
-              trend === 'up' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
-            }`}>
-              {trend === 'up' ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />}
+            <div
+              className={`flex items-center gap-1 text-xs font-medium ${
+                trend === "up"
+                  ? "text-green-600 dark:text-green-400"
+                  : "text-red-600 dark:text-red-400"
+              }`}
+            >
+              {trend === "up" ? (
+                <ArrowUp className="h-3 w-3" />
+              ) : (
+                <ArrowDown className="h-3 w-3" />
+              )}
               {trendValue}
             </div>
           )}
@@ -67,7 +113,8 @@ export default function FarmerDashboard() {
             Farmer Dashboard
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">
-            Welcome back, {user?.full_name || 'Farmer'}! Manage your products and track your sales performance
+            Welcome back, {user?.full_name || "Farmer"}! Manage your products
+            and track your sales performance
           </p>
         </div>
 
@@ -75,11 +122,11 @@ export default function FarmerDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Products"
-            value={farmerStats.totalProducts}
-            description="Active listings"
+            value={total}
+            description={`${recent} new this week`}
             icon={<Package className="h-5 w-5 text-primary" />}
             trend="up"
-            trendValue="+12%"
+            trendValue={growth}
           />
           <StatCard
             title="Total Sales"
@@ -111,19 +158,35 @@ export default function FarmerDashboard() {
             <Tabs defaultValue="products" className="w-full">
               <div className="border-b border-border px-6 pt-6">
                 <TabsList className="grid w-full grid-cols-3 h-12 bg-muted">
-                  <TabsTrigger value="products" className="text-sm font-medium">My Products</TabsTrigger>
-                  <TabsTrigger value="analytics" className="text-sm font-medium">Analytics</TabsTrigger>
-                  <TabsTrigger value="orders" className="text-sm font-medium">Orders</TabsTrigger>
+                  <TabsTrigger value="products" className="text-sm font-medium">
+                    My Products
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="analytics"
+                    className="text-sm font-medium"
+                  >
+                    Analytics
+                  </TabsTrigger>
+                  <TabsTrigger value="orders" className="text-sm font-medium">
+                    Orders
+                  </TabsTrigger>
                 </TabsList>
               </div>
 
               <TabsContent value="products" className="space-y-6 p-6">
                 <div className="flex justify-between items-center">
                   <div>
-                    <h2 className="text-2xl font-bold text-card-foreground">My Products</h2>
-                    <p className="text-muted-foreground">Manage your product inventory</p>
+                    <h2 className="text-2xl font-bold text-card-foreground">
+                      My Products
+                    </h2>
+                    <p className="text-muted-foreground">
+                      Manage your product inventory
+                    </p>
                   </div>
-                  <Button onClick={() => setShowAddProduct(true)} className="gap-2 h-11 px-6">
+                  <Button
+                    onClick={() => setShowAddProduct(true)}
+                    className="gap-2 h-11 px-6"
+                  >
                     <Plus className="h-4 w-4" />
                     Add Product
                   </Button>
@@ -143,18 +206,32 @@ export default function FarmerDashboard() {
               <TabsContent value="orders" className="p-6">
                 <div className="space-y-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-card-foreground">Recent Orders</h2>
-                    <p className="text-muted-foreground">Orders from your customers</p>
+                    <h2 className="text-2xl font-bold text-card-foreground">
+                      Recent Orders
+                    </h2>
+                    <p className="text-muted-foreground">
+                      Orders from your customers
+                    </p>
                   </div>
                   <div className="space-y-4">
                     {[1, 2, 3].map((order) => (
-                      <Card key={order} className="border shadow-sm hover:shadow-md transition-all duration-300 bg-card">
+                      <Card
+                        key={order}
+                        className="border shadow-sm hover:shadow-md transition-all duration-300 bg-card"
+                      >
                         <CardContent className="flex items-center justify-between p-6">
                           <div className="space-y-1">
-                            <p className="font-semibold text-card-foreground">Order #{order}001</p>
-                            <p className="text-sm text-muted-foreground">2 items • GHS 45.00</p>
+                            <p className="font-semibold text-card-foreground">
+                              Order #{order}001
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              2 items • GHS 45.00
+                            </p>
                           </div>
-                          <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800">
+                          <Badge
+                            variant="outline"
+                            className="bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
+                          >
                             Pending
                           </Badge>
                         </CardContent>

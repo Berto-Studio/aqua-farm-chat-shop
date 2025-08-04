@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -23,6 +23,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { User, ShoppingBag, Map, Clock } from "lucide-react";
 import { useUserStore } from "@/store/store";
+import { GetUserOrders } from "@/services/orders";
+import { get } from "http";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -37,26 +39,7 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 export default function Profile() {
   const { user } = useUserStore();
 
-  const [orders, setOrders] = useState([
-    {
-      id: "ORD-123456",
-      date: "2025-05-10",
-      status: "Delivered",
-      total: "$125.99",
-    },
-    {
-      id: "ORD-123457",
-      date: "2025-05-08",
-      status: "Processing",
-      total: "$75.50",
-    },
-    {
-      id: "ORD-123458",
-      date: "2025-05-05",
-      status: "Delivered",
-      total: "$210.25",
-    },
-  ]);
+  const [orders, setOrders] = useState<OrderProps[]>([]);
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -68,9 +51,21 @@ export default function Profile() {
   });
 
   function onSubmit(data: ProfileFormValues) {
-    // In a real app, this would update the user profile in the backend
     console.log(data);
   }
+
+  const getUserOrders = async () => {
+    const response = await GetUserOrders();
+    if (response.success) {
+      setOrders(response.data || []);
+    } else {
+      console.error("Failed to fetch user orders:", response.message);
+    }
+  };
+
+  useEffect(() => {
+    getUserOrders();
+  }, []);
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -191,13 +186,13 @@ export default function Profile() {
                         </tr>
                       </thead>
                       <tbody>
-                        {orders.map((order) => (
+                        {orders.map((order, index) => (
                           <tr
                             key={order.id}
                             className="border-b hover:bg-muted/50"
                           >
-                            <td className="py-3 px-2">{order.id}</td>
-                            <td className="py-3 px-2">{order.date}</td>
+                            <td className="py-3 px-2">{index + 1}</td>
+                            <td className="py-3 px-2">{order.created_at}</td>
                             <td className="py-3 px-2">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs ${
@@ -209,7 +204,9 @@ export default function Profile() {
                                 {order.status}
                               </span>
                             </td>
-                            <td className="py-3 px-2">{order.total}</td>
+                            <td className="py-3 px-2">
+                              GHS {order.total_price}
+                            </td>
                             <td className="py-3 px-2 text-right">
                               <Button variant="outline" size="sm">
                                 View

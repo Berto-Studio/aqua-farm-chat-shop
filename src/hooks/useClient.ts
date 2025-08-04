@@ -1,4 +1,3 @@
-
 import { useUserStore } from "@/store/store";
 import Cookies from "js-cookie";
 
@@ -20,31 +19,8 @@ export const apiRequest = async <T>(
     Authorization: `Bearer ${token || ""}`,
   };
 
-  // IMPORTANT: Only set Content-Type for non-FormData requests
-  // For FormData, DO NOT set Content-Type - let the browser handle it automatically
   if (!isFormData) {
     headers["Content-Type"] = "application/json";
-  }
-
-  console.log("Making API request:", {
-    url: `${API_BASE_URL}${endpoint}`,
-    method,
-    isFormData,
-    bodyType: body?.constructor?.name,
-    hasFile: isFormData && body instanceof FormData ? Array.from(body.entries()).some(([, value]) => value instanceof File) : false,
-    headers: headers
-  });
-
-  // Log FormData contents if it's FormData
-  if (isFormData && body instanceof FormData) {
-    console.log("FormData contents:");
-    for (const [key, value] of body.entries()) {
-      if (value instanceof File) {
-        console.log(`${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
-      } else {
-        console.log(`${key}: ${value}`);
-      }
-    }
   }
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
@@ -56,9 +32,6 @@ export const apiRequest = async <T>(
         : JSON.stringify(body)
       : undefined,
   });
-
-  console.log("Response status:", response.status);
-  console.log("Response headers:", Object.fromEntries(response.headers.entries()));
 
   if (!response.ok) {
     let errorMessage = "Something went wrong";
@@ -96,8 +69,6 @@ export const apiRequest = async <T>(
 
     throw new Error(errorMessage);
   }
-
-  console.log("Success");
 
   return response.json();
 };

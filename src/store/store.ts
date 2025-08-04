@@ -10,7 +10,7 @@ type User = {
   is_active?: boolean;
   username?: string;
   user_type?: string;
-  phone?: number;
+  phone_number?: number;
   address?: string;
   image_url?: string;
   is_admin?: boolean;

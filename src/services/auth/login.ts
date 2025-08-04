@@ -9,6 +9,8 @@ interface LoginResponse {
     full_name: string;
     email: string;
     user_type?: string;
+    phone?: number;
+    address?: string;
   } | null;
   access_token: string;
   status: number;
@@ -46,6 +48,8 @@ export default async function logIn({ email, password }: loginProps): Promise<{
       email: data.email,
       user_type: data.user_type,
       full_name: data.full_name,
+      phone_number: data.phone,
+      address: data.address,
     });
 
     // Store token securely

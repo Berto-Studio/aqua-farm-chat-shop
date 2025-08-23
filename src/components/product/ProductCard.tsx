@@ -31,7 +31,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   const AddCart = async () => {
     const cartData: AddToCartPayload = {
-      product_id: product.id,
+      product_id: Number(product.id),
       quantity: 1,
     };
 

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { X, Package } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { CreateProduct } from "@/services/products";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import ProductPricingInfo from "./ProductPricingInfo";
 import ProductCategoryFields from "./ProductCategoryFields";
 import ProductImageUpload from "./ProductImageUpload";
 import { Product } from "@/types/product";
+import { ModalMessage } from "@/components/ui/modalMessage";
 
 interface AddProductFormProps {
   onClose: () => void;
@@ -36,6 +37,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: categoriesResponse, isLoading: categoriesLoading } =
@@ -69,6 +71,11 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       return;
     }
 
+    setShowConfirmModal(true);
+  };
+
+  const confirmCreateProduct = async () => {
+    setShowConfirmModal(false);
     setIsLoading(true);
     setIsUploadingImage(true);
 
@@ -111,8 +118,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
       if (response.success) {
         toast({
-          title: "Product Added",
-          description: "Your product has been successfully added.",
+          title: "Market Item Created",
+          description: "Your market item has been successfully added.",
         });
 
         // Invalidate and refetch products query
@@ -124,12 +131,12 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       }
     } catch (error) {
       console.error("Error adding product:", error);
-      toast({
-        title: "Failed to Add Product",
-        description:
-          error instanceof Error ? error.message : "Please try again later.",
-        variant: "destructive",
-      });
+        toast({
+          title: "Failed to Create Market Item",
+          description:
+            error instanceof Error ? error.message : "Please try again later.",
+          variant: "destructive",
+        });
     } finally {
       setIsLoading(false);
       setIsUploadingImage(false);
@@ -139,7 +146,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Add New Product</CardTitle>
+        <CardTitle>Add New Market Item</CardTitle>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -183,12 +190,23 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
               {isUploadingImage
                 ? "Uploading Image..."
                 : isLoading
-                ? "Adding Product..."
-                : "Add Product"}
+                ? "Creating Market Item..."
+                : "Create Market Item"}
             </Button>
           </div>
         </form>
       </CardContent>
+
+      <ModalMessage
+        open={showConfirmModal}
+        onConfirm={confirmCreateProduct}
+        onCancel={() => setShowConfirmModal(false)}
+        title="Create Market Item"
+        message="Are you sure you want to add this item to your market? This will make it visible to potential buyers."
+        actionLabel="Create Item"
+        actionVariant="default"
+        icon={<Package className="w-5 h-5 text-primary" />}
+      />
     </Card>
   );
 }

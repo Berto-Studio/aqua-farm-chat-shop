@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
-import { X } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { X, CheckCircle } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { UpdateProduct } from "@/services/products";
 import { useQueryClient } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import ProductPricingInfo from "./ProductPricingInfo";
 import ProductCategoryFields from "./ProductCategoryFields";
 import ProductImageUpload from "./ProductImageUpload";
 import { Product } from "@/types/product";
+import { ModalMessage } from "@/components/ui/modalMessage";
 
 interface EditProductFormProps {
   product: Product;
@@ -26,6 +27,7 @@ export default function EditProductForm({
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: categoriesResponse, isLoading: categoriesLoading } =
@@ -50,6 +52,11 @@ export default function EditProductForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setShowConfirmModal(true);
+  };
+
+  const confirmUpdateProduct = async () => {
+    setShowConfirmModal(false);
     setIsLoading(true);
 
     try {
@@ -94,8 +101,8 @@ export default function EditProductForm({
 
       if (response.success) {
         toast({
-          title: "Product Updated",
-          description: "Your product has been successfully updated.",
+          title: "Market Item Updated",
+          description: "Your market item has been successfully updated.",
         });
 
         // Invalidate and refetch products query
@@ -107,12 +114,12 @@ export default function EditProductForm({
       }
     } catch (error) {
       console.error("Error updating product:", error);
-      toast({
-        title: "Failed to Update Product",
-        description:
-          error instanceof Error ? error.message : "Please try again later.",
-        variant: "destructive",
-      });
+        toast({
+          title: "Failed to Update Market Item",
+          description:
+            error instanceof Error ? error.message : "Please try again later.",
+          variant: "destructive",
+        });
     } finally {
       setIsLoading(false);
       setIsUploadingImage(false);
@@ -122,7 +129,7 @@ export default function EditProductForm({
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Edit Product</CardTitle>
+        <CardTitle>Edit Market Item</CardTitle>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
@@ -167,12 +174,23 @@ export default function EditProductForm({
               {isUploadingImage
                 ? "Uploading Image..."
                 : isLoading
-                ? "Updating Product..."
-                : "Update Product"}
+                ? "Updating Market Item..."
+                : "Update Market Item"}
             </Button>
           </div>
         </form>
       </CardContent>
+
+      <ModalMessage
+        open={showConfirmModal}
+        onConfirm={confirmUpdateProduct}
+        onCancel={() => setShowConfirmModal(false)}
+        title="Update Market Item"
+        message="Are you sure you want to update this market item? Changes will be visible to buyers immediately."
+        actionLabel="Update Item"
+        actionVariant="default"
+        icon={<CheckCircle className="w-5 h-5 text-primary" />}
+      />
     </Card>
   );
 }

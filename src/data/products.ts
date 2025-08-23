@@ -3,7 +3,7 @@ import { Product } from "@/types/product";
 
 export const products: Product[] = [
   {
-    id: "0",
+    id: 1,
     title: "CatFish Fingerlings Pack",
     description:
       "Healthy catFish fingerlings, perfect for starting your Fish farm. Each fingerling is 2-3 inches in length and ready for your pond or tank.",
@@ -17,7 +17,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "1",
+    id: 2,
     title: "Juvenile CatFish",
     description:
       "Juvenile catFish for faster growth and better yield. Each Fish is 5-6 inches in length, healthy and disease-free.",
@@ -31,7 +31,7 @@ export const products: Product[] = [
     rating: 4.6,
   },
   {
-    id: "2",
+    id: 3,
     title: "Mature CatFish",
     description:
       "Fully grown catFish ready for harvest. Each Fish weighs approximately 1-1.5 kg, perfect for commercial use or personal consumption.",
@@ -45,7 +45,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "3",
+    id: 4,
     title: "Tilapia Fingerlings Pack",
     description:
       "Healthy tilapia fingerlings from premium genetic stock. Each fingerling is 1-2 inches in length, perfect for your aquaculture project.",
@@ -59,7 +59,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "4",
+    id: 5,
     title: "Juvenile Tilapia",
     description:
       "Juvenile tilapia Fish for optimal growth. Each Fish is 4-5 inches in length, bred for fast growth and disease resistance.",
@@ -73,7 +73,7 @@ export const products: Product[] = [
     rating: 4.5,
   },
   {
-    id: "5",
+    id: 6,
     title: "Mature Tilapia",
     description:
       "Fully grown tilapia ready for harvest. Each Fish weighs approximately 0.5-0.8 kg, perfect for immediate use.",
@@ -88,7 +88,7 @@ export const products: Product[] = [
     discount_percentage: 10,
   },
   {
-    id: "6",
+    id: 7,
     title: "Organic Tomatoes",
     description:
       "Fresh, organically grown tomatoes. Perfect for salads, sauces, and culinary uses.",
@@ -101,7 +101,7 @@ export const products: Product[] = [
     rating: 4.7,
   },
   {
-    id: "7",
+    id: 8,
     title: "Fresh Cucumbers",
     description:
       "Crisp and refreshing cucumbers, grown with sustainable farming practices.",
@@ -115,7 +115,7 @@ export const products: Product[] = [
     discount_percentage: 5,
   },
   {
-    id: "apple-red-1",
+    id: 9,
     title: "Red Apples",
     description:
       "Sweet and crunchy red apples, perfect for snacking or baking.",
@@ -129,7 +129,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "orange-juicy-1",
+    id: 10,
     title: "Juicy Oranges",
     description:
       "Vitamin-rich oranges with a perfect balance of sweetness and tanginess.",
@@ -142,7 +142,7 @@ export const products: Product[] = [
     rating: 4.6,
   },
   {
-    id: "chicken-broiler-1",
+    id: 11,
     title: "Broiler Chickens",
     description:
       "Healthy broiler chickens raised in a free-range environment, perfect for meat production.",
@@ -157,7 +157,7 @@ export const products: Product[] = [
     isFeatured: true,
   },
   {
-    id: "goat-dairy-1",
+    id: 12,
     title: "Dairy Goats",
     description:
       "Healthy dairy goats from quality breeding stock, excellent for milk production.",
@@ -184,5 +184,5 @@ export const getProductsByAge = (age: string) =>
     return productAge === age;
   });
 
-export const getProductById = (id: string) =>
-  products.find((product) => product.id === id);
+export const getProductById = (id: string | number) =>
+  products.find((product) => product.id == id);

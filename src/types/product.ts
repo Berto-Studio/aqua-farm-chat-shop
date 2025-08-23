@@ -1,7 +1,7 @@
 export type ProductCategory = "Live Stock" | "Fish" | "Vegetables" | "Fruits";
 
 export interface Product {
-  id?: number;
+  id?: string | number;
   title: string;
   description: string;
   price: number;

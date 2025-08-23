@@ -37,12 +37,13 @@ const ITEMS_PER_PAGE = 20;
 
 export default function PaginatedProductsList() {
   const { data: products, isLoading, error, refetch } = useProducts();
-  const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [deletingAll, setDeletingAll] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState<string | number | null>(null);
   const { toast } = useToast();
 
   // Filter and search products
@@ -54,11 +55,11 @@ export default function PaginatedProductsList() {
         product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         product.description.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory =
-        categoryFilter === "all" || product.category === categoryFilter;
+        selectedCategory === "all" || product.category === selectedCategory;
 
       return matchesSearch && matchesCategory;
     });
-  }, [products, searchTerm, categoryFilter]);
+  }, [products, searchTerm, selectedCategory]);
 
   // Pagination
   const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
@@ -75,14 +76,22 @@ export default function PaginatedProductsList() {
     return uniqueCategories;
   }, [products]);
 
-  const handleDeleteProduct = async (id: number) => {
-    setDeletingId(id);
+  const handleDeleteProduct = async (id: string | number) => {
+    setProductToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteProduct = async () => {
+    if (!productToDelete) return;
+    
+    setShowDeleteModal(false);
+    setDeletingId(productToDelete);
     try {
-      const response = await DeleteProduct(id);
+      const response = await DeleteProduct(productToDelete);
       if (response.success) {
         toast({
-          title: "Product Deleted",
-          description: "Product has been successfully deleted.",
+          title: "Market Item Deleted",
+          description: "Market item has been successfully deleted.",
         });
         refetch();
 
@@ -99,41 +108,17 @@ export default function PaginatedProductsList() {
     } catch (error) {
       toast({
         title: "Delete Failed",
-        description:
-          error instanceof Error ? error.message : "Failed to delete product",
+        description: error instanceof Error ? error.message : "Failed to delete market item",
         variant: "destructive",
       });
     } finally {
       setDeletingId(null);
+      setProductToDelete(null);
     }
   };
 
   const handleDeleteAllProducts = async () => {
-    setDeletingAll(true);
-    try {
-      const response = await DeleteAllProducts();
-      if (response.success) {
-        toast({
-          title: "All Products Deleted",
-          description: "All products have been successfully deleted.",
-        });
-        refetch();
-        setCurrentPage(1);
-      } else {
-        throw new Error(response.message);
-      }
-    } catch (error) {
-      toast({
-        title: "Delete All Failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Failed to delete all products",
-        variant: "destructive",
-      });
-    } finally {
-      setDeletingAll(false);
-    }
+    // Remove delete all functionality for now
   };
 
   const handleEditProduct = (product: Product) => {
@@ -154,7 +139,7 @@ export default function PaginatedProductsList() {
   };
 
   const handleCategoryChange = (value: string) => {
-    setCategoryFilter(value);
+    setSelectedCategory(value);
     setCurrentPage(1); // Reset to first page when filtering
   };
 
@@ -228,9 +213,9 @@ export default function PaginatedProductsList() {
             variant="destructive"
             size="sm"
             onClick={handleDeleteAllProducts}
-            disabled={deletingAll}
+            disabled={false}
           >
-            {deletingAll ? "Deleting..." : "Delete All"}
+            Delete All
           </Button>
         )}
       </div>
@@ -249,7 +234,7 @@ export default function PaginatedProductsList() {
 
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={categoryFilter} onValueChange={handleCategoryChange}>
+          <Select value={selectedCategory} onValueChange={handleCategoryChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by category" />
             </SelectTrigger>
@@ -365,6 +350,17 @@ export default function PaginatedProductsList() {
             </TableBody>
           </Table>
         </CardContent>
+
+        <ModalMessage
+          open={showDeleteModal}
+          onConfirm={confirmDeleteProduct}
+          onCancel={() => setShowDeleteModal(false)}
+          title="Delete Market Item"
+          message="Are you sure you want to delete this market item? This action cannot be undone and will remove it from your market."
+          actionLabel="Delete Item"
+          actionVariant="destructive"
+          icon={<AlertTriangle className="w-5 h-5 text-destructive" />}
+        />
       </Card>
 
       {/* Pagination */}

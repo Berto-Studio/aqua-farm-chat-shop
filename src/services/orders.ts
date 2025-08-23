@@ -86,3 +86,34 @@ export async function GetUserOrders(): Promise<{
     };
   }
 }
+
+export async function GetFarmerOrders(): Promise<{
+  success: boolean;
+  data?: OrderProps[];
+  message: string;
+  status: number;
+}> {
+  try {
+    const response = await apiRequest<ResponseProps<OrderProps[]>>(
+      `orders/get-farmer-orders`,
+      "GET"
+    );
+    return {
+      success: true,
+      data: response.data,
+      message: response.message || "Farmer orders retrieved successfully",
+      status: response.status || 200,
+    };
+  } catch (error) {
+    console.error("Error fetching farmer orders:", error);
+    return {
+      success: false,
+      data: [],
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch farmer orders",
+      status: 500,
+    };
+  }
+}

@@ -24,27 +24,37 @@ import PaginatedProductsList from "@/components/farmers/PaginatedProductsList";
 import FarmerAnalytics from "@/components/farmers/FarmerAnalytics";
 import { useAuth } from "@/hooks/useAuth";
 import { GetProductStats } from "@/services/products";
+import { GetFarmerOrders } from "@/services/orders";
 
 export default function FarmerDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const { user } = useAuth();
-  const [total, setTotal] = useState<number>(0);
+  const [totalProduct, setTotalProduct] = useState<number>(0);
   const [recent, setRecent] = useState<number>(0);
   const [growth, setGrowth] = useState<string>("+0%");
+  const [orders, setOrders] = useState<OrderProps[]>();
+
+  async function fetchStats() {
+    const res = await GetProductStats();
+    if (res.success) {
+      setTotalProduct(res.data.totalProducts);
+      setRecent(res.data.recentProducts);
+      setGrowth(res.data.percentageGrowth);
+    }
+  }
+
+  async function fetchOrders() {
+    const res = await GetFarmerOrders();
+    if (res.success) {
+      setOrders(res.data);
+    }
+  }
 
   useEffect(() => {
-    async function fetchStats() {
-      const res = await GetProductStats();
-      if (res.success) {
-        setTotal(res.data.totalProducts);
-        setRecent(res.data.recentProducts);
-        setGrowth(res.data.percentageGrowth);
-      }
-    }
+    fetchOrders();
     fetchStats();
   }, []);
 
-  // Mock farmer stats
   const farmerStats = {
     totalProducts: 12,
     totalSales: 2540.5,
@@ -122,7 +132,7 @@ export default function FarmerDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Products"
-            value={total}
+            value={totalProduct}
             description={`${recent} new this week`}
             icon={<Package className="h-5 w-5 text-primary" />}
             trend="up"
@@ -214,15 +224,15 @@ export default function FarmerDashboard() {
                     </p>
                   </div>
                   <div className="space-y-4">
-                    {[1, 2, 3].map((order) => (
+                    {orders?.map((order, key) => (
                       <Card
-                        key={order}
+                        key={key}
                         className="border shadow-sm hover:shadow-md transition-all duration-300 bg-card"
                       >
                         <CardContent className="flex items-center justify-between p-6">
                           <div className="space-y-1">
                             <p className="font-semibold text-card-foreground">
-                              Order #{order}001
+                              Order #{key}001
                             </p>
                             <p className="text-sm text-muted-foreground">
                               2 items • GHS 45.00
@@ -232,7 +242,7 @@ export default function FarmerDashboard() {
                             variant="outline"
                             className="bg-yellow-50 dark:bg-yellow-950 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800"
                           >
-                            Pending
+                            {order.status}
                           </Badge>
                         </CardContent>
                       </Card>

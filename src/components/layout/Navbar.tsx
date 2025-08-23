@@ -30,6 +30,7 @@ import ChatList from "@/components/chat/ChatList";
 import { getAllConversations } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
 import { useUserStore } from "@/store/store";
+import { useCarts } from "@/hooks/useCart";
 
 export default function Navbar() {
   const isMobile = useIsMobile();
@@ -110,6 +111,8 @@ export default function Navbar() {
     </div>
   );
 
+  const { totalCartItems } = useCarts();
+
   return (
     <>
       <header className="bg-background border-b border-border sticky top-0 z-40">
@@ -152,10 +155,10 @@ export default function Navbar() {
 
               <Link to="/" className="flex items-center gap-2">
                 <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                  FS
+                  PD
                 </div>
                 <span className="font-bold text-xl hidden sm:inline-block text-foreground">
-                  FishFarm
+                  Pomegid
                 </span>
               </Link>
 
@@ -169,26 +172,30 @@ export default function Navbar() {
                 </div>
               )}
 
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => setIsChatOpen(true)}
-              >
-                <MessageCircle className="h-5 w-5" />
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                  2
-                </Badge>
-              </Button>
+              {isLoggedIn && (
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    onClick={() => setIsChatOpen(true)}
+                  >
+                    <MessageCircle className="h-5 w-5" />
+                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                      2
+                    </Badge>
+                  </Button>
 
-              <Link to="/cart">
-                <Button variant="ghost" size="icon" className="relative">
-                  <ShoppingCart className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                    3
-                  </Badge>
-                </Button>
-              </Link>
+                  <Link to="/cart">
+                    <Button variant="ghost" size="icon" className="relative">
+                      <ShoppingCart className="h-5 w-5" />
+                      <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                        {totalCartItems}
+                      </Badge>
+                    </Button>
+                  </Link>
+                </div>
+              )}
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

@@ -37,7 +37,7 @@ const ITEMS_PER_PAGE = 20;
 
 export default function PaginatedProductsList() {
   const { data: products, isLoading, error, refetch } = useProducts();
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [deletingAll, setDeletingAll] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -75,7 +75,7 @@ export default function PaginatedProductsList() {
     return uniqueCategories;
   }, [products]);
 
-  const handleDeleteProduct = async (id: string) => {
+  const handleDeleteProduct = async (id: number) => {
     setDeletingId(id);
     try {
       const response = await DeleteProduct(id);

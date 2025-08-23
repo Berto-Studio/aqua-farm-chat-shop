@@ -41,7 +41,7 @@ export default async function GetProducts(): Promise<{
   }
 }
 
-export async function GetProduct(id: string): Promise<{
+export async function GetProduct(id: number): Promise<{
   success: boolean;
   data?: Product;
   message: string;
@@ -170,7 +170,7 @@ export async function UpdateProduct(
   }
 }
 
-export async function DeleteProduct(id: string): Promise<{
+export async function DeleteProduct(id: number): Promise<{
   success: boolean;
   message: string;
   status: number;

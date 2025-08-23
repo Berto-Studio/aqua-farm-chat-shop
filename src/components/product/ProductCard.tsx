@@ -5,12 +5,18 @@ import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Star, ShoppingCart } from "lucide-react";
 import { Product } from "@/types/product";
 import { Link } from "react-router-dom";
+import { AddToCart } from "@/services/cart";
+import { useToast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface ProductCardProps {
   product: Product;
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -23,8 +29,37 @@ export default function ProductCard({ product }: ProductCardProps) {
       }).format(product.price * (1 - product.discount_percentage / 100))
     : null;
 
+  const AddCart = async () => {
+    const cartData: AddToCartPayload = {
+      product_id: product.id,
+      quantity: 1,
+    };
+
+    try {
+      const response = await AddToCart(cartData);
+
+      if (response.success) {
+        toast({
+          title: "Success",
+          description: "Cart successfully added.",
+          variant: "success",
+        });
+        // Invalidate and refetch products query
+        queryClient.invalidateQueries({ queryKey: ["carts"] });
+      } else {
+        toast({
+          title: "Error",
+          description: "Error adding cart.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Add to cart error:", error);
+    }
+  };
+
   return (
-    <Card className="group overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 w-[300px]">
+    <Card className="group overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 w-[300px] flex flex-col justify-between">
       <Link to={`/products/${product.id}`} className="block">
         <div className="relative overflow-hidden bg-muted">
           <AspectRatio ratio={4 / 3}>
@@ -49,7 +84,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
 
-        <CardContent className="p-4 space-y-3">
+        <CardContent className="p-2 space-y-3">
           <div className="space-y-1">
             <h3 className="font-semibold text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
               {product.title}
@@ -88,8 +123,11 @@ export default function ProductCard({ product }: ProductCardProps) {
         </CardContent>
       </Link>
 
-      <CardFooter className="p-4 pt-0">
-        <Button className="w-full gap-2 group-hover:bg-primary/90 transition-colors">
+      <CardFooter className="p-2 pt-0">
+        <Button
+          className="w-full gap-2 group-hover:bg-primary/90 transition-colors"
+          onClick={AddCart}
+        >
           <ShoppingCart className="w-4 h-4" />
           Add to Cart
         </Button>

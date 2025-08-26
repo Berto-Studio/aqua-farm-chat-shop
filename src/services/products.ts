@@ -279,23 +279,24 @@ export async function DeleteAllProducts(): Promise<{
   }
 }
 
-export async function GetProductStats(): Promise<{
+export async function GetFarmerStats(): Promise<{
   success: boolean;
   data: {
     totalProducts: number;
     recentProducts: number;
     percentageGrowth: string;
+    monthlyRevenue: number;
   };
   message: string;
   status: number;
 }> {
   try {
     const response = await apiRequest<ProductStatsResponse>(
-      "products/stats/total-products",
+      "products/stats/overview",
       "GET"
     );
 
-    const { totalProducts, recentProducts } = response.data;
+    const { totalProducts, recentProducts, monthlyRevenue } = response.data;
 
     const percentageGrowth =
       totalProducts && recentProducts
@@ -311,6 +312,7 @@ export async function GetProductStats(): Promise<{
         totalProducts,
         recentProducts,
         percentageGrowth,
+        monthlyRevenue,
       },
       message: response.message || "Stats fetched successfully",
       status: response.status || 200,
@@ -323,6 +325,7 @@ export async function GetProductStats(): Promise<{
         totalProducts: 0,
         recentProducts: 0,
         percentageGrowth: "0%",
+        monthlyRevenue: 0,
       },
       message:
         error instanceof Error

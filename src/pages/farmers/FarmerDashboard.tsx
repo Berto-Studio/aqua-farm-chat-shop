@@ -23,25 +23,15 @@ import AddProductForm from "@/components/farmers/AddProductForm";
 import PaginatedProductsList from "@/components/farmers/PaginatedProductsList";
 import FarmerAnalytics from "@/components/farmers/FarmerAnalytics";
 import { useAuth } from "@/hooks/useAuth";
-import { GetProductStats } from "@/services/products";
 import { GetFarmerOrders } from "@/services/orders";
+import { GetFarmerStats } from "@/services/products";
+import { useFarmerStats } from "@/hooks/useFarmerStats";
 
 export default function FarmerDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
   const { user } = useAuth();
-  const [totalProduct, setTotalProduct] = useState<number>(0);
-  const [recent, setRecent] = useState<number>(0);
-  const [growth, setGrowth] = useState<string>("+0%");
   const [orders, setOrders] = useState<OrderProps[]>();
-
-  async function fetchStats() {
-    const res = await GetProductStats();
-    if (res.success) {
-      setTotalProduct(res.data.totalProducts);
-      setRecent(res.data.recentProducts);
-      setGrowth(res.data.percentageGrowth);
-    }
-  }
+  const { data: stats, isLoading } = useFarmerStats();
 
   async function fetchOrders() {
     const res = await GetFarmerOrders();
@@ -52,7 +42,6 @@ export default function FarmerDashboard() {
 
   useEffect(() => {
     fetchOrders();
-    fetchStats();
   }, []);
 
   const farmerStats = {
@@ -132,15 +121,15 @@ export default function FarmerDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <StatCard
             title="Total Products"
-            value={totalProduct}
-            description={`${recent} new this week`}
+            value={stats?.totalProducts}
+            description={`+${stats?.recentProducts}% new this week`}
             icon={<Package className="h-5 w-5 text-primary" />}
             trend="up"
-            trendValue={growth}
+            trendValue={stats?.percentageGrowth}
           />
           <StatCard
             title="Total Sales"
-            value={`GHS ${farmerStats.totalSales.toFixed(2)}`}
+            value={`GHS ${stats?.monthlyRevenue || 0}`}
             description="All time earnings"
             icon={<DollarSign className="h-5 w-5 text-primary" />}
             trend="up"

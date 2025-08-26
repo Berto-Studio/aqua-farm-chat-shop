@@ -110,8 +110,9 @@ export default function Navbar() {
       </Link>
     </div>
   );
+  const { totalCartItems } = useCarts({ enabled: isLoggedIn });
 
-  const { totalCartItems } = useCarts();
+  const cartCount = isLoggedIn ? totalCartItems : 0;
 
   return (
     <>
@@ -190,7 +191,7 @@ export default function Navbar() {
                     <Button variant="ghost" size="icon" className="relative">
                       <ShoppingCart className="h-5 w-5" />
                       <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                        {totalCartItems}
+                        {cartCount}
                       </Badge>
                     </Button>
                   </Link>

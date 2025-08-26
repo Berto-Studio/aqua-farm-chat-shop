@@ -3,13 +3,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { 
+import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow
+  TableRow,
 } from "@/components/ui/table";
 import { Pencil, Trash, Package, AlertTriangle } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
@@ -17,6 +17,7 @@ import { DeleteProduct, DeleteAllProducts } from "@/services/products";
 import { Product } from "@/types/product";
 import EditProductForm from "./EditProductForm";
 import { ModalMessage } from "@/components/ui/modalMessage";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function ProductsList() {
   const { data: products, isLoading, error, refetch } = useProducts();
@@ -25,8 +26,11 @@ export default function ProductsList() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showDeleteAllModal, setShowDeleteAllModal] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<string | number | null>(null);
+  const [productToDelete, setProductToDelete] = useState<
+    string | number | null
+  >(null);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const handleDeleteProduct = async (id: string | number) => {
     setProductToDelete(id);
@@ -35,7 +39,7 @@ export default function ProductsList() {
 
   const confirmDeleteProduct = async () => {
     if (!productToDelete) return;
-    
+
     setShowDeleteModal(false);
     setDeletingId(productToDelete);
     try {
@@ -45,14 +49,18 @@ export default function ProductsList() {
           title: "Market Item Deleted",
           description: "Market item has been successfully deleted.",
         });
-        refetch();
+        await queryClient.invalidateQueries({ queryKey: ["products"] });
+        await queryClient.refetchQueries({ queryKey: ["farmer-stats"] });
       } else {
         throw new Error(response.message);
       }
     } catch (error) {
       toast({
         title: "Delete Failed",
-        description: error instanceof Error ? error.message : "Failed to delete market item",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete market item",
         variant: "destructive",
       });
     } finally {
@@ -82,7 +90,10 @@ export default function ProductsList() {
     } catch (error) {
       toast({
         title: "Delete All Failed",
-        description: error instanceof Error ? error.message : "Failed to delete all market items",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete all market items",
         variant: "destructive",
       });
     } finally {
@@ -119,7 +130,9 @@ export default function ProductsList() {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">Error loading products: {error.message}</p>
+          <p className="text-muted-foreground">
+            Error loading products: {error.message}
+          </p>
           <Button onClick={() => refetch()} className="mt-4">
             Try Again
           </Button>
@@ -129,14 +142,18 @@ export default function ProductsList() {
   }
 
   if (editingProduct) {
-    return <EditProductForm product={editingProduct} onClose={handleCloseEdit} />;
+    return (
+      <EditProductForm product={editingProduct} onClose={handleCloseEdit} />
+    );
   }
 
-  if (!products || products.data?.length === 0) {
+  if (!products || products?.length === 0) {
     return (
       <Card>
         <CardContent className="p-6 text-center">
-          <p className="text-muted-foreground">No market items found. Add your first market item to get started!</p>
+          <p className="text-muted-foreground">
+            No market items found. Add your first market item to get started!
+          </p>
         </CardContent>
       </Card>
     );
@@ -145,8 +162,10 @@ export default function ProductsList() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">Market Items ({products.data?.length || 0})</h3>
-        {products.data && products.data.length > 0 && (
+        <h3 className="text-lg font-semibold">
+          Market Items ({products?.length || 0})
+        </h3>
+        {products && products?.length > 0 && (
           <Button
             variant="destructive"
             size="sm"
@@ -174,7 +193,7 @@ export default function ProductsList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {products.data?.map((product: Product) => (
+              {products?.map((product: Product) => (
                 <TableRow key={product.id}>
                   <TableCell>
                     <div className="h-12 w-12 rounded-md overflow-hidden bg-muted">
@@ -226,7 +245,9 @@ export default function ProductsList() {
                     {product.rating && (
                       <div className="flex items-center gap-1">
                         <span className="text-yellow-500">★</span>
-                        <span className="text-sm font-medium">{product.rating}</span>
+                        <span className="text-sm font-medium">
+                          {product.rating}
+                        </span>
                       </div>
                     )}
                   </TableCell>

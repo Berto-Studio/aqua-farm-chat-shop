@@ -124,6 +124,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
         // Invalidate and refetch products query
         queryClient.invalidateQueries({ queryKey: ["products"] });
+        //Refetch farmer stats
+        queryClient.invalidateQueries({ queryKey: ["farmer-stats"] });
 
         onClose();
       } else {
@@ -131,12 +133,12 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       }
     } catch (error) {
       console.error("Error adding product:", error);
-        toast({
-          title: "Failed to Create Market Item",
-          description:
-            error instanceof Error ? error.message : "Please try again later.",
-          variant: "destructive",
-        });
+      toast({
+        title: "Failed to Create Market Item",
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
       setIsUploadingImage(false);

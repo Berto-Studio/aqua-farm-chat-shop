@@ -1,21 +1,7 @@
 import { apiRequest } from "@/hooks/useClient";
 import { useUserStore } from "@/store/store";
-import { loginProps } from "@/types/authentication";
+import { loginProps, LoginResponse } from "@/types/authentication";
 import Cookies from "js-cookie";
-
-interface LoginResponse {
-  data: {
-    id: string;
-    full_name: string;
-    email: string;
-    user_type?: string;
-    phone?: number;
-    address?: string;
-  } | null;
-  access_token: string;
-  status: number;
-  message?: string;
-}
 
 export default async function logIn({ email, password }: loginProps): Promise<{
   success: boolean;

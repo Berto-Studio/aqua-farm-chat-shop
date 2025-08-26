@@ -19,7 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Pencil, Trash, Package, Search, Filter } from "lucide-react";
+import {
+  Pencil,
+  Trash,
+  Package,
+  Search,
+  Filter,
+  AlertTriangle,
+} from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
 import { DeleteProduct, DeleteAllProducts } from "@/services/products";
 import { Product } from "@/types/product";
@@ -32,6 +39,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { ModalMessage } from "../ui/modalMessage";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -43,7 +51,9 @@ export default function PaginatedProductsList() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [productToDelete, setProductToDelete] = useState<string | number | null>(null);
+  const [productToDelete, setProductToDelete] = useState<
+    string | number | null
+  >(null);
   const { toast } = useToast();
 
   // Filter and search products
@@ -83,7 +93,7 @@ export default function PaginatedProductsList() {
 
   const confirmDeleteProduct = async () => {
     if (!productToDelete) return;
-    
+
     setShowDeleteModal(false);
     setDeletingId(productToDelete);
     try {
@@ -108,7 +118,10 @@ export default function PaginatedProductsList() {
     } catch (error) {
       toast({
         title: "Delete Failed",
-        description: error instanceof Error ? error.message : "Failed to delete market item",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete market item",
         variant: "destructive",
       });
     } finally {

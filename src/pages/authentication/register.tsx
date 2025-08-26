@@ -10,8 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/authentication/AuthLayout";
+import Register from "@/services/auth/register";
 
-const Register = () => {
+const RegisterPage = () => {
   const [activeStage, setActiveStage] = useState<string>("1");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -156,18 +157,44 @@ const Register = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Registration successful!",
-        description: "Welcome to inSpace! Let's get started.",
+    try {
+      const response = await Register({
+        username: `${formData.firstName}.${formData.lastName}`.toLowerCase(), // you can refine this
+        email: formData.email,
+        password: formData.password,
+        full_name: `${formData.firstName} ${formData.lastName}`,
+        phone: "0000000000", // TODO: add phone input in UI
+        user_type: formData.accountType === "personal" ? "consumer" : "farmer",
+        address: "", // optional, add input if needed
+        profile_image_url: "",
+        date_of_birth: "2000-01-01", // TODO: add date input in UI
       });
-      navigate("/dashboard");
-    }, 1500);
+
+      if (response.success) {
+        toast({
+          title: "Registration successful!",
+          description: response.message,
+        });
+        navigate("/");
+      } else {
+        toast({
+          title: "Registration failed",
+          description: response.message,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderProgressIndicator = () => {
@@ -480,4 +507,4 @@ const Register = () => {
   );
 };
 
-export default Register;
+export default RegisterPage;

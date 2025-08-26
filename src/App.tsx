@@ -13,7 +13,7 @@ import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Services from "./pages/Services";
 import Settings from "./pages/Settings";
-import Cart from "./pages/Cart";
+import Cart from "./pages/payment/payment";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -29,6 +29,7 @@ import Profile from "./pages/Profile";
 import Products from "./pages/products/products";
 import FarmerRegister from "./pages/farmers/FarmerRegister";
 import FarmerDashboard from "./pages/farmers/FarmerDashboard";
+import PaymentProccess from "./pages/payment/payment";
 
 const queryClient = new QueryClient();
 
@@ -52,7 +53,8 @@ const App = () => (
               <Route path="services" element={<Services />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="contact" element={<ContactUs />} />
-              <Route path="cart" element={<Cart />} />
+              <Route path="cart" element={<PaymentProccess />} />
+
               <Route
                 path="profile"
                 element={

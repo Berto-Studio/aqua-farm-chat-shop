@@ -30,6 +30,7 @@ export interface ProductStatsResponse {
   data: {
     totalProducts: number;
     recentProducts: number;
+    monthlyRevenue: number;
   };
   message: string;
   status: number;

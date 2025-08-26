@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Star, ShoppingCart } from "lucide-react";
 import { Product } from "@/types/product";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { AddToCart } from "@/services/cart";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ProductCardProps {
   product: Product;
@@ -16,7 +17,8 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-
+  const router = useNavigate();
+  const { user } = useAuth();
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -34,6 +36,11 @@ export default function ProductCard({ product }: ProductCardProps) {
       product_id: Number(product.id),
       quantity: 1,
     };
+
+    if (!user) {
+      router("/login");
+      return;
+    }
 
     try {
       const response = await AddToCart(cartData);

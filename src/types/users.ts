@@ -2,6 +2,12 @@ export interface User {
   id?: number;
   name?: string;
   email: string;
+  full_name?: string;
+  user_type?: string;
+  phone?: number;
+  address?: string;
+  is_admin?: boolean;
+  profile_image_url?: string;
 }
 
 export interface UserStore {

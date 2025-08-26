@@ -23,6 +23,10 @@ const RegisterPage = () => {
     firstName: "",
     lastName: "",
     email: "",
+    phone: "",
+    dateOfBirth: "",
+    gender: "",
+    profilePicture: null as File | null,
     password: "",
     confirmPassword: "",
     accountType: "personal",
@@ -31,12 +35,26 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData({
-      ...formData,
-      [name]: type === "checkbox" ? checked : value,
-    });
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    if (type === "checkbox") {
+      const { checked } = e.target as HTMLInputElement;
+      setFormData({
+        ...formData,
+        [name]: checked,
+      });
+    } else if (type === "file") {
+      const { files } = e.target as HTMLInputElement;
+      setFormData({
+        ...formData,
+        [name]: files ? files[0] : null,
+      });
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value,
+      });
+    }
   };
 
   const handleRadioChange = (value: string) => {
@@ -74,6 +92,33 @@ const RegisterPage = () => {
       toast({
         title: "Invalid Email",
         description: "Please enter a valid email address.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.phone) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter your phone number.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.dateOfBirth) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter your date of birth.",
+        variant: "destructive",
+      });
+      return false;
+    }
+
+    if (!formData.gender) {
+      toast({
+        title: "Missing Information",
+        description: "Please select your gender.",
         variant: "destructive",
       });
       return false;
@@ -161,34 +206,49 @@ const RegisterPage = () => {
     setIsLoading(true);
 
     try {
+      // Upload profile picture if provided
+      let profileImageUrl = "";
+      if (formData.profilePicture) {
+        // TODO: Implement actual image upload to your backend/cloudinary
+        // For now, we'll use a placeholder
+        profileImageUrl = ""; // This should be the uploaded image URL
+      }
+
       const response = await Register({
-        username: `${formData.firstName}.${formData.lastName}`.toLowerCase(), // you can refine this
+        username: `${formData.firstName}.${formData.lastName}`.toLowerCase(),
         email: formData.email,
         password: formData.password,
         full_name: `${formData.firstName} ${formData.lastName}`,
-        phone: "0000000000", // TODO: add phone input in UI
+        phone: formData.phone,
         user_type: formData.accountType === "personal" ? "consumer" : "farmer",
-        address: "", // optional, add input if needed
-        profile_image_url: "",
-        date_of_birth: "2000-01-01", // TODO: add date input in UI
+        address: "", // optional, can be added later
+        profile_image_url: profileImageUrl,
+        date_of_birth: formData.dateOfBirth,
       });
 
       if (response.success) {
         toast({
-          title: "Registration successful!",
-          description: response.message,
+          title: "Registration submitted successfully!",
+          description: "Please verify your email to complete your registration.",
         });
-        navigate("/");
+        
+        // Navigate to OTP verification
+        navigate("/verify-otp", {
+          state: {
+            verificationType: "email",
+            contactInfo: formData.email,
+          },
+        });
       } else {
         toast({
           title: "Registration failed",
-          description: response.message,
+          description: response.message || "Please try again.",
           variant: "destructive",
         });
       }
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Registration error",
         description: "Something went wrong. Please try again.",
         variant: "destructive",
       });
@@ -205,7 +265,7 @@ const RegisterPage = () => {
       <div className="mb-8 space-y-2">
         <div className="flex justify-between text-xs text-gray-500">
           <span>Basic Info</span>
-          <span>Email</span>
+          <span>Contact</span>
           <span>Security</span>
           <span>Finish</span>
         </div>
@@ -296,33 +356,112 @@ const RegisterPage = () => {
 
           <TabsContent value="2" className="animate-fadeIn space-y-6 mt-4">
             <h2 className="text-xl font-medium text-theme-black">
-              Email Address
+              Contact Information
             </h2>
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-gray-700"
-              >
-                Email
-              </label>
-              <div className="mt-1 relative">
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="Enter your email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full pl-10"
-                  required
-                />
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-4 w-4 text-gray-400" />
+            <div className="space-y-4">
+              <div>
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Email Address
+                </label>
+                <div className="mt-1 relative">
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    placeholder="Enter your email address"
+                    value={formData.email}
+                    onChange={handleChange}
+                    className="w-full pl-10"
+                    required
+                  />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                  </div>
                 </div>
               </div>
-              <p className="mt-2 text-xs text-gray-500">
-                We'll send a verification email to this address
-              </p>
+
+              <div>
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Phone Number
+                </label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="Enter your phone number"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  className="w-full mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="dateOfBirth"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Date of Birth
+                </label>
+                <Input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  className="w-full mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="gender"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full mt-1 px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  required
+                >
+                  <option value="">Select your gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="profilePicture"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Profile Picture (Optional)
+                </label>
+                <Input
+                  id="profilePicture"
+                  name="profilePicture"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleChange}
+                  className="w-full mt-1"
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                  Upload a profile picture (JPG, PNG, or GIF)
+                </p>
+              </div>
             </div>
           </TabsContent>
 

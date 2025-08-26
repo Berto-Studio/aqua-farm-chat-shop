@@ -29,6 +29,7 @@ import Profile from "./pages/Profile";
 import Products from "./pages/products/products";
 import FarmerRegister from "./pages/farmers/FarmerRegister";
 import FarmerDashboard from "./pages/farmers/FarmerDashboard";
+import OtpVerification from "./pages/authentication/OtpVerification";
 import PaymentProccess from "./pages/payment/payment";
 
 const queryClient = new QueryClient();
@@ -111,6 +112,7 @@ const App = () => (
 
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-otp" element={<OtpVerification />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

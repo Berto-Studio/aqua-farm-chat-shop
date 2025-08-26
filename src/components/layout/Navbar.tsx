@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Menu, X, MessageCircle, User } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
   SheetContent,
@@ -200,9 +201,20 @@ export default function Navbar() {
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" disabled={isLoading}>
-                    <User className="h-5 w-5" />
-                  </Button>
+                  {isLoggedIn ? (
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" disabled={isLoading}>
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.image_url} alt={user?.full_name} />
+                        <AvatarFallback className="bg-primary text-primary-foreground">
+                          {user?.email ? user.email.charAt(0).toUpperCase() + user.email.split('@')[0].slice(-1).toUpperCase() : 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    </Button>
+                  ) : (
+                    <Button variant="ghost" size="icon" disabled={isLoading}>
+                      <User className="h-5 w-5" />
+                    </Button>
+                  )}
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
                   align="end"

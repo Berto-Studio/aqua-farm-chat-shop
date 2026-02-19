@@ -2,7 +2,7 @@ import { useUserStore } from "@/store/store";
 import Cookies from "js-cookie";
 
 // src/api/client.ts
-const API_BASE_URL = import.meta.env.VITE_APP_API_URL;
+const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const ACCESS_TOKEN_COOKIE = "access_token";
 const REFRESH_CSRF_COOKIE = "refresh_csrf_token";
 const REFRESH_ENDPOINT = "auth/refresh";
@@ -18,6 +18,27 @@ type ApiRequestOptions = {
 let activeRefreshRequest: Promise<boolean> | null = null;
 
 const normalizeEndpoint = (endpoint: string) => endpoint.replace(/^\/+/, "");
+
+const resolveApiBaseUrl = () => {
+  if (!RAW_API_BASE_URL) return "/api/v1/";
+
+  // In dev we prefer relative API paths so Vite proxy can avoid CORS errors.
+  if (import.meta.env.DEV) {
+    try {
+      const parsed = new URL(RAW_API_BASE_URL);
+      const pathname = parsed.pathname.startsWith("/")
+        ? parsed.pathname
+        : `/${parsed.pathname}`;
+      return pathname.endsWith("/") ? pathname : `${pathname}/`;
+    } catch {
+      // If it's already relative, keep it as-is.
+    }
+  }
+
+  return RAW_API_BASE_URL;
+};
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 const buildUrl = (endpoint: string) => {
   const normalizedBase = API_BASE_URL.endsWith("/")
@@ -150,16 +171,28 @@ const performRequest = async (
   isFormData: boolean,
   options: ApiRequestOptions
 ) => {
-  return fetch(buildUrl(endpoint), {
-    method,
-    headers: buildHeaders(endpoint, isFormData, options),
-    credentials: "include",
-    body: body
-      ? isFormData
-        ? (body as FormData)
-        : JSON.stringify(body)
-      : undefined,
-  });
+  const requestUrl = buildUrl(endpoint);
+
+  try {
+    return await fetch(requestUrl, {
+      method,
+      headers: buildHeaders(endpoint, isFormData, options),
+      credentials: "include",
+      body: body
+        ? isFormData
+          ? (body as FormData)
+          : JSON.stringify(body)
+        : undefined,
+    });
+  } catch (error) {
+    if (error instanceof TypeError) {
+      throw new Error(
+        `Failed to reach API (${requestUrl}). Check backend availability and CORS/proxy config.`
+      );
+    }
+
+    throw error;
+  }
 };
 
 const parseResponse = async <T>(response: Response): Promise<T> => {

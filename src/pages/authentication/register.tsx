@@ -35,7 +35,9 @@ const RegisterPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
       const { checked } = e.target as HTMLInputElement;
@@ -220,7 +222,7 @@ const RegisterPage = () => {
         password: formData.password,
         full_name: `${formData.firstName} ${formData.lastName}`,
         phone: formData.phone,
-        user_type: formData.accountType === "personal" ? "consumer" : "farmer",
+        user_type: formData.accountType === "personal" ? "user" : "worker",
         address: "", // optional, can be added later
         profile_image_url: profileImageUrl,
         date_of_birth: formData.dateOfBirth,
@@ -229,9 +231,10 @@ const RegisterPage = () => {
       if (response.success) {
         toast({
           title: "Registration submitted successfully!",
-          description: "Please verify your email to complete your registration.",
+          description:
+            "Please verify your email to complete your registration.",
         });
-        
+
         // Navigate to OTP verification
         navigate("/verify-otp", {
           state: {
@@ -351,6 +354,46 @@ const RegisterPage = () => {
                   required
                 />
               </div>
+              <div>
+                <label
+                  htmlFor="dateOfBirth"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Date of Birth
+                </label>
+                <Input
+                  id="dateOfBirth"
+                  name="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleChange}
+                  className="w-full mt-1"
+                  required
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor="gender"
+                  className="block text-sm font-medium text-gray-700"
+                >
+                  Gender
+                </label>
+                <select
+                  id="gender"
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full mt-1 px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
+                  required
+                >
+                  <option value="">Select your gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                  <option value="prefer-not-to-say">Prefer not to say</option>
+                </select>
+              </div>
             </div>
           </TabsContent>
 
@@ -400,67 +443,6 @@ const RegisterPage = () => {
                   className="w-full mt-1"
                   required
                 />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="dateOfBirth"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Date of Birth
-                </label>
-                <Input
-                  id="dateOfBirth"
-                  name="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleChange}
-                  className="w-full mt-1"
-                  required
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="gender"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Gender
-                </label>
-                <select
-                  id="gender"
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="w-full mt-1 px-3 py-2 border border-input bg-background rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                  required
-                >
-                  <option value="">Select your gender</option>
-                  <option value="male">Male</option>
-                  <option value="female">Female</option>
-                  <option value="other">Other</option>
-                  <option value="prefer-not-to-say">Prefer not to say</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="profilePicture"
-                  className="block text-sm font-medium text-gray-700"
-                >
-                  Profile Picture (Optional)
-                </label>
-                <Input
-                  id="profilePicture"
-                  name="profilePicture"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleChange}
-                  className="w-full mt-1"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Upload a profile picture (JPG, PNG, or GIF)
-                </p>
               </div>
             </div>
           </TabsContent>
@@ -563,12 +545,6 @@ const RegisterPage = () => {
                     <RadioGroupItem value="business" id="business" />
                     <Label htmlFor="business" className="cursor-pointer">
                       Business
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="educational" id="educational" />
-                    <Label htmlFor="educational" className="cursor-pointer">
-                      Educational
                     </Label>
                   </div>
                 </RadioGroup>

@@ -1,6 +1,5 @@
-import { apiRequest } from "@/hooks/useClient";
+import { apiRequest, setAuthSession } from "@/hooks/useClient";
 import { useUserStore } from "@/store/store";
-import Cookies from "js-cookie";
 
 export interface RegisterProps {
   username: string;
@@ -8,11 +7,17 @@ export interface RegisterProps {
   password: string;
   full_name: string;
   phone: string;
-  user_type: "farmer" | "consumer";
+  user_type: "user" | "worker" | "consumer" | "farmer";
   address?: string;
   profile_image_url?: string;
   date_of_birth: string;
 }
+
+const normalizeRegistrationUserType = (userType: RegisterProps["user_type"]) => {
+  if (userType === "consumer") return "user";
+  if (userType === "farmer") return "worker";
+  return userType;
+};
 
 export default async function Register(payload: RegisterProps): Promise<{
   success: boolean;
@@ -24,11 +29,14 @@ export default async function Register(payload: RegisterProps): Promise<{
   try {
     setLoading(true);
 
-    const response = await apiRequest<any>("auth/register", "POST", payload);
+    const response = await apiRequest<any>("auth/register", "POST", {
+      ...payload,
+      user_type: normalizeRegistrationUserType(payload.user_type),
+    });
 
     const { status, message } = response;
 
-    if (status !== 201) {
+    if (status !== 200) {
       return {
         success: false,
         message: message || "Registration failed",
@@ -36,13 +44,9 @@ export default async function Register(payload: RegisterProps): Promise<{
       };
     }
 
-    // Optionally store token if backend issues one (adjust if you add token support)
-    if (response.access_token) {
-      Cookies.set("access_token", response.access_token, {
-        expires: 1,
-        secure: true,
-        sameSite: "Lax",
-      });
+    // Optional: support registration responses that also issue auth tokens.
+    if (response?.data?.access_token) {
+      setAuthSession(response.data.access_token, response.data.csrf_token);
     }
 
     return { success: true, message: "Registration successful", status };

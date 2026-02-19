@@ -3,72 +3,306 @@ import Cookies from "js-cookie";
 
 // src/api/client.ts
 const API_BASE_URL = import.meta.env.VITE_APP_API_URL;
+const ACCESS_TOKEN_COOKIE = "access_token";
+const REFRESH_CSRF_COOKIE = "refresh_csrf_token";
+const REFRESH_ENDPOINT = "auth/refresh";
 
-const getToken = () => {
-  return Cookies.get("access_token");
+type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+
+type ApiRequestOptions = {
+  headers?: HeadersInit;
+  skipAuth?: boolean;
+  skipRefresh?: boolean;
 };
 
-export const apiRequest = async <T>(
-  endpoint: string,
-  method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
-  body?: unknown,
-  isFormData: boolean = false
-): Promise<T> => {
-  const token = getToken();
-  const headers: HeadersInit = {
-    Authorization: `Bearer ${token || ""}`,
-  };
+let activeRefreshRequest: Promise<boolean> | null = null;
 
-  if (!isFormData) {
-    headers["Content-Type"] = "application/json";
+const normalizeEndpoint = (endpoint: string) => endpoint.replace(/^\/+/, "");
+
+const buildUrl = (endpoint: string) => {
+  const normalizedBase = API_BASE_URL.endsWith("/")
+    ? API_BASE_URL
+    : `${API_BASE_URL}/`;
+  return `${normalizedBase}${normalizeEndpoint(endpoint)}`;
+};
+
+const getAccessToken = () => {
+  return Cookies.get(ACCESS_TOKEN_COOKIE);
+};
+
+const getRefreshCsrfToken = () => {
+  const cookieToken = Cookies.get(REFRESH_CSRF_COOKIE);
+  if (cookieToken) return cookieToken;
+
+  try {
+    return localStorage.getItem(REFRESH_CSRF_COOKIE) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const setRefreshCsrfToken = (csrfToken?: string) => {
+  if (!csrfToken) return;
+
+  Cookies.set(REFRESH_CSRF_COOKIE, csrfToken, {
+    expires: 7,
+    secure: true,
+    sameSite: "Lax",
+  });
+
+  try {
+    localStorage.setItem(REFRESH_CSRF_COOKIE, csrfToken);
+  } catch {
+    // Ignore storage errors in private browsing / restricted environments.
+  }
+};
+
+const clearRefreshCsrfToken = () => {
+  Cookies.remove(REFRESH_CSRF_COOKIE);
+
+  try {
+    localStorage.removeItem(REFRESH_CSRF_COOKIE);
+  } catch {
+    // Ignore storage errors in private browsing / restricted environments.
+  }
+};
+
+const safeParseJson = async <T>(response: Response): Promise<T | null> => {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+};
+
+const extractErrorMessage = (
+  payload: Record<string, any> | null,
+  fallback: string = "Something went wrong"
+) => {
+  if (!payload) return fallback;
+
+  return payload.message || payload.msg || payload.error || fallback;
+};
+
+const shouldAttemptRefresh = (
+  statusCode: number,
+  payload: Record<string, any> | null
+) => {
+  if (statusCode !== 401 && statusCode !== 422) return false;
+
+  const message = extractErrorMessage(payload, "").toLowerCase();
+  const tokenErrorPatterns = [
+    "token has expired",
+    "signature has expired",
+    "bad authorization header",
+    "missing authorization header",
+    "jwt",
+    "token",
+  ];
+
+  const hasSessionContext = Boolean(
+    getAccessToken() || getRefreshCsrfToken() || useUserStore.getState().isLoggedIn
+  );
+
+  return hasSessionContext && tokenErrorPatterns.some((pattern) => message.includes(pattern));
+};
+
+const buildHeaders = (
+  endpoint: string,
+  isFormData: boolean,
+  options: ApiRequestOptions
+) => {
+  const headers = new Headers(options.headers);
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
+
+  const publicAuthEndpoints = new Set([
+    "auth/login",
+    "auth/register",
+    "auth/register-admin",
+    REFRESH_ENDPOINT,
+  ]);
+
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+  if (!options.skipAuth && !publicAuthEndpoints.has(normalizedEndpoint)) {
+    const token = getAccessToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
+  if (normalizedEndpoint === REFRESH_ENDPOINT && !headers.has("X-CSRF-TOKEN")) {
+    const csrfToken = getRefreshCsrfToken();
+    if (csrfToken) {
+      headers.set("X-CSRF-TOKEN", csrfToken);
+    }
+  }
+
+  return headers;
+};
+
+const performRequest = async (
+  endpoint: string,
+  method: HttpMethod,
+  body: unknown,
+  isFormData: boolean,
+  options: ApiRequestOptions
+) => {
+  return fetch(buildUrl(endpoint), {
     method,
-    headers,
+    headers: buildHeaders(endpoint, isFormData, options),
+    credentials: "include",
     body: body
       ? isFormData
         ? (body as FormData)
         : JSON.stringify(body)
       : undefined,
   });
+};
 
-  if (!response.ok) {
-    let errorMessage = "Something went wrong";
-    try {
-      const error = await response.json();
-
-      //No token
-      if (
-        response.status === 422 &&
-        error.msg ===
-          "Bad Authorization header. Expected 'Authorization: Bearer <JWT>'"
-      ) {
-        Cookies.remove("access_token");
-        useUserStore.getState().logout();
-
-        errorMessage = "Session expired. Please log in again.";
-      }
-
-      // Expired token
-      if (
-        response.status === 401 &&
-        error.msg &&
-        error.msg.toLowerCase().includes("token has expired")
-      ) {
-        Cookies.remove("access_token");
-        useUserStore.getState().logout();
-
-        errorMessage = "Session expired. Please log in again.";
-      } else {
-        errorMessage = error.message || error.msg || errorMessage;
-      }
-    } catch (e) {
-      // fallback error message
-    }
-
-    throw new Error(errorMessage);
+const parseResponse = async <T>(response: Response): Promise<T> => {
+  if (response.status === 204) {
+    return {} as T;
   }
 
-  return response.json();
+  const text = await response.text();
+  if (!text) {
+    return {} as T;
+  }
+
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    return text as T;
+  }
+};
+
+const clearAuthState = () => {
+  Cookies.remove(ACCESS_TOKEN_COOKIE);
+  clearRefreshCsrfToken();
+  useUserStore.getState().logout();
+};
+
+const refreshAccessToken = async (): Promise<boolean> => {
+  if (activeRefreshRequest) {
+    return activeRefreshRequest;
+  }
+
+  activeRefreshRequest = (async () => {
+    try {
+      const refreshResponse = await performRequest(
+        REFRESH_ENDPOINT,
+        "POST",
+        undefined,
+        false,
+        { skipAuth: true, skipRefresh: true }
+      );
+
+      const refreshPayload = await safeParseJson<Record<string, any>>(refreshResponse);
+
+      if (!refreshResponse.ok || !refreshPayload?.access_token) {
+        clearAuthState();
+        return false;
+      }
+
+      setAuthSession(refreshPayload.access_token, refreshPayload.csrf_token);
+
+      if (refreshPayload.requires_retry) {
+        const retryResponse = await performRequest(
+          REFRESH_ENDPOINT,
+          "POST",
+          undefined,
+          false,
+          { skipAuth: true, skipRefresh: true }
+        );
+
+        const retryPayload = await safeParseJson<Record<string, any>>(retryResponse);
+        if (!retryResponse.ok || !retryPayload?.access_token) {
+          clearAuthState();
+          return false;
+        }
+
+        setAuthSession(retryPayload.access_token, retryPayload.csrf_token);
+      }
+
+      return true;
+    } catch (error) {
+      clearAuthState();
+      return false;
+    } finally {
+      activeRefreshRequest = null;
+    }
+  })();
+
+  return activeRefreshRequest;
+};
+
+export const setAccessToken = (token: string) => {
+  Cookies.set(ACCESS_TOKEN_COOKIE, token, {
+    expires: 1,
+    secure: true,
+    sameSite: "Lax",
+  });
+};
+
+export const setAuthSession = (accessToken: string, csrfToken?: string) => {
+  setAccessToken(accessToken);
+  setRefreshCsrfToken(csrfToken);
+};
+
+export const clearAuthSession = () => {
+  clearAuthState();
+};
+
+export const apiRequest = async <T>(
+  endpoint: string,
+  method: HttpMethod = "GET",
+  body?: unknown,
+  isFormData: boolean = false,
+  options: ApiRequestOptions = {}
+): Promise<T> => {
+  const normalizedEndpoint = normalizeEndpoint(endpoint);
+  const isRefreshEndpoint = normalizedEndpoint === REFRESH_ENDPOINT;
+
+  let response = await performRequest(endpoint, method, body, isFormData, options);
+
+  if (!response.ok) {
+    const errorPayload = await safeParseJson<Record<string, any>>(response);
+
+    if (
+      !options.skipRefresh &&
+      !isRefreshEndpoint &&
+      shouldAttemptRefresh(response.status, errorPayload)
+    ) {
+      const refreshed = await refreshAccessToken();
+
+      if (refreshed) {
+        response = await performRequest(endpoint, method, body, isFormData, options);
+
+        if (response.ok) {
+          return parseResponse<T>(response);
+        }
+
+        const retryErrorPayload = await safeParseJson<Record<string, any>>(response);
+        throw new Error(extractErrorMessage(retryErrorPayload));
+      }
+    }
+
+    const lowerMessage = extractErrorMessage(errorPayload, "").toLowerCase();
+    if (
+      (response.status === 401 || response.status === 422) &&
+      (lowerMessage.includes("token") ||
+        lowerMessage.includes("authorization") ||
+        lowerMessage.includes("jwt"))
+    ) {
+      clearAuthState();
+      throw new Error("Session expired. Please log in again.");
+    }
+
+    throw new Error(extractErrorMessage(errorPayload));
+  }
+
+  return parseResponse<T>(response);
 };

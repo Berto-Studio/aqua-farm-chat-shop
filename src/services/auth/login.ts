@@ -1,7 +1,13 @@
-import { apiRequest } from "@/hooks/useClient";
+import { apiRequest, setAuthSession } from "@/hooks/useClient";
 import { useUserStore } from "@/store/store";
 import { loginProps, LoginResponse } from "@/types/authentication";
-import Cookies from "js-cookie";
+
+const normalizeUserType = (userType?: string) => {
+  if (!userType) return userType;
+  if (userType === "worker") return "farmer";
+  if (userType === "user") return "consumer";
+  return userType;
+};
 
 export default async function logIn({ email, password }: loginProps): Promise<{
   success: boolean;
@@ -18,32 +24,32 @@ export default async function logIn({ email, password }: loginProps): Promise<{
       password,
     });
 
-    const { data, access_token: token, status, message } = response;
+    const { data, status, message } = response;
+    const token = data?.access_token;
+    const csrfToken = data?.csrf_token;
+    const userData = data?.data;
 
     if (status !== 200) {
       return { success: false, message: message || "Login failed", status };
     }
 
-    if (!data || !token) {
+    if (!userData || !token) {
       return { success: false, message: "Invalid response from server" };
     }
 
     // Set user data in store
     setUser({
-      id: data.id,
-      email: data.email,
-      user_type: data.user_type,
-      full_name: data.full_name,
-      phone_number: data.phone,
-      address: data.address,
+      id: String(userData.id),
+      email: userData.email,
+      user_type: normalizeUserType(userData.user_type),
+      full_name: userData.full_name,
+      phone_number: userData.phone as any,
+      address: userData.address,
+      is_admin: Boolean(userData.is_admin),
     });
 
-    // Store token securely
-    Cookies.set("access_token", token, {
-      expires: 1,
-      secure: true,
-      sameSite: "Lax",
-    });
+    // Store access token and refresh CSRF token used by auth/refresh.
+    setAuthSession(token, csrfToken);
 
     return { success: true, message: "Login successful", status };
   } catch (error) {

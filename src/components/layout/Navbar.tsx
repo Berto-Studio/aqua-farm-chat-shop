@@ -32,6 +32,7 @@ import { getAllConversations } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
 import { useUserStore } from "@/store/store";
 import { useCarts } from "@/hooks/useCart";
+import { logoutUser } from "@/services/auth/logout";
 
 export default function Navbar() {
   const isMobile = useIsMobile();
@@ -39,7 +40,7 @@ export default function Navbar() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Zustand store for user and login state
-  const { user, isLoggedIn, isLoading, logout } = useUserStore();
+  const { user, isLoggedIn, isLoading } = useUserStore();
 
   const allConversations = getAllConversations();
   const conversation = allConversations[0];
@@ -114,6 +115,11 @@ export default function Navbar() {
   const { totalCartItems } = useCarts({ enabled: isLoggedIn });
 
   const cartCount = isLoggedIn ? totalCartItems : 0;
+
+  const handleLogout = async () => {
+    await logoutUser();
+    window.location.href = "/login";
+  };
 
   return (
     <>
@@ -245,10 +251,7 @@ export default function Navbar() {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        onClick={() => {
-                          logout();
-                          window.location.href = "/login";
-                        }}
+                        onClick={handleLogout}
                         className="cursor-pointer"
                       >
                         <span>Logout</span>

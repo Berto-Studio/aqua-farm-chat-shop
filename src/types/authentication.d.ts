@@ -3,16 +3,25 @@ export interface loginProps {
   password: string;
 }
 
+export interface AuthenticatedUser {
+  id: string | number;
+  username?: string;
+  full_name: string;
+  email: string;
+  phone?: string;
+  user_type?: string;
+  address?: string;
+  is_admin?: number | boolean;
+  is_active?: number | boolean;
+  date_of_birth?: string;
+}
+
 export interface LoginResponse {
   data: {
-    id: string;
-    full_name: string;
-    email: string;
-    user_type?: string;
-    phone?: number;
-    address?: string;
+    access_token: string;
+    csrf_token?: string;
+    data: AuthenticatedUser;
   } | null;
-  access_token: string;
   status: number;
   message?: string;
 }

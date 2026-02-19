@@ -2,6 +2,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import Cookies from "js-cookie";
 
+const normalizeUserType = (userType?: string) => {
+  if (!userType) return userType;
+  if (userType === "worker") return "farmer";
+  if (userType === "user") return "consumer";
+  return userType;
+};
+
 type User = {
   id: string;
   full_name?: string;
@@ -39,37 +46,58 @@ export const useUserStore = create<UserState>()(
       setLoading: (isLoading) => set({ isLoading }),
       logout: () => {
         Cookies.remove("access_token");
+        Cookies.remove("refresh_csrf_token");
+        try {
+          localStorage.removeItem("refresh_csrf_token");
+        } catch {
+          // Ignore storage errors in private browsing / restricted environments.
+        }
         set({ user: null, isLoggedIn: false, isLoading: false });
       },
       checkAuthStatus: () => {
         const token = Cookies.get("access_token");
+        const refreshCsrfToken =
+          Cookies.get("refresh_csrf_token") ||
+          (() => {
+            try {
+              return localStorage.getItem("refresh_csrf_token");
+            } catch {
+              return null;
+            }
+          })();
         const { isLoggedIn } = get();
 
-        if (!token && isLoggedIn) {
-          // Token expired but store shows logged in - logout
+        if (!token && !refreshCsrfToken && isLoggedIn) {
+          // No access token and no refresh CSRF means the session cannot be renewed.
           get().logout();
           return false;
         }
 
-        return !!token && isLoggedIn;
+        return isLoggedIn;
       },
       validateUser: async () => {
         const { user, logout } = get();
-        const token = Cookies.get("access_token");
-
-        // if (!token || !user?.id) {
-        //   logout();
-        //   return false;
-        // }
 
         try {
-          const { GetUser } = await import("@/services/user");
-          const response = await GetUser(user.id);
+          const { getAuthMe } = await import("@/services/auth/me");
+          const response = await getAuthMe();
 
-          if (!response.success) {
+          if (!response.success || !response.data) {
             logout();
             return false;
           }
+
+          set({
+            user: {
+              ...user,
+              id: String(response.data.id),
+              email: response.data.email,
+              full_name: response.data.full_name,
+              user_type: normalizeUserType(response.data.user_type),
+              is_admin: Boolean(response.data.is_admin),
+            },
+            isLoggedIn: true,
+          });
 
           return true;
         } catch (error) {

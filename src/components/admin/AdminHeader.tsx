@@ -108,7 +108,10 @@ export default function AdminHeader({
                 )}
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[340px] p-0">
+            <DropdownMenuContent
+              align="end"
+              className="w-[calc(100vw-1rem)] max-w-[340px] p-0"
+            >
               <div className="flex items-center justify-between border-b px-4 py-3">
                 <div>
                   <p className="text-sm font-semibold">Notifications</p>

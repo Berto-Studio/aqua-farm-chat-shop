@@ -19,14 +19,14 @@ const HeroCarouselItems = [
     description:
       "High-quality catfish fingerlings and mature fish for your farm",
     image: "/catfishbg.webp",
-    link: "/products?category=fish",
+    link: "/products?category=Fish",
     color: "from-shopBlack/80 to-shopBlack",
   },
   {
     title: "Healthy Tilapia",
     description: "Farm-raised tilapia for optimal growth and yield",
     image: "/tilapiabg.jpg",
-    link: "/products?category=fish",
+    link: "/products?category=Fish",
     color: "from-shopBlack/80 to-shopBlack",
   },
 ];
@@ -78,7 +78,7 @@ export default function Index() {
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
           Shop by Category
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
           <Link to="/products?category=Fish" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary opacity-80 group-hover:opacity-90 transition-opacity"></div>
@@ -151,6 +151,27 @@ export default function Index() {
               <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
                 <h3 className="text-2xl md:text-3xl font-bold mb-2">Fruits</h3>
                 <p className="text-lg text-center">Juicy fruits available</p>
+                <Button variant="secondary" className="mt-4">
+                  View Products
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link to="/products?category=Farm%20Equipment" className="group">
+            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-700/80 to-amber-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
+              <img
+                src="/placeholder.svg"
+                alt="Farm equipment"
+                className="w-full h-full object-cover"
+              />
+              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">
+                  Farm Equipment
+                </h3>
+                <p className="text-lg text-center">
+                  Pumps, tanks, aerators, and farm tools
+                </p>
                 <Button variant="secondary" className="mt-4">
                   View Products
                 </Button>

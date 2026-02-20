@@ -16,6 +16,7 @@ import SearchDropdown from "@/components/layout/SearchDropdown";
 import CategoryFilter from "@/components/product/CategoryFilter";
 import { useProducts } from "@/hooks/useProducts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { normalizeCategoryName } from "@/constants/categories";
 
 const ITEMS_PER_PAGE = 8;
 
@@ -24,7 +25,11 @@ export default function Products() {
   const [loadedItems, setLoadedItems] = useState(ITEMS_PER_PAGE);
 
   // Get category from URL params
-  const categoryParam = searchParams.get("category") || "all";
+  const rawCategoryParam = searchParams.get("category") || "all";
+  const categoryParam =
+    rawCategoryParam.toLowerCase() === "all"
+      ? "all"
+      : normalizeCategoryName(rawCategoryParam);
 
   // Filter states
   const [sortOption, setSortOption] = useState("featured");
@@ -34,7 +39,10 @@ export default function Products() {
   // Filter products by category
   const filteredProducts = allProducts.filter((product) => {
     if (categoryParam === "all") return true;
-    return product.category.toLowerCase() === categoryParam.toLowerCase();
+    return (
+      normalizeCategoryName(product.category).toLowerCase() ===
+      categoryParam.toLowerCase()
+    );
   });
 
   // Sort products based on selected option
@@ -60,7 +68,9 @@ export default function Products() {
   // Handle category change
   const handleCategoryChange = (category: string) => {
     const params = new URLSearchParams(searchParams.toString());
-    params.set("category", category);
+    const normalizedCategory =
+      category.toLowerCase() === "all" ? "all" : normalizeCategoryName(category);
+    params.set("category", normalizedCategory);
     setSearchParams(params);
   };
 
@@ -87,7 +97,7 @@ export default function Products() {
         <div>
           <h1 className="text-3xl font-bold">Products</h1>
           <p className="text-muted-foreground">
-            Browse our selection of fish and agricultural products
+            Browse fish, produce, livestock, and farm equipment
           </p>
         </div>
 
@@ -134,7 +144,7 @@ export default function Products() {
                 className="ml-1 hover:text-destructive"
                 onClick={() => handleCategoryChange("all")}
               >
-                ×
+                &times;
               </button>
             </Badge>
           )}

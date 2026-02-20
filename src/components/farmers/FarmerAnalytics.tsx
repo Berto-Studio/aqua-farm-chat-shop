@@ -23,6 +23,7 @@ export default function FarmerAnalytics() {
     { name: "Fruits", value: 300, color: "#10b981" },
     { name: "Live Stock", value: 200, color: "#f59e0b" },
     { name: "Fish", value: 100, color: "#ef4444" },
+    { name: "Farm Equipment", value: 150, color: "#3b82f6" },
   ];
 
   const topProducts = [
@@ -56,6 +57,10 @@ export default function FarmerAnalytics() {
     fish: {
       label: "Fish",
       color: "#ef4444",
+    },
+    farmEquipment: {
+      label: "Farm Equipment",
+      color: "#3b82f6",
     },
   };
 

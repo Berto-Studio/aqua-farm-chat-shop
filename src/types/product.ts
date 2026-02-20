@@ -1,4 +1,9 @@
-export type ProductCategory = "Live Stock" | "Fish" | "Vegetables" | "Fruits";
+export type ProductCategory =
+  | "Live Stock"
+  | "Fish"
+  | "Vegetables"
+  | "Fruits"
+  | "Farm Equipment";
 
 export interface Product {
   id?: string | number;

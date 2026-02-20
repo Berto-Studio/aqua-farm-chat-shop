@@ -1,6 +1,10 @@
 
 import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/useCategories";
+import {
+  DEFAULT_PRODUCT_CATEGORIES,
+  normalizeCategoryName,
+} from "@/constants/categories";
 
 interface CategoryFilterProps {
   activeCategory: string;
@@ -11,7 +15,8 @@ export default function CategoryFilter({
   activeCategory,
   onCategoryChange,
 }: CategoryFilterProps) {
-  const { data: categories = [], isLoading, error } = useCategories();
+  const { data: categories = [], isLoading } = useCategories();
+  const normalizedActiveCategory = normalizeCategoryName(activeCategory);
 
   if (isLoading) {
     return (
@@ -25,58 +30,30 @@ export default function CategoryFilter({
     );
   }
 
-  if (error) {
-    console.error('Error fetching categories:', error);
-    // Fallback to default categories if API fails
-    const fallbackCategories = [
-      { id: 1, name: "fish" },
-      { id: 2, name: "vegetable" },
-      { id: 3, name: "fruit" },
-      { id: 4, name: "livestock" },
-    ];
-    
-    return (
-      <div className="overflow-x-auto pb-2">
-        <div className="flex gap-2 min-w-max">
-          <Button
-            variant={activeCategory === "all" ? "default" : "outline"}
-            size="sm"
-            onClick={() => onCategoryChange("all")}
-            className="capitalize"
-          >
-            All Products
-          </Button>
-          {fallbackCategories.map((category) => (
-            <Button
-              key={category.id}
-              variant={activeCategory === category.name ? "default" : "outline"}
-              size="sm"
-              onClick={() => onCategoryChange(category.name)}
-              className="capitalize"
-            >
-              {category.name}
-            </Button>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="overflow-x-auto pb-2">
       <div className="flex gap-2 min-w-max">
         <Button
-          variant={activeCategory === "all" ? "default" : "outline"}
+          variant={
+            normalizedActiveCategory.toLowerCase() === "all"
+              ? "default"
+              : "outline"
+          }
           size="sm"
           onClick={() => onCategoryChange("all")}
           className="capitalize"
         >
           All Products
         </Button>
-        {Array.isArray(categories) && categories.map((category) => (
+        {(Array.isArray(categories) ? categories : DEFAULT_PRODUCT_CATEGORIES).map((category) => (
           <Button
             key={category.id}
-            variant={activeCategory === category.name ? "default" : "outline"}
+            variant={
+              normalizedActiveCategory.toLowerCase() ===
+              category.name.toLowerCase()
+                ? "default"
+                : "outline"
+            }
             size="sm"
             onClick={() => onCategoryChange(category.name)}
             className="capitalize"

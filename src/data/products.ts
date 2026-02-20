@@ -170,6 +170,19 @@ export const products: Product[] = [
     weight_per_unit: "1 goat",
     rating: 4.9,
   },
+  {
+    id: 13,
+    title: "Solar Pond Aerator Pump",
+    description:
+      "Energy-efficient aerator pump for pond oxygenation. Includes fittings for quick setup and reliable daily operation.",
+    price: 149.99,
+    category: "Farm Equipment",
+    image_url: "/placeholder.svg",
+    quantity: 45,
+    weight_per_unit: "1 unit",
+    rating: 4.7,
+    isFeatured: true,
+  },
 ];
 
 export const getFeaturedProducts = () =>

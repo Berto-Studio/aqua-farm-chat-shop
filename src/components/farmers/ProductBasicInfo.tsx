@@ -39,6 +39,7 @@ export default function ProductBasicInfo({
         <div className="space-y-2">
           <Label htmlFor="category">Category</Label>
           <Select
+            value={formData.category}
             onValueChange={(value) => onInputChange("category", value)}
             disabled={categoriesLoading}
           >

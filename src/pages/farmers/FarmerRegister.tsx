@@ -167,6 +167,7 @@ export default function FarmerRegister() {
                         <SelectItem value="fruits">Fruits</SelectItem>
                         <SelectItem value="vegetables">Vegetables</SelectItem>
                         <SelectItem value="fish">Fish Farm</SelectItem>
+                        <SelectItem value="equipment">Farm Equipment</SelectItem>
                         <SelectItem value="mixed">Mixed Farming</SelectItem>
                       </SelectContent>
                     </Select>

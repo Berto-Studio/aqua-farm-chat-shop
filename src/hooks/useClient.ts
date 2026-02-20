@@ -9,7 +9,7 @@ const LEGACY_REFRESH_CSRF_COOKIE = "csrf_refresh_token";
 const ACCESS_TOKEN_STORAGE_KEY = "access_token";
 const REFRESH_ENDPOINT = "auth/refresh";
 
-type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
+type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
 type ApiRequestOptions = {
   headers?: HeadersInit;

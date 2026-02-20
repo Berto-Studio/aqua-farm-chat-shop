@@ -4,23 +4,101 @@ import { ArrowLeft, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { getAdminOrderById } from "@/data/adminDashboard";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAdminOrder, useUpdateAdminOrderStatus } from "@/hooks/useAdminOrders";
+import {
+  getOrderItemName,
+  getOrderItemUnitPrice,
+  getOrderPaymentLabel,
+  getOrderShippingAddress,
+  getOrderStatusLabel,
+  getOrderTotal,
+} from "@/lib/adminTransformers";
 
 const statusClass: Record<string, string> = {
-  Delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  Processing: "bg-blue-50 text-blue-700 border-blue-200",
-  Pending: "bg-amber-50 text-amber-700 border-amber-200",
-  Cancelled: "bg-rose-50 text-rose-700 border-rose-200",
+  delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  processing: "bg-blue-50 text-blue-700 border-blue-200",
+  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  cancelled: "bg-rose-50 text-rose-700 border-rose-200",
 };
+
+const statusOptions = ["pending", "processing", "delivered", "cancelled"];
+
+const toStatusLabel = (value: string) =>
+  value.charAt(0).toUpperCase() + value.slice(1);
 
 export default function AdminOrderDetails() {
   const navigate = useNavigate();
   const { orderId } = useParams<{ orderId: string }>();
+  const { data: order, isLoading, isError, error } = useAdminOrder(orderId);
+  const { mutate: updateStatus, isPending: isUpdatingStatus } =
+    useUpdateAdminOrderStatus();
 
-  const order = useMemo(
-    () => (orderId ? getAdminOrderById(orderId) : undefined),
-    [orderId]
+  const normalizedStatus = useMemo(
+    () => String(getOrderStatusLabel(order)).toLowerCase(),
+    [order]
   );
+  const selectStatusValue = statusOptions.includes(normalizedStatus)
+    ? normalizedStatus
+    : undefined;
+
+  const formatDate = (value?: string) => {
+    if (!value) return "N/A";
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime())
+      ? value
+      : parsed.toLocaleString();
+  };
+
+  if (!orderId) {
+    return (
+      <div className="p-6 space-y-4">
+        <Button variant="outline" onClick={() => navigate("/admin/orders")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Orders
+        </Button>
+        <Card>
+          <CardContent className="p-6 text-destructive">Missing order id.</CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <Button variant="outline" onClick={() => navigate("/admin/orders")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Orders
+        </Button>
+        <Card>
+          <CardContent className="p-6 text-muted-foreground">Loading order...</CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-6 space-y-4">
+        <Button variant="outline" onClick={() => navigate("/admin/orders")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Orders
+        </Button>
+        <Card>
+          <CardContent className="p-6 text-destructive">
+            {(error as Error)?.message || "Failed to load order."}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!order) {
     return (
@@ -46,13 +124,15 @@ export default function AdminOrderDetails() {
           </Button>
           <div>
             <h1 className="text-2xl font-bold">Order {order.id}</h1>
-            <p className="text-sm text-muted-foreground">Placed on {order.date}</p>
+            <p className="text-sm text-muted-foreground">
+              Placed on {formatDate(order.created_at)}
+            </p>
           </div>
         </div>
 
         <Button
           variant="outline"
-          onClick={() => navigate(`/admin/users/${order.userId}`)}
+          onClick={() => navigate(`/admin/users/${order.user_id}`)}
         >
           <User className="mr-2 h-4 w-4" />
           View User
@@ -65,27 +145,31 @@ export default function AdminOrderDetails() {
             <CardTitle>Order Items</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {order.items.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between rounded-lg border p-4"
-              >
-                <div>
-                  <p className="font-semibold">{item.productName}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Quantity: {item.quantity}
-                  </p>
+            {order.items?.length ? (
+              order.items.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between rounded-lg border p-4"
+                >
+                  <div>
+                    <p className="font-semibold">{getOrderItemName(item)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Quantity: {item.quantity}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">
+                      ${getOrderItemUnitPrice(item).toFixed(2)} each
+                    </p>
+                    <p className="font-semibold">
+                      ${(getOrderItemUnitPrice(item) * Number(item.quantity || 0)).toFixed(2)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm text-muted-foreground">
-                    ${item.unitPrice.toFixed(2)} each
-                  </p>
-                  <p className="font-semibold">
-                    ${(item.unitPrice * item.quantity).toFixed(2)}
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-muted-foreground">No order items available.</p>
+            )}
           </CardContent>
         </Card>
 
@@ -98,33 +182,56 @@ export default function AdminOrderDetails() {
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Status
               </p>
-              <Badge
-                variant="outline"
-                className={`mt-2 ${statusClass[order.status] || ""}`}
-              >
-                {order.status}
-              </Badge>
+              <div className="mt-2 space-y-2">
+                <Badge
+                  variant="outline"
+                  className={statusClass[normalizedStatus] || ""}
+                >
+                  {toStatusLabel(normalizedStatus)}
+                </Badge>
+                <Select
+                  value={selectStatusValue}
+                  onValueChange={(value) =>
+                    updateStatus({
+                      orderId: order.id,
+                      status: value,
+                    })
+                  }
+                  disabled={isUpdatingStatus}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Update status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {statusOptions.map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {toStatusLabel(status)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="rounded-lg border p-3">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Payment Method
               </p>
-              <p className="mt-1 font-semibold">{order.payment}</p>
+              <p className="mt-1 font-semibold">{getOrderPaymentLabel(order)}</p>
             </div>
 
             <div className="rounded-lg border p-3">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Shipping Address
               </p>
-              <p className="mt-1 text-sm">{order.shippingAddress}</p>
+              <p className="mt-1 text-sm">{getOrderShippingAddress(order)}</p>
             </div>
 
             <div className="rounded-lg border p-3">
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Total
               </p>
-              <p className="mt-1 text-2xl font-bold">${order.total.toFixed(2)}</p>
+              <p className="mt-1 text-2xl font-bold">${getOrderTotal(order).toFixed(2)}</p>
             </div>
 
             {order.notes ? (

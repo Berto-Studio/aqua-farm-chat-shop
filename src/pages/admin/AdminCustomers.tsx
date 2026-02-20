@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -13,17 +12,42 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Search, Eye, Mail, UserPlus, ShoppingCart } from "lucide-react";
-import { adminUsers as users } from "@/data/adminDashboard";
+import { Users, Search, Eye, Mail, ShoppingCart } from "lucide-react";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
+import {
+  getUserDisplayName,
+  getUserLocation,
+  getUserOrderCount,
+  getUserStatusLabel,
+  getUserTotalSpent,
+  isUserActive,
+} from "@/lib/adminTransformers";
 
 export default function AdminCustomers() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  
-  const filteredUsers = users.filter((user) =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.location.toLowerCase().includes(searchTerm.toLowerCase())
+  const { data, isLoading, isError, error } = useAdminUsers({ per_page: 200 });
+
+  const users = data?.data || [];
+
+  const filteredUsers = users.filter((user) => {
+    const q = searchTerm.toLowerCase();
+    return (
+      getUserDisplayName(user).toLowerCase().includes(q) ||
+      user.email.toLowerCase().includes(q) ||
+      getUserLocation(user).toLowerCase().includes(q)
+    );
+  });
+
+  const totalUsers = data?.meta?.total ?? users.length;
+  const activeUsers = users.filter((user) => isUserActive(user)).length;
+  const totalOrders = users.reduce(
+    (sum, user) => sum + getUserOrderCount(user),
+    0
+  );
+  const totalRevenue = users.reduce(
+    (sum, user) => sum + getUserTotalSpent(user),
+    0
   );
   
   return (
@@ -39,7 +63,7 @@ export default function AdminCustomers() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{users.length}</div>
+              <div className="text-2xl font-bold">{totalUsers}</div>
               <Users className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
@@ -53,9 +77,7 @@ export default function AdminCustomers() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">
-                {users.filter((u) => u.status === "Active").length}
-              </div>
+              <div className="text-2xl font-bold">{activeUsers}</div>
               <Users className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
@@ -69,9 +91,7 @@ export default function AdminCustomers() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">
-                {users.reduce((sum, user) => sum + user.orders, 0)}
-              </div>
+              <div className="text-2xl font-bold">{totalOrders}</div>
               <ShoppingCart className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
@@ -86,7 +106,7 @@ export default function AdminCustomers() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="text-2xl font-bold">
-                ${users.reduce((sum, user) => sum + user.spent, 0).toFixed(2)}
+                ${totalRevenue.toFixed(2)}
               </div>
               <ShoppingCart className="h-5 w-5 text-muted-foreground" />
             </div>
@@ -104,10 +124,15 @@ export default function AdminCustomers() {
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         </div>
-        <Button>
-          <UserPlus className="mr-2 h-4 w-4" /> Add User
-        </Button>
       </div>
+
+      {isError ? (
+        <Card>
+          <CardContent className="p-6 text-destructive">
+            {(error as Error)?.message || "Failed to load users."}
+          </CardContent>
+        </Card>
+      ) : null}
       
       <div className="border rounded-lg overflow-hidden">
         <Table>
@@ -124,17 +149,26 @@ export default function AdminCustomers() {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  Loading users...
+                </TableCell>
+              </TableRow>
+            ) : null}
             {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.id}</TableCell>
-                <TableCell>{user.name}</TableCell>
+                <TableCell>{getUserDisplayName(user)}</TableCell>
                 <TableCell>{user.email}</TableCell>
-                <TableCell>{user.location}</TableCell>
-                <TableCell>{user.orders}</TableCell>
-                <TableCell>${user.spent.toFixed(2)}</TableCell>
+                <TableCell>{getUserLocation(user)}</TableCell>
+                <TableCell>{getUserOrderCount(user)}</TableCell>
+                <TableCell>${getUserTotalSpent(user).toFixed(2)}</TableCell>
                 <TableCell>
-                  <Badge variant={user.status === "Active" ? "success" : "secondary"}>
-                    {user.status}
+                  <Badge
+                    variant={isUserActive(user) ? "success" : "secondary"}
+                  >
+                    {getUserStatusLabel(user)}
                   </Badge>
                 </TableCell>
                 <TableCell>
@@ -159,6 +193,13 @@ export default function AdminCustomers() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && filteredUsers.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                  No users found.
+                </TableCell>
+              </TableRow>
+            ) : null}
           </TableBody>
         </Table>
       </div>

@@ -10,9 +10,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import {
-  AdminNotification,
-  useAdminNotificationStore,
-} from "@/store/adminNotifications";
+  useAdminNotifications,
+  useMarkAdminNotificationRead,
+  useMarkAllAdminNotificationsRead,
+} from "@/hooks/useAdminNotifications";
+import {
+  NormalizedAdminNotification,
+  normalizeAdminNotification,
+} from "@/lib/adminTransformers";
 
 type AdminHeaderProps = {
   showMenuButton?: boolean;
@@ -31,7 +36,7 @@ const getHeaderTitle = (pathname: string) => {
   return "Admin";
 };
 
-const getNotificationTypeLabel = (notification: AdminNotification) => {
+const getNotificationTypeLabel = (notification: NormalizedAdminNotification) => {
   if (notification.type === "order") return "Order";
   if (notification.type === "message") return "Message";
   return "System";
@@ -43,12 +48,14 @@ export default function AdminHeader({
 }: AdminHeaderProps) {
   const pathname = useLocation().pathname;
   const navigate = useNavigate();
+  const { data: notificationsResponse } = useAdminNotifications({ per_page: 100 });
+  const { mutate: markAsRead } = useMarkAdminNotificationRead();
+  const { mutate: markAllAsRead } = useMarkAllAdminNotificationsRead();
 
-  const notifications = useAdminNotificationStore((state) => state.notifications);
-  const markAsRead = useAdminNotificationStore((state) => state.markAsRead);
-  const markTypeAsRead = useAdminNotificationStore((state) => state.markTypeAsRead);
-  const markAllAsRead = useAdminNotificationStore((state) => state.markAllAsRead);
-
+  const notifications = useMemo(
+    () => (notificationsResponse?.data || []).map(normalizeAdminNotification),
+    [notificationsResponse?.data]
+  );
   const unreadCount = notifications.filter((notification) => !notification.read).length;
   const unreadMessageCount = notifications.filter(
     (notification) => !notification.read && notification.type === "message"
@@ -64,16 +71,27 @@ export default function AdminHeader({
   );
 
   useEffect(() => {
-    if (pathname.startsWith("/admin/chat")) {
-      markTypeAsRead("message");
-    }
-    if (pathname.startsWith("/admin/orders")) {
-      markTypeAsRead("order");
-    }
-  }, [pathname, markTypeAsRead]);
+    const typeToMark = pathname.startsWith("/admin/chat")
+      ? "message"
+      : pathname.startsWith("/admin/orders")
+        ? "order"
+        : null;
 
-  const handleNotificationClick = (notification: AdminNotification) => {
-    markAsRead(notification.id);
+    if (!typeToMark) return;
+
+    const unreadOfType = notifications.filter(
+      (notification) => !notification.read && notification.type === typeToMark
+    );
+
+    unreadOfType.forEach((notification) => {
+      markAsRead(notification.id);
+    });
+  }, [markAsRead, notifications, pathname]);
+
+  const handleNotificationClick = (notification: NormalizedAdminNotification) => {
+    if (!notification.read) {
+      markAsRead(notification.id);
+    }
 
     if (notification.href) {
       navigate(notification.href);
@@ -125,7 +143,7 @@ export default function AdminHeader({
                     variant="ghost"
                     size="sm"
                     className="h-8 px-2 text-xs"
-                    onClick={markAllAsRead}
+                    onClick={() => markAllAsRead()}
                   >
                     <CheckCheck className="mr-1 h-3.5 w-3.5" />
                     Mark all read

@@ -1,69 +1,109 @@
-
+import { formatDistanceToNow } from "date-fns";
 import DashboardCard from "@/components/admin/DashboardCard";
 import StatisticsChart from "@/components/admin/StatisticsChart";
-import { 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  MessageCircle,
-  DollarSign
-} from "lucide-react";
+import { DollarSign, Package, ShoppingCart, Users } from "lucide-react";
+import { useProducts } from "@/hooks/useProducts";
+import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useAdminConversations } from "@/hooks/useAdminMessages";
+import { useAdminOrders, useAdminOrderStats } from "@/hooks/useAdminOrders";
+import {
+  getOrderItemsCount,
+  getOrderStatusLabel,
+  getOrderTotal,
+  getOrderUserName,
+  getUserDisplayName,
+  mapAdminConversationToChatConversation,
+} from "@/lib/adminTransformers";
+
+const statusClass: Record<string, string> = {
+  delivered: "bg-green-50 text-green-700 border border-green-200",
+  processing: "bg-blue-50 text-blue-700 border border-blue-200",
+  pending: "bg-amber-50 text-amber-700 border border-amber-200",
+  cancelled: "bg-red-50 text-red-700 border border-red-200",
+};
 
 export default function AdminDashboard() {
+  const { data: products = [] } = useProducts();
+  const { data: usersResponse } = useAdminUsers({ per_page: 200 });
+  const { data: ordersResponse, isLoading: isOrdersLoading } = useAdminOrders({
+    per_page: 20,
+    sort_by: "date",
+    sort_dir: "desc",
+  });
+  const { data: orderStats } = useAdminOrderStats();
+  const { data: conversationsResponse } = useAdminConversations();
+
+  const users = usersResponse?.data || [];
+  const orders = ordersResponse?.data || [];
+  const conversations = (conversationsResponse?.data || [])
+    .map(mapAdminConversationToChatConversation)
+    .sort(
+      (a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime()
+    );
+
+  const totalRevenue =
+    orderStats?.total_revenue ??
+    orders.reduce((sum, order) => sum + getOrderTotal(order), 0);
+  const totalOrders = orderStats?.total_orders ?? ordersResponse?.meta?.total ?? orders.length;
+  const totalUsers = usersResponse?.meta?.total ?? users.length;
+  const totalProducts = products.length;
+
+  const recentOrders = [...orders]
+    .sort(
+      (a, b) =>
+        new Date(b.created_at || "").getTime() -
+        new Date(a.created_at || "").getTime()
+    )
+    .slice(0, 5);
+
+  const recentMessages = conversations.slice(0, 5);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
       <div className="p-4 sm:p-6">
-        {/* Header */}
         <div className="mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
             Admin Dashboard
           </h1>
-          <p className="text-muted-foreground mt-2 text-sm sm:text-base lg:text-lg">Welcome back, Admin</p>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base lg:text-lg">
+            Live overview of orders, users, products and conversations.
+          </p>
         </div>
-        
-        {/* Stats Cards */}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <DashboardCard
             title="Total Revenue"
-            value="$24,356.00"
+            value={`$${Number(totalRevenue || 0).toFixed(2)}`}
             icon={<DollarSign className="h-4 w-4" />}
-            trendValue={12.3}
-            trendLabel="from last month"
           />
           <DashboardCard
             title="Orders"
-            value="142"
+            value={totalOrders}
             icon={<ShoppingCart className="h-4 w-4" />}
-            trendValue={-2.5}
-            trendLabel="from last month"
           />
           <DashboardCard
             title="Products"
-            value="35"
+            value={totalProducts}
             icon={<Package className="h-4 w-4" />}
           />
           <DashboardCard
             title="Users"
-            value="89"
+            value={totalUsers}
             icon={<Users className="h-4 w-4" />}
-            trendValue={8.1}
-            trendLabel="from last month"
           />
         </div>
-        
-        {/* Charts */}
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <StatisticsChart 
-            title="Sales Overview" 
+          <StatisticsChart
+            title="Sales Overview"
             description="Compare sales by fish type"
           />
-          <StatisticsChart 
-            title="Order Trends" 
+          <StatisticsChart
+            title="Order Trends"
             description="Monthly order statistics"
           />
         </div>
-        
-        {/* Recent Activities Section */}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-lg border border-0 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
@@ -79,99 +119,105 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[
-                    { 
-                      id: "ORD-5623", 
-                      user: "John Smith", 
-                      products: "Catfish Fingerlings x2", 
-                      total: "$52.99", 
-                      status: "Delivered" 
-                    },
-                    { 
-                      id: "ORD-5622", 
-                      user: "Sarah Johnson", 
-                      products: "Tilapia Mature x1", 
-                      total: "$69.99", 
-                      status: "Processing" 
-                    },
-                    { 
-                      id: "ORD-5621", 
-                      user: "Michael Brown", 
-                      products: "Catfish Mature x2", 
-                      total: "$179.98", 
-                      status: "Shipped" 
-                    },
-                    { 
-                      id: "ORD-5620", 
-                      user: "Emily Davis", 
-                      products: "Tilapia Fingerlings x3", 
-                      total: "$59.97", 
-                      status: "Delivered" 
-                    },
-                  ].map((order) => (
-                    <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                      <td className="py-3 px-2 font-medium">{order.id}</td>
-                      <td className="py-3 px-2 text-muted-foreground hidden sm:table-cell">{order.user}</td>
-                      <td className="py-3 px-2 text-muted-foreground">
-                        <div className="truncate max-w-[120px] sm:max-w-none">{order.products}</div>
-                      </td>
-                      <td className="py-3 px-2 font-semibold">{order.total}</td>
-                      <td className="py-3 px-2">
-                        <span 
-                          className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                            order.status === "Delivered" 
-                              ? "bg-green-50 text-green-700 border border-green-200" 
-                              : order.status === "Processing"
-                              ? "bg-blue-50 text-blue-700 border border-blue-200"
-                              : "bg-amber-50 text-amber-700 border border-amber-200"
-                          }`}
-                        >
-                          {order.status}
-                        </span>
+                  {isOrdersLoading ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-muted-foreground"
+                      >
+                        Loading recent orders...
                       </td>
                     </tr>
-                  ))}
+                  ) : recentOrders.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        className="py-8 text-center text-muted-foreground"
+                      >
+                        No orders yet.
+                      </td>
+                    </tr>
+                  ) : (
+                    recentOrders.map((order) => {
+                      const status = getOrderStatusLabel(order);
+
+                      return (
+                        <tr
+                          key={order.id}
+                          className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors"
+                        >
+                          <td className="py-3 px-2 font-medium">{order.id}</td>
+                          <td className="py-3 px-2 text-muted-foreground hidden sm:table-cell">
+                            {getOrderUserName(order)}
+                          </td>
+                          <td className="py-3 px-2 text-muted-foreground">
+                            <div className="truncate max-w-[120px] sm:max-w-none">
+                              {getOrderItemsCount(order)} items
+                            </div>
+                          </td>
+                          <td className="py-3 px-2 font-semibold">
+                            ${getOrderTotal(order).toFixed(2)}
+                          </td>
+                          <td className="py-3 px-2">
+                            <span
+                              className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
+                                statusClass[status.toLowerCase()] ||
+                                "bg-gray-50 text-gray-700 border border-gray-200"
+                              }`}
+                            >
+                              {status}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
-          
+
           <div className="bg-white p-4 sm:p-6 rounded-lg border border-0 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Recent Messages</h2>
             <div className="space-y-4">
-              {[
-                { 
-                  id: "msg-1", 
-                  user: "John Doe", 
-                  message: "Hello, I'm interested in purchasing some catfish fingerlings. Do you ship to California?", 
-                  time: "10:23 AM" 
-                },
-                { 
-                  id: "msg-2", 
-                  user: "Sarah Smith", 
-                  message: "Hi there, I received my order of tilapia but one of the fish looks unhealthy. Can you help?", 
-                  time: "09:45 AM" 
-                },
-                { 
-                  id: "msg-3", 
-                  user: "Michael Johnson", 
-                  message: "What's the minimum order quantity for catfish?", 
-                  time: "Yesterday" 
-                },
-              ].map((message) => (
-                <div key={message.id} className="flex items-start gap-3 pb-4 border-b last:border-0">
-                  <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
-                    {message.user.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="font-medium text-sm sm:text-base truncate">{message.user}</span>
-                      <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{message.time}</span>
+              {recentMessages.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No messages yet.</p>
+              ) : (
+                recentMessages.map((conversation) => {
+                  const lastMessage =
+                    conversation.messages[conversation.messages.length - 1];
+
+                  return (
+                    <div
+                      key={conversation.id}
+                      className="flex items-start gap-3 pb-4 border-b last:border-0"
+                    >
+                      <div className="h-8 w-8 sm:h-10 sm:w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold text-sm">
+                        {getUserDisplayName({
+                          id: conversation.userId,
+                          email: "",
+                          full_name: conversation.userName,
+                        }).charAt(0)}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="font-medium text-sm sm:text-base truncate">
+                            {conversation.userName}
+                          </span>
+                          <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                            {formatDistanceToNow(conversation.lastMessageTime, {
+                              addSuffix: true,
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
+                          {lastMessage?.content || "No message preview available."}
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{message.message}</p>
-                  </div>
-                </div>
-              ))}
+                  );
+                })
+              )}
             </div>
           </div>
         </div>

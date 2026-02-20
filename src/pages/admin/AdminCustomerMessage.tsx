@@ -1,12 +1,23 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatInterface from "@/components/chat/ChatInterface";
-import { ChatMessage } from "@/types/chat";
-import { getConversationById } from "@/data/chat";
-import { getAdminUserById } from "@/data/adminDashboard";
+import {
+  useAdminConversationMessages,
+  useAdminConversations,
+  useCreateAdminConversation,
+  useMarkAdminConversationRead,
+  useSendAdminConversationMessage,
+} from "@/hooks/useAdminMessages";
+import { useAdminUser } from "@/hooks/useAdminUsers";
+import {
+  getUserDisplayName,
+  getUserLocation,
+  mapAdminMessageToChatMessage,
+} from "@/lib/adminTransformers";
+import { useUserStore } from "@/store/store";
 
 export default function AdminCustomerMessage() {
   const navigate = useNavigate();
@@ -15,23 +26,49 @@ export default function AdminCustomerMessage() {
     customerId?: string;
   }>();
   const resolvedUserId = userId || customerId;
+  const adminUser = useUserStore((state) => state.user);
+  const currentUserId = String(adminUser?.id ?? "admin");
 
-  const user = useMemo(
-    () => (resolvedUserId ? getAdminUserById(resolvedUserId) : undefined),
-    [resolvedUserId]
-  );
+  const {
+    data: user,
+    isLoading: isUserLoading,
+    isError: isUserError,
+    error: userError,
+  } = useAdminUser(resolvedUserId);
+  const { data: conversationsResponse } = useAdminConversations();
+  const { mutate: markConversationRead } = useMarkAdminConversationRead();
+  const { mutateAsync: createConversationAsync, isPending: isCreatingConversation } =
+    useCreateAdminConversation();
+  const { mutateAsync: sendMessageAsync, isPending: isSendingMessage } =
+    useSendAdminConversationMessage();
 
-  const seedConversation = useMemo(
+  const activeConversation = useMemo(() => {
+    if (!user) return undefined;
+    return (conversationsResponse?.data || []).find(
+      (conversation) => String(conversation.user_id) === String(user.id)
+    );
+  }, [conversationsResponse?.data, user]);
+
+  const { data: messagesResponse, isLoading: isMessagesLoading } =
+    useAdminConversationMessages(activeConversation?.id, { per_page: 100 });
+
+  const messages = useMemo(
     () =>
-      user?.conversationId ? getConversationById(user.conversationId) : undefined,
-    [user?.conversationId]
+      (messagesResponse?.data || [])
+        .map((message) =>
+          mapAdminMessageToChatMessage(message, getUserDisplayName(user))
+        )
+        .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+    [messagesResponse?.data, user]
   );
 
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    seedConversation?.messages || []
-  );
+  useEffect(() => {
+    if (activeConversation?.id) {
+      markConversationRead(String(activeConversation.id));
+    }
+  }, [activeConversation?.id, markConversationRead]);
 
-  if (!user) {
+  if (!resolvedUserId) {
     return (
       <div className="p-6 space-y-4">
         <Button variant="outline" onClick={() => navigate("/admin/users")}>
@@ -39,23 +76,62 @@ export default function AdminCustomerMessage() {
           Back to Users
         </Button>
         <Card>
-          <CardContent className="p-6 text-destructive">User not found.</CardContent>
+          <CardContent className="p-6 text-destructive">Missing user id.</CardContent>
         </Card>
       </div>
     );
   }
 
-  const handleSendMessage = (content: string) => {
-    const newMessage: ChatMessage = {
-      id: `admin-${Date.now()}`,
-      senderId: "admin",
-      receiverId: user.id,
-      content,
-      timestamp: new Date(),
-      isRead: false,
-      senderName: "Admin",
-    };
-    setMessages((prev) => [...prev, newMessage]);
+  if (isUserLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <Button variant="outline" onClick={() => navigate("/admin/users")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Users
+        </Button>
+        <Card>
+          <CardContent className="p-6 text-muted-foreground">Loading user...</CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isUserError || !user) {
+    return (
+      <div className="p-6 space-y-4">
+        <Button variant="outline" onClick={() => navigate("/admin/users")}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Users
+        </Button>
+        <Card>
+          <CardContent className="p-6 text-destructive">
+            {(userError as Error)?.message || "User not found."}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const handleSendMessage = async (content: string) => {
+    if (!content.trim()) return;
+
+    try {
+      let conversationId = activeConversation?.id
+        ? String(activeConversation.id)
+        : undefined;
+
+      if (!conversationId) {
+        const created = await createConversationAsync(user.id!);
+        conversationId = String(created.id);
+      }
+
+      await sendMessageAsync({
+        conversationId,
+        content,
+      });
+    } catch (sendError) {
+      console.error("Failed to send admin message:", sendError);
+    }
   };
 
   return (
@@ -67,7 +143,7 @@ export default function AdminCustomerMessage() {
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Message {user.name}</h1>
+            <h1 className="text-2xl font-bold">Message {getUserDisplayName(user)}</h1>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
@@ -88,7 +164,7 @@ export default function AdminCustomerMessage() {
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Name
               </p>
-              <p className="mt-1 font-semibold">{user.name}</p>
+              <p className="mt-1 font-semibold">{getUserDisplayName(user)}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -100,16 +176,16 @@ export default function AdminCustomerMessage() {
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Last Known Location
               </p>
-              <p className="mt-1 font-semibold">{user.location}</p>
+              <p className="mt-1 font-semibold">{getUserLocation(user)}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Conversation
               </p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {seedConversation
-                  ? `Thread #${seedConversation.id}`
-                  : "No previous thread found. Start a new message."}
+                {activeConversation
+                  ? `Thread #${activeConversation.id}`
+                  : "No previous thread found. Sending a message will open a new thread."}
               </p>
             </div>
           </CardContent>
@@ -119,8 +195,17 @@ export default function AdminCustomerMessage() {
           <ChatInterface
             messages={messages}
             onSendMessage={handleSendMessage}
-            currentUserId="admin"
+            currentUserId={currentUserId}
           />
+          {isMessagesLoading || isCreatingConversation || isSendingMessage ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {isCreatingConversation
+                ? "Opening conversation..."
+                : isSendingMessage
+                  ? "Sending message..."
+                  : "Loading messages..."}
+            </p>
+          ) : null}
         </div>
       </div>
     </div>

@@ -1,26 +1,12 @@
-
-import { useEffect } from "react";
 import { useUserStore } from "@/store/store";
-import { useNavigate } from "react-router-dom";
 
 export const useAuth = () => {
-  const { user, isLoggedIn, isLoading, logout, checkAuthStatus, validateUser } =
-    useUserStore();
-  const navigate = useNavigate();
-
-  // Validate persisted auth state and try refresh flow via auth/me on mount.
-  useEffect(() => {
-    const validateOnMount = async () => {
-      if (!isLoggedIn) return;
-
-      const isValid = await validateUser();
-      if (!isValid) {
-        navigate("/login");
-      }
-    };
-
-    validateOnMount();
-  }, [isLoggedIn, validateUser, navigate]);
+  const user = useUserStore((state) => state.user);
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const isLoading = useUserStore((state) => state.isLoading);
+  const logout = useUserStore((state) => state.logout);
+  const checkAuthStatus = useUserStore((state) => state.checkAuthStatus);
+  const validateUser = useUserStore((state) => state.validateUser);
 
   const isAuthenticated = () => {
     return checkAuthStatus();

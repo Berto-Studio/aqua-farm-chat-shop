@@ -22,14 +22,14 @@ import { Link } from "react-router-dom";
 import AddProductForm from "@/components/farmers/AddProductForm";
 import PaginatedProductsList from "@/components/farmers/PaginatedProductsList";
 import FarmerAnalytics from "@/components/farmers/FarmerAnalytics";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserStore } from "@/store/store";
 import { GetFarmerOrders } from "@/services/orders";
 import { GetFarmerStats } from "@/services/products";
 import { useFarmerStats } from "@/hooks/useFarmerStats";
 
 export default function FarmerDashboard() {
   const [showAddProduct, setShowAddProduct] = useState(false);
-  const { user } = useAuth();
+  const user = useUserStore((state) => state.user);
   const [orders, setOrders] = useState<OrderProps[]>();
   const { data: stats, isLoading } = useFarmerStats();
 

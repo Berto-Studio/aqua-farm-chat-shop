@@ -208,11 +208,21 @@ export default function Navbar() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   {isLoggedIn ? (
-                    <Button variant="ghost" className="relative h-8 w-8 rounded-full" disabled={isLoading}>
+                    <Button
+                      variant="ghost"
+                      className="relative h-8 w-8 rounded-full"
+                      disabled={isLoading}
+                    >
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={user?.image_url} alt={user?.full_name} />
+                        <AvatarImage
+                          src={user?.image_url}
+                          alt={user?.full_name}
+                        />
                         <AvatarFallback className="bg-primary text-primary-foreground">
-                          {user?.email ? user.email.charAt(0).toUpperCase() + user.email.split('@')[0].slice(-1).toUpperCase() : 'U'}
+                          {user?.email
+                            ? user.email.charAt(0).toUpperCase() +
+                              user.email.split("@")[0].slice(-1).toUpperCase()
+                            : "U"}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
@@ -234,10 +244,10 @@ export default function Navbar() {
                           <span>{user?.full_name || "Profile"}</span>
                         </Link>
                       </DropdownMenuItem>
-                      {user.user_type === "farmer" && (
+                      {user?.user_type === "admin" && (
                         <DropdownMenuItem asChild>
                           <Link
-                            to={user.is_admin ? "/admin" : "/farmer-dashboard"}
+                            to={user?.is_admin ? "/admin" : "/farmer-dashboard"}
                             className="cursor-pointer"
                           >
                             Dashboard

@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AddToCart } from "@/services/cart";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@/hooks/useAuth";
+import { useUserStore } from "@/store/store";
 
 interface ProductCardProps {
   product: Product;
@@ -18,7 +18,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const router = useNavigate();
-  const { user } = useAuth();
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -37,7 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
     };
 
-    if (!user) {
+    if (!isLoggedIn) {
       router("/login");
       return;
     }

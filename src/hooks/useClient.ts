@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const ACCESS_TOKEN_COOKIE = "access_token";
 const REFRESH_CSRF_COOKIE = "refresh_csrf_token";
+const LEGACY_REFRESH_CSRF_COOKIE = "csrf_refresh_token";
+const ACCESS_TOKEN_STORAGE_KEY = "access_token";
 const REFRESH_ENDPOINT = "auth/refresh";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "DELETE";
@@ -18,6 +20,20 @@ type ApiRequestOptions = {
 let activeRefreshRequest: Promise<boolean> | null = null;
 
 const normalizeEndpoint = (endpoint: string) => endpoint.replace(/^\/+/, "");
+
+const getCookieOptions = (expiresInDays: number) => {
+  const isHttps =
+    typeof window !== "undefined"
+      ? window.location.protocol === "https:"
+      : !import.meta.env.DEV;
+
+  return {
+    expires: expiresInDays,
+    secure: isHttps,
+    sameSite: "Lax" as const,
+    path: "/",
+  };
+};
 
 const resolveApiBaseUrl = () => {
   if (!RAW_API_BASE_URL) return "/api/v1/";
@@ -48,15 +64,27 @@ const buildUrl = (endpoint: string) => {
 };
 
 const getAccessToken = () => {
-  return Cookies.get(ACCESS_TOKEN_COOKIE);
-};
-
-const getRefreshCsrfToken = () => {
-  const cookieToken = Cookies.get(REFRESH_CSRF_COOKIE);
+  const cookieToken = Cookies.get(ACCESS_TOKEN_COOKIE);
   if (cookieToken) return cookieToken;
 
   try {
-    return localStorage.getItem(REFRESH_CSRF_COOKIE) || undefined;
+    return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const getRefreshCsrfToken = () => {
+  const cookieToken =
+    Cookies.get(REFRESH_CSRF_COOKIE) || Cookies.get(LEGACY_REFRESH_CSRF_COOKIE);
+  if (cookieToken) return cookieToken;
+
+  try {
+    return (
+      localStorage.getItem(REFRESH_CSRF_COOKIE) ||
+      localStorage.getItem(LEGACY_REFRESH_CSRF_COOKIE) ||
+      undefined
+    );
   } catch {
     return undefined;
   }
@@ -65,11 +93,7 @@ const getRefreshCsrfToken = () => {
 const setRefreshCsrfToken = (csrfToken?: string) => {
   if (!csrfToken) return;
 
-  Cookies.set(REFRESH_CSRF_COOKIE, csrfToken, {
-    expires: 7,
-    secure: true,
-    sameSite: "Lax",
-  });
+  Cookies.set(REFRESH_CSRF_COOKIE, csrfToken, getCookieOptions(7));
 
   try {
     localStorage.setItem(REFRESH_CSRF_COOKIE, csrfToken);
@@ -80,9 +104,20 @@ const setRefreshCsrfToken = (csrfToken?: string) => {
 
 const clearRefreshCsrfToken = () => {
   Cookies.remove(REFRESH_CSRF_COOKIE);
+  Cookies.remove(LEGACY_REFRESH_CSRF_COOKIE);
 
   try {
     localStorage.removeItem(REFRESH_CSRF_COOKIE);
+    localStorage.removeItem(LEGACY_REFRESH_CSRF_COOKIE);
+  } catch {
+    // Ignore storage errors in private browsing / restricted environments.
+  }
+};
+
+const clearAccessToken = () => {
+  Cookies.remove(ACCESS_TOKEN_COOKIE);
+  try {
+    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
   } catch {
     // Ignore storage errors in private browsing / restricted environments.
   }
@@ -213,7 +248,7 @@ const parseResponse = async <T>(response: Response): Promise<T> => {
 };
 
 const clearAuthState = () => {
-  Cookies.remove(ACCESS_TOKEN_COOKIE);
+  clearAccessToken();
   clearRefreshCsrfToken();
   useUserStore.getState().logout();
 };
@@ -273,11 +308,12 @@ const refreshAccessToken = async (): Promise<boolean> => {
 };
 
 export const setAccessToken = (token: string) => {
-  Cookies.set(ACCESS_TOKEN_COOKIE, token, {
-    expires: 1,
-    secure: true,
-    sameSite: "Lax",
-  });
+  Cookies.set(ACCESS_TOKEN_COOKIE, token, getCookieOptions(1));
+  try {
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+  } catch {
+    // Ignore storage errors in private browsing / restricted environments.
+  }
 };
 
 export const setAuthSession = (accessToken: string, csrfToken?: string) => {

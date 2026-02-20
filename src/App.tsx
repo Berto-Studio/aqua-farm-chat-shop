@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Layout from "./components/layout/Layout";
 import AdminLayout from "./components/admin/AdminLayout";
+import AuthBootstrap from "./components/auth/AuthBootstrap";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import ProductDetail from "./pages/products/ProductDetail";
@@ -46,6 +47,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <AuthBootstrap />
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Index />} />

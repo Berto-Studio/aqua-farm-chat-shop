@@ -36,6 +36,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { normalizeCategoryName } from "@/constants/categories";
 import { DeleteProduct } from "@/services/products";
 import { useToast } from "@/hooks/use-toast";
+import { getProductPrimaryImageUrl } from "@/lib/productMedia";
 
 type StockFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
 type SortOption =
@@ -343,16 +344,14 @@ export default function AdminProducts() {
                 displayedProducts.map((product) => {
                   const quantity = Number(product.quantity) || 0;
                   const status = getStockStatus(quantity);
+                  const primaryImageUrl = getProductPrimaryImageUrl(product);
 
                   return (
                     <TableRow key={product.id}>
                       <TableCell>
                         <div className="h-10 w-10 rounded-md overflow-hidden bg-muted">
                           <img
-                            src={
-                              product.image_url ||
-                              (typeof product.image === "string" ? product.image : "")
-                            }
+                            src={primaryImageUrl || "/placeholder.svg"}
                             alt={product.title}
                             className="h-full w-full object-cover"
                           />
@@ -457,6 +456,7 @@ export default function AdminProducts() {
             displayedProducts.map((product) => {
               const quantity = Number(product.quantity) || 0;
               const status = getStockStatus(quantity);
+              const primaryImageUrl = getProductPrimaryImageUrl(product);
 
               return (
                 <Card key={product.id} className="border shadow-sm">
@@ -467,10 +467,7 @@ export default function AdminProducts() {
                       onClick={() => navigate(`/admin/products/${product.id}`)}
                     >
                       <img
-                        src={
-                          product.image_url ||
-                          (typeof product.image === "string" ? product.image : "")
-                        }
+                        src={primaryImageUrl || "/placeholder.svg"}
                         alt={product.title}
                         className="h-full w-full object-cover"
                       />

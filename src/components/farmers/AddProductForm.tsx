@@ -6,7 +6,10 @@ import { X, Package } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { CreateProduct } from "@/services/products";
 import { useQueryClient } from "@tanstack/react-query";
-import { uploadImageToCloudinary } from "@/services/cloudinary";
+import {
+  uploadImageToCloudinary,
+  uploadVideoToCloudinary,
+} from "@/services/cloudinary";
 import ProductBasicInfo from "./ProductBasicInfo";
 import ProductPricingInfo from "./ProductPricingInfo";
 import ProductCategoryFields from "./ProductCategoryFields";
@@ -34,9 +37,10 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     is_fresh: false,
   });
 
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [selectedVideos, setSelectedVideos] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -47,24 +51,31 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-    }
+  const handleAddImages = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setSelectedImages((prev) => [...prev, ...Array.from(files)]);
   };
 
-  const handleImageRemove = () => {
-    setSelectedImage(null);
+  const handleAddVideos = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setSelectedVideos((prev) => [...prev, ...Array.from(files)]);
+  };
+
+  const handleRemoveSelectedImage = (index: number) => {
+    setSelectedImages((prev) => prev.filter((_, fileIndex) => fileIndex !== index));
+  };
+
+  const handleRemoveSelectedVideo = (index: number) => {
+    setSelectedVideos((prev) => prev.filter((_, fileIndex) => fileIndex !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedImage) {
+    if (selectedImages.length === 0) {
       toast({
         title: "Image Required",
-        description: "Please select an image for your product.",
+        description: "Please add at least one image for your product.",
         variant: "destructive",
       });
       return;
@@ -76,15 +87,18 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const confirmCreateProduct = async () => {
     setShowConfirmModal(false);
     setIsLoading(true);
-    setIsUploadingImage(true);
+    setIsUploadingMedia(true);
 
     try {
-      // Upload image to Cloudinary first
-      console.log("Uploading image to Cloudinary...");
-      const imageUrl = await uploadImageToCloudinary(selectedImage);
-      console.log("Image uploaded, URL:", imageUrl);
+      // Upload media to Cloudinary first
+      const [uploadedImageUrls, uploadedVideoUrls] = await Promise.all([
+        Promise.all(selectedImages.map((file) => uploadImageToCloudinary(file))),
+        Promise.all(selectedVideos.map((file) => uploadVideoToCloudinary(file))),
+      ]);
 
-      setIsUploadingImage(false);
+      const primaryImageUrl = uploadedImageUrls[0];
+
+      setIsUploadingMedia(false);
 
       // Prepare product data with image URL
       const productData: Product = {
@@ -93,7 +107,10 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
         price: Number(formData.price),
         quantity: Number(formData.quantity),
         category: formData.category,
-        image: imageUrl, // Send URL instead of file
+        image: primaryImageUrl,
+        image_url: primaryImageUrl,
+        image_urls: uploadedImageUrls,
+        video_urls: uploadedVideoUrls,
         weight_per_unit: Number(formData.weight_per_unit),
         rating: formData.rating || 4.0,
         discount_percentage: formData.discount_percentage
@@ -140,7 +157,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       });
     } finally {
       setIsLoading(false);
-      setIsUploadingImage(false);
+      setIsUploadingMedia(false);
     }
   };
 
@@ -173,9 +190,14 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
           />
 
           <ProductImageUpload
-            selectedImage={selectedImage}
-            onImageChange={handleImageChange}
-            onImageRemove={handleImageRemove}
+            selectedImages={selectedImages}
+            selectedVideos={selectedVideos}
+            onAddImages={handleAddImages}
+            onAddVideos={handleAddVideos}
+            onRemoveSelectedImage={handleRemoveSelectedImage}
+            onRemoveSelectedVideo={handleRemoveSelectedVideo}
+            onRemoveExistingImage={() => {}}
+            onRemoveExistingVideo={() => {}}
           />
 
           <div className="flex gap-4">
@@ -188,8 +210,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
               Cancel
             </Button>
             <Button type="submit" disabled={isLoading} className="flex-1">
-              {isUploadingImage
-                ? "Uploading Image..."
+              {isUploadingMedia
+                ? "Uploading Media..."
                 : isLoading
                 ? "Creating Market Item..."
                 : "Create Market Item"}

@@ -22,6 +22,8 @@ export interface Product {
   is_alive?: boolean;
   is_fresh?: boolean;
   image_url?: string;
+  image_urls?: string[];
+  video_urls?: string[];
 
   // Legacy/computed properties for backward compatibility
   name?: string; // Computed from title

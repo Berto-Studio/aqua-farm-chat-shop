@@ -1,11 +1,16 @@
 import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Pencil, Package, Star } from "lucide-react";
+import { ArrowLeft, Pencil, Package, Star, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useProducts } from "@/hooks/useProducts";
 import { normalizeCategoryName } from "@/constants/categories";
+import {
+  getProductImageUrls,
+  getProductPrimaryImageUrl,
+  getProductVideoUrls,
+} from "@/lib/productMedia";
 
 export default function AdminProductDetails() {
   const navigate = useNavigate();
@@ -44,8 +49,9 @@ export default function AdminProductDetails() {
   }
 
   const quantity = Number(product.quantity) || 0;
-  const productImage =
-    product.image_url || (typeof product.image === "string" ? product.image : "");
+  const imageUrls = getProductImageUrls(product);
+  const videoUrls = getProductVideoUrls(product);
+  const productImage = getProductPrimaryImageUrl(product);
 
   return (
     <div className="p-6 space-y-6">
@@ -70,23 +76,67 @@ export default function AdminProductDetails() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[340px_1fr]">
-        <Card className="overflow-hidden">
-          <CardContent className="p-0">
-            <div className="aspect-square w-full bg-muted">
-              {productImage ? (
-                <img
-                  src={productImage}
-                  alt={product.title}
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  <Package className="h-10 w-10" />
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="aspect-square w-full bg-muted">
+                {productImage ? (
+                  <img
+                    src={productImage}
+                    alt={product.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-muted-foreground">
+                    <Package className="h-10 w-10" />
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {imageUrls.length > 1 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Images ({imageUrls.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="grid grid-cols-3 gap-2">
+                {imageUrls.map((url, index) => (
+                  <div key={`${url}-${index}`} className="aspect-square overflow-hidden rounded-md border">
+                    <img
+                      src={url}
+                      alt={`${product.title} media ${index + 1}`}
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {videoUrls.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Videos ({videoUrls.length})</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {videoUrls.map((url, index) => (
+                  <div key={`${url}-${index}`} className="space-y-2">
+                    <video
+                      src={url}
+                      controls
+                      className="w-full rounded-md border bg-black/5"
+                    />
+                    <p className="flex items-center text-xs text-muted-foreground">
+                      <Video className="mr-1 h-3 w-3" />
+                      Video {index + 1}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+        </div>
 
         <Card>
           <CardHeader>

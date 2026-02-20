@@ -74,14 +74,18 @@ export async function CreateProduct(product: Product): Promise<{
   status: number;
 }> {
   try {
+    const primaryImageUrl =
+      product.image_urls?.[0] ||
+      (typeof product.image === "string" ? product.image : undefined);
+
     // Prepare product data with proper field mapping
-    const productData = {
+    const baseProductData = {
       title: product.title,
       description: product.description,
       price: Number(product.price),
       quantity: Number(product.quantity),
       category: product.category,
-      image_url: product.image, // Send the Cloudinary URL as image_url
+      image_url: primaryImageUrl,
       weight_per_unit: Number(product.weight_per_unit),
       rating: product.rating || 4.0,
       discount_percentage: product.discount_percentage
@@ -99,11 +103,35 @@ export async function CreateProduct(product: Product): Promise<{
         product.category === "Vegetables" || product.category === "Fruits",
     };
 
-    const response = await apiRequest<ProductResponse>(
-      "products/",
-      "POST",
-      productData
-    );
+    const hasExtendedMedia =
+      Boolean(product.image_urls?.length) || Boolean(product.video_urls?.length);
+
+    const extendedProductData = {
+      ...baseProductData,
+      ...(product.image_urls?.length ? { image_urls: product.image_urls } : {}),
+      ...(product.video_urls?.length ? { video_urls: product.video_urls } : {}),
+    };
+
+    let response: ProductResponse;
+
+    try {
+      response = await apiRequest<ProductResponse>(
+        "products/",
+        "POST",
+        extendedProductData
+      );
+    } catch (error) {
+      if (!hasExtendedMedia) {
+        throw error;
+      }
+
+      // Backward compatibility with APIs that only accept image_url.
+      response = await apiRequest<ProductResponse>(
+        "products/",
+        "POST",
+        baseProductData
+      );
+    }
 
     return {
       success: true,
@@ -131,7 +159,12 @@ export async function UpdateProduct(
   status: number;
 }> {
   try {
-    const apiProduct = {
+    const primaryImageUrl =
+      product.image_urls?.[0] ||
+      product.image_url ||
+      (typeof product.image === "string" ? product.image : undefined);
+
+    const baseProductData = {
       title: product.title,
       description: product.description,
       price: product.price,
@@ -144,14 +177,38 @@ export async function UpdateProduct(
       weight_per_unit: product.weight_per_unit,
       animal_stage: product.animal_stage,
       discount_percentage: product.discount_percentage,
-      image_url: product.image_url,
+      image_url: primaryImageUrl,
     };
 
-    const response = await apiRequest<ProductResponse>(
-      `products/${id}`,
-      "PUT",
-      apiProduct
-    );
+    const hasExtendedMedia =
+      Boolean(product.image_urls?.length) || Boolean(product.video_urls?.length);
+
+    const extendedProductData = {
+      ...baseProductData,
+      ...(product.image_urls?.length ? { image_urls: product.image_urls } : {}),
+      ...(product.video_urls?.length ? { video_urls: product.video_urls } : {}),
+    };
+
+    let response: ProductResponse;
+
+    try {
+      response = await apiRequest<ProductResponse>(
+        `products/${id}`,
+        "PUT",
+        extendedProductData
+      );
+    } catch (error) {
+      if (!hasExtendedMedia) {
+        throw error;
+      }
+
+      // Backward compatibility with APIs that only accept image_url.
+      response = await apiRequest<ProductResponse>(
+        `products/${id}`,
+        "PUT",
+        baseProductData
+      );
+    }
 
     return {
       success: true,
@@ -176,12 +233,16 @@ export async function DeleteProduct(id: string | number): Promise<{
   status: number;
 }> {
   try {
-    // First, get the product to retrieve its image URL
+    // First, get the product to retrieve image URLs
     const productResponse = await GetProduct(id);
-    let imageUrl: string | undefined;
+    let imageUrls: string[] = [];
 
-    if (productResponse.success && productResponse.data?.image_url) {
-      imageUrl = productResponse.data.image_url;
+    if (productResponse.success && productResponse.data) {
+      const product = productResponse.data;
+      imageUrls = [
+        ...(product.image_urls || []),
+        ...(product.image_url ? [product.image_url] : []),
+      ].filter((url, index, arr) => Boolean(url) && arr.indexOf(url) === index);
     }
 
     // Delete the product from the backend
@@ -190,15 +251,14 @@ export async function DeleteProduct(id: string | number): Promise<{
       "DELETE"
     );
 
-    // If product deletion was successful and there's an image, delete it from Cloudinary
-    if (imageUrl) {
-      console.log("Attempting to delete image from Cloudinary:", imageUrl);
-      const imageDeleted = await deleteImageFromCloudinary(imageUrl);
-      if (imageDeleted) {
-        console.log("Image successfully deleted from Cloudinary");
-      } else {
-        console.log("Failed to delete image from Cloudinary (non-critical)");
-      }
+    // If product deletion was successful and there are images, delete them from Cloudinary
+    if (imageUrls.length > 0) {
+      console.log(
+        `Attempting to delete ${imageUrls.length} product image(s) from Cloudinary`
+      );
+      await Promise.allSettled(
+        imageUrls.map((imageUrl) => deleteImageFromCloudinary(imageUrl))
+      );
     }
 
     return {
@@ -229,6 +289,9 @@ export async function DeleteAllProducts(): Promise<{
 
     if (productsResponse.success && productsResponse.data) {
       productsResponse.data.forEach((product) => {
+        if (product.image_urls?.length) {
+          imageUrls.push(...product.image_urls);
+        }
         if (product.image_url) {
           imageUrls.push(product.image_url);
         }
@@ -242,12 +305,14 @@ export async function DeleteAllProducts(): Promise<{
     );
 
     // If products deletion was successful, delete all images from Cloudinary
-    if (imageUrls.length > 0) {
+    const uniqueImageUrls = [...new Set(imageUrls.filter(Boolean))];
+
+    if (uniqueImageUrls.length > 0) {
       console.log(
-        `Attempting to delete ${imageUrls.length} images from Cloudinary`
+        `Attempting to delete ${uniqueImageUrls.length} images from Cloudinary`
       );
 
-      const deletePromises = imageUrls.map((imageUrl) =>
+      const deletePromises = uniqueImageUrls.map((imageUrl) =>
         deleteImageFromCloudinary(imageUrl)
       );
 
@@ -257,7 +322,7 @@ export async function DeleteAllProducts(): Promise<{
       ).length;
 
       console.log(
-        `Successfully deleted ${successCount}/${imageUrls.length} images from Cloudinary`
+        `Successfully deleted ${successCount}/${uniqueImageUrls.length} images from Cloudinary`
       );
     }
 

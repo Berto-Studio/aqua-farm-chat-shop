@@ -11,10 +11,7 @@ export default function CategoryFilter({
   activeCategory,
   onCategoryChange,
 }: CategoryFilterProps) {
-  const { data: categoriesResponse, isLoading, error } = useCategories();
-
-  // Extract categories from the response data
-  const categories = categoriesResponse?.data || [];
+  const { data: categories = [], isLoading, error } = useCategories();
 
   if (isLoading) {
     return (

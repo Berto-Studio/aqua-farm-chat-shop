@@ -30,9 +30,8 @@ export default function EditProductForm({
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: categoriesResponse, isLoading: categoriesLoading } =
+  const { data: categories = [], isLoading: categoriesLoading } =
     useCategories();
-  const categories = categoriesResponse?.data || [];
 
   const handleInputChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

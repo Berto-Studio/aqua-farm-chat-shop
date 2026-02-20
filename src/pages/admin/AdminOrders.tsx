@@ -24,7 +24,7 @@ export default function AdminOrders() {
   
   const filteredOrders = orders.filter((order) =>
     order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    order.customer.toLowerCase().includes(searchTerm.toLowerCase())
+    order.user.toLowerCase().includes(searchTerm.toLowerCase())
   );
   
   const sortedOrders = [...filteredOrders].sort((a, b) => {
@@ -156,7 +156,7 @@ export default function AdminOrders() {
           <TableHeader>
             <TableRow>
               <TableHead>Order ID</TableHead>
-              <TableHead>Customer</TableHead>
+              <TableHead>User</TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort("date")}>
                 <div className="flex items-center gap-1">
                   Date {getSortIcon("date")}
@@ -179,10 +179,10 @@ export default function AdminOrders() {
                 <TableCell>
                   <button
                     type="button"
-                    onClick={() => navigate(`/admin/customers/${order.customerId}`)}
+                    onClick={() => navigate(`/admin/users/${order.userId}`)}
                     className="text-primary hover:underline"
                   >
-                    {order.customer}
+                    {order.user}
                   </button>
                 </TableCell>
                 <TableCell>{order.date}</TableCell>

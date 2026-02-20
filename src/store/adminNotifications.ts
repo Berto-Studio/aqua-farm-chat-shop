@@ -49,7 +49,7 @@ const buildDefaultNotifications = (): AdminNotification[] => {
     },
     {
       id: "notif-message-1",
-      title: "New customer message",
+      title: "New user message",
       description: "A buyer asked about delivery timelines for fresh tilapia.",
       type: "message",
       href: "/admin/chat",

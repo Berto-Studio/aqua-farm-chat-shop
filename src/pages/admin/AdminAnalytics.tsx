@@ -34,20 +34,20 @@ const monthlySalesData = [
   { name: "Dec", catfish: 1890, tilapia: 4800 },
 ];
 
-// Mock data for customer growth chart
-const customerGrowthData = [
-  { name: "Jan", customers: 100 },
-  { name: "Feb", customers: 120 },
-  { name: "Mar", customers: 150 },
-  { name: "Apr", customers: 180 },
-  { name: "May", customers: 210 },
-  { name: "Jun", customers: 250 },
-  { name: "Jul", customers: 300 },
-  { name: "Aug", customers: 350 },
-  { name: "Sep", customers: 390 },
-  { name: "Oct", customers: 410 },
-  { name: "Nov", customers: 450 },
-  { name: "Dec", customers: 500 },
+// Mock data for user growth chart
+const userGrowthData = [
+  { name: "Jan", users: 100 },
+  { name: "Feb", users: 120 },
+  { name: "Mar", users: 150 },
+  { name: "Apr", users: 180 },
+  { name: "May", users: 210 },
+  { name: "Jun", users: 250 },
+  { name: "Jul", users: 300 },
+  { name: "Aug", users: 350 },
+  { name: "Sep", users: 390 },
+  { name: "Oct", users: 410 },
+  { name: "Nov", users: 450 },
+  { name: "Dec", users: 500 },
 ];
 
 // Mock data for product distribution chart
@@ -101,12 +101,12 @@ export default function AdminAnalytics() {
         
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total Customers</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">1,205</div>
-            <p className="text-xs text-muted-foreground">+20 new customers this week</p>
+            <p className="text-xs text-muted-foreground">+20 new users this week</p>
           </CardContent>
         </Card>
       </div>
@@ -114,7 +114,7 @@ export default function AdminAnalytics() {
       <Tabs defaultValue="sales" className="w-full">
         <TabsList className="grid grid-cols-3 mb-4 w-full sm:w-[400px]">
           <TabsTrigger value="sales">Sales</TabsTrigger>
-          <TabsTrigger value="customers">Customers</TabsTrigger>
+          <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="products">Products</TabsTrigger>
         </TabsList>
         
@@ -149,16 +149,16 @@ export default function AdminAnalytics() {
           </Card>
         </TabsContent>
         
-        <TabsContent value="customers">
+        <TabsContent value="users">
           <Card>
             <CardHeader>
-              <CardTitle>Customer Growth</CardTitle>
+              <CardTitle>User Growth</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart
-                    data={customerGrowthData}
+                    data={userGrowthData}
                     margin={{
                       top: 5,
                       right: 30,
@@ -171,7 +171,7 @@ export default function AdminAnalytics() {
                     <YAxis />
                     <Tooltip />
                     <Legend />
-                    <Line type="monotone" dataKey="customers" stroke="#1b5e20" activeDot={{ r: 8 }} />
+                    <Line type="monotone" dataKey="users" stroke="#1b5e20" activeDot={{ r: 8 }} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

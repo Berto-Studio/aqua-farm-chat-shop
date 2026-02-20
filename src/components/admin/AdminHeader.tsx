@@ -23,7 +23,8 @@ const getHeaderTitle = (pathname: string) => {
   if (pathname === "/admin") return "Dashboard";
   if (pathname.startsWith("/admin/products")) return "Products";
   if (pathname.startsWith("/admin/orders")) return "Orders";
-  if (pathname.startsWith("/admin/customers")) return "Customers";
+  if (pathname.startsWith("/admin/users")) return "Users";
+  if (pathname.startsWith("/admin/customers")) return "Users";
   if (pathname.startsWith("/admin/analytics")) return "Analytics";
   if (pathname.startsWith("/admin/settings")) return "Settings";
   if (pathname.startsWith("/admin/chat")) return "Messages";

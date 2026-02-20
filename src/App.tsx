@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Layout from "./components/layout/Layout";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -122,8 +122,20 @@ const App = () => (
               <Route path="products/:productId/edit" element={<AdminProductEdit />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:orderId" element={<AdminOrderDetails />} />
-              <Route path="customers" element={<AdminCustomers />} />
-              <Route path="customers/:customerId" element={<AdminCustomerDetails />} />
+              <Route path="users" element={<AdminCustomers />} />
+              <Route path="users/:userId" element={<AdminCustomerDetails />} />
+              <Route
+                path="users/:userId/message"
+                element={<AdminCustomerMessage />}
+              />
+              <Route
+                path="customers"
+                element={<AdminCustomers />}
+              />
+              <Route
+                path="customers/:customerId"
+                element={<AdminCustomerDetails />}
+              />
               <Route
                 path="customers/:customerId/message"
                 element={<AdminCustomerMessage />}

@@ -6,36 +6,40 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ChatInterface from "@/components/chat/ChatInterface";
 import { ChatMessage } from "@/types/chat";
 import { getConversationById } from "@/data/chat";
-import { getAdminCustomerById } from "@/data/adminDashboard";
+import { getAdminUserById } from "@/data/adminDashboard";
 
 export default function AdminCustomerMessage() {
   const navigate = useNavigate();
-  const { customerId } = useParams<{ customerId: string }>();
+  const { userId, customerId } = useParams<{
+    userId?: string;
+    customerId?: string;
+  }>();
+  const resolvedUserId = userId || customerId;
 
-  const customer = useMemo(
-    () => (customerId ? getAdminCustomerById(customerId) : undefined),
-    [customerId]
+  const user = useMemo(
+    () => (resolvedUserId ? getAdminUserById(resolvedUserId) : undefined),
+    [resolvedUserId]
   );
 
   const seedConversation = useMemo(
     () =>
-      customer?.conversationId ? getConversationById(customer.conversationId) : undefined,
-    [customer?.conversationId]
+      user?.conversationId ? getConversationById(user.conversationId) : undefined,
+    [user?.conversationId]
   );
 
   const [messages, setMessages] = useState<ChatMessage[]>(
     seedConversation?.messages || []
   );
 
-  if (!customer) {
+  if (!user) {
     return (
       <div className="p-6 space-y-4">
-        <Button variant="outline" onClick={() => navigate("/admin/customers")}>
+        <Button variant="outline" onClick={() => navigate("/admin/users")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Customers
+          Back to Users
         </Button>
         <Card>
-          <CardContent className="p-6 text-destructive">Customer not found.</CardContent>
+          <CardContent className="p-6 text-destructive">User not found.</CardContent>
         </Card>
       </div>
     );
@@ -45,7 +49,7 @@ export default function AdminCustomerMessage() {
     const newMessage: ChatMessage = {
       id: `admin-${Date.now()}`,
       senderId: "admin",
-      receiverId: customer.id,
+      receiverId: user.id,
       content,
       timestamp: new Date(),
       isRead: false,
@@ -58,13 +62,13 @@ export default function AdminCustomerMessage() {
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate(`/admin/customers/${customer.id}`)}>
+          <Button variant="outline" onClick={() => navigate(`/admin/users/${user.id}`)}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           <div>
-            <h1 className="text-2xl font-bold">Message {customer.name}</h1>
-            <p className="text-sm text-muted-foreground">{customer.email}</p>
+            <h1 className="text-2xl font-bold">Message {user.name}</h1>
+            <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
         </div>
 
@@ -77,26 +81,26 @@ export default function AdminCustomerMessage() {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[300px_1fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Customer Snapshot</CardTitle>
+            <CardTitle>User Snapshot</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Name
               </p>
-              <p className="mt-1 font-semibold">{customer.name}</p>
+              <p className="mt-1 font-semibold">{user.name}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Email
               </p>
-              <p className="mt-1 font-semibold">{customer.email}</p>
+              <p className="mt-1 font-semibold">{user.email}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Last Known Location
               </p>
-              <p className="mt-1 font-semibold">{customer.location}</p>
+              <p className="mt-1 font-semibold">{user.location}</p>
             </div>
             <div>
               <p className="text-xs uppercase tracking-wide text-muted-foreground">

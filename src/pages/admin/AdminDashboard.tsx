@@ -43,7 +43,7 @@ export default function AdminDashboard() {
             icon={<Package className="h-4 w-4" />}
           />
           <DashboardCard
-            title="Customers"
+            title="Users"
             value="89"
             icon={<Users className="h-4 w-4" />}
             trendValue={8.1}
@@ -72,7 +72,7 @@ export default function AdminDashboard() {
                 <thead>
                   <tr className="border-b border-gray-100">
                     <th className="text-left py-3 px-2 font-semibold text-gray-700">Order ID</th>
-                    <th className="text-left py-3 px-2 font-semibold text-gray-700 hidden sm:table-cell">Customer</th>
+                    <th className="text-left py-3 px-2 font-semibold text-gray-700 hidden sm:table-cell">User</th>
                     <th className="text-left py-3 px-2 font-semibold text-gray-700">Products</th>
                     <th className="text-left py-3 px-2 font-semibold text-gray-700">Total</th>
                     <th className="text-left py-3 px-2 font-semibold text-gray-700">Status</th>
@@ -82,28 +82,28 @@ export default function AdminDashboard() {
                   {[
                     { 
                       id: "ORD-5623", 
-                      customer: "John Smith", 
+                      user: "John Smith", 
                       products: "Catfish Fingerlings x2", 
                       total: "$52.99", 
                       status: "Delivered" 
                     },
                     { 
                       id: "ORD-5622", 
-                      customer: "Sarah Johnson", 
+                      user: "Sarah Johnson", 
                       products: "Tilapia Mature x1", 
                       total: "$69.99", 
                       status: "Processing" 
                     },
                     { 
                       id: "ORD-5621", 
-                      customer: "Michael Brown", 
+                      user: "Michael Brown", 
                       products: "Catfish Mature x2", 
                       total: "$179.98", 
                       status: "Shipped" 
                     },
                     { 
                       id: "ORD-5620", 
-                      customer: "Emily Davis", 
+                      user: "Emily Davis", 
                       products: "Tilapia Fingerlings x3", 
                       total: "$59.97", 
                       status: "Delivered" 
@@ -111,7 +111,7 @@ export default function AdminDashboard() {
                   ].map((order) => (
                     <tr key={order.id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                       <td className="py-3 px-2 font-medium">{order.id}</td>
-                      <td className="py-3 px-2 text-muted-foreground hidden sm:table-cell">{order.customer}</td>
+                      <td className="py-3 px-2 text-muted-foreground hidden sm:table-cell">{order.user}</td>
                       <td className="py-3 px-2 text-muted-foreground">
                         <div className="truncate max-w-[120px] sm:max-w-none">{order.products}</div>
                       </td>

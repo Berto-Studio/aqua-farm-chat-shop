@@ -52,10 +52,10 @@ export default function AdminOrderDetails() {
 
         <Button
           variant="outline"
-          onClick={() => navigate(`/admin/customers/${order.customerId}`)}
+          onClick={() => navigate(`/admin/users/${order.userId}`)}
         >
           <User className="mr-2 h-4 w-4" />
-          View Customer
+          View User
         </Button>
       </div>
 

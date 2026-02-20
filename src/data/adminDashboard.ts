@@ -7,8 +7,8 @@ export interface AdminOrderItem {
 
 export interface AdminOrder {
   id: string;
-  customerId: string;
-  customer: string;
+  userId: string;
+  user: string;
   date: string;
   status: "Delivered" | "Processing" | "Pending" | "Cancelled";
   total: number;
@@ -19,7 +19,7 @@ export interface AdminOrder {
   items: AdminOrderItem[];
 }
 
-export interface AdminCustomer {
+export interface AdminUser {
   id: string;
   name: string;
   email: string;
@@ -32,9 +32,9 @@ export interface AdminCustomer {
   conversationId?: string;
 }
 
-export const adminCustomers: AdminCustomer[] = [
+export const adminUsers: AdminUser[] = [
   {
-    id: "CUST-001",
+    id: "USR-001",
     name: "John Doe",
     email: "john.doe@example.com",
     phone: "+1 (212) 555-0121",
@@ -46,7 +46,7 @@ export const adminCustomers: AdminCustomer[] = [
     conversationId: "conv-1",
   },
   {
-    id: "CUST-002",
+    id: "USR-002",
     name: "Sarah Smith",
     email: "sarah.smith@example.com",
     phone: "+1 (310) 555-0102",
@@ -58,7 +58,7 @@ export const adminCustomers: AdminCustomer[] = [
     conversationId: "conv-2",
   },
   {
-    id: "CUST-003",
+    id: "USR-003",
     name: "Robert Johnson",
     email: "robert.johnson@example.com",
     phone: "+1 (312) 555-0117",
@@ -69,7 +69,7 @@ export const adminCustomers: AdminCustomer[] = [
     joined: "2025-03-20",
   },
   {
-    id: "CUST-004",
+    id: "USR-004",
     name: "Lisa Anderson",
     email: "lisa.anderson@example.com",
     phone: "+1 (305) 555-0193",
@@ -80,7 +80,7 @@ export const adminCustomers: AdminCustomer[] = [
     joined: "2025-04-05",
   },
   {
-    id: "CUST-005",
+    id: "USR-005",
     name: "Michael Brown",
     email: "michael.brown@example.com",
     phone: "+1 (737) 555-0160",
@@ -95,8 +95,8 @@ export const adminCustomers: AdminCustomer[] = [
 export const adminOrders: AdminOrder[] = [
   {
     id: "ORD-001",
-    customerId: "CUST-001",
-    customer: "John Doe",
+    userId: "USR-001",
+    user: "John Doe",
     date: "2025-05-10",
     status: "Delivered",
     total: 125.99,
@@ -111,8 +111,8 @@ export const adminOrders: AdminOrder[] = [
   },
   {
     id: "ORD-002",
-    customerId: "CUST-002",
-    customer: "Sarah Smith",
+    userId: "USR-002",
+    user: "Sarah Smith",
     date: "2025-05-09",
     status: "Processing",
     total: 75.5,
@@ -125,23 +125,23 @@ export const adminOrders: AdminOrder[] = [
   },
   {
     id: "ORD-003",
-    customerId: "CUST-003",
-    customer: "Robert Johnson",
+    userId: "USR-003",
+    user: "Robert Johnson",
     date: "2025-05-08",
     status: "Pending",
     total: 210.25,
     itemsCount: 5,
     payment: "Bank Transfer",
     shippingAddress: "450 N Cityfront Plaza Dr, Chicago, IL, USA",
-    notes: "Customer requested morning delivery.",
+    notes: "User requested morning delivery.",
     items: [
       { id: "ORD-003-1", productName: "Broiler Chickens", quantity: 5, unitPrice: 42.05 },
     ],
   },
   {
     id: "ORD-004",
-    customerId: "CUST-004",
-    customer: "Lisa Anderson",
+    userId: "USR-004",
+    user: "Lisa Anderson",
     date: "2025-05-07",
     status: "Delivered",
     total: 62.75,
@@ -154,15 +154,15 @@ export const adminOrders: AdminOrder[] = [
   },
   {
     id: "ORD-005",
-    customerId: "CUST-005",
-    customer: "Michael Brown",
+    userId: "USR-005",
+    user: "Michael Brown",
     date: "2025-05-06",
     status: "Cancelled",
     total: 150,
     itemsCount: 4,
     payment: "PayPal",
     shippingAddress: "600 Congress Ave, Austin, TX, USA",
-    notes: "Order cancelled by customer before shipment.",
+    notes: "Order cancelled by user before shipment.",
     items: [
       { id: "ORD-005-1", productName: "Dairy Goats", quantity: 1, unitPrice: 150 },
     ],
@@ -172,8 +172,8 @@ export const adminOrders: AdminOrder[] = [
 export const getAdminOrderById = (orderId: string) =>
   adminOrders.find((order) => order.id === orderId);
 
-export const getAdminCustomerById = (customerId: string) =>
-  adminCustomers.find((customer) => customer.id === customerId);
+export const getAdminUserById = (userId: string) =>
+  adminUsers.find((user) => user.id === userId);
 
-export const getOrdersByCustomerId = (customerId: string) =>
-  adminOrders.filter((order) => order.customerId === customerId);
+export const getOrdersByUserId = (userId: string) =>
+  adminOrders.filter((order) => order.userId === userId);

@@ -71,9 +71,9 @@ export default function AdminSidebar() {
       label: "Orders",
     },
     {
-      to: "/admin/customers",
+      to: "/admin/users",
       icon: <Users className="h-5 w-5" />,
-      label: "Customers",
+      label: "Users",
     },
     {
       to: "/admin/analytics",
@@ -124,7 +124,9 @@ export default function AdminSidebar() {
             isActive={
               item.to === "/admin" 
                 ? pathname === "/admin" 
-                : pathname.startsWith(item.to)
+                : pathname.startsWith(item.to) ||
+                  (item.to === "/admin/users" &&
+                    pathname.startsWith("/admin/customers"))
             }
           />
         ))}

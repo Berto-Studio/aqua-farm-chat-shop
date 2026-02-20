@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -13,62 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Search, Eye, Mail, UserPlus, ShoppingCart } from "lucide-react";
-
-// Mock data for customers
-const customers = [
-  {
-    id: "CUST-001",
-    name: "John Doe",
-    email: "john.doe@example.com",
-    location: "New York, USA",
-    orders: 5,
-    spent: 325.75,
-    status: "Active",
-    joined: "2025-01-15"
-  },
-  {
-    id: "CUST-002",
-    name: "Jane Smith",
-    email: "jane.smith@example.com",
-    location: "Los Angeles, USA",
-    orders: 3,
-    spent: 175.50,
-    status: "Active",
-    joined: "2025-02-10"
-  },
-  {
-    id: "CUST-003",
-    name: "Robert Johnson",
-    email: "robert.johnson@example.com",
-    location: "Chicago, USA",
-    orders: 8,
-    spent: 510.25,
-    status: "Active",
-    joined: "2025-03-20"
-  },
-  {
-    id: "CUST-004",
-    name: "Lisa Anderson",
-    email: "lisa.anderson@example.com",
-    location: "Miami, USA",
-    orders: 1,
-    spent: 62.75,
-    status: "Inactive",
-    joined: "2025-04-05"
-  },
-  {
-    id: "CUST-005",
-    name: "Michael Brown",
-    email: "michael.brown@example.com",
-    location: "Austin, USA",
-    orders: 2,
-    spent: 150.00,
-    status: "Active",
-    joined: "2025-05-01"
-  }
-];
+import { adminCustomers as customers } from "@/data/adminDashboard";
 
 export default function AdminCustomers() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   
   const filteredCustomers = customers.filter((customer) =>
@@ -190,10 +139,20 @@ export default function AdminCustomers() {
                 </TableCell>
                 <TableCell>
                   <div className="flex justify-center gap-2">
-                    <Button size="sm" variant="ghost">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate(`/admin/customers/${customer.id}`)}
+                    >
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button size="sm" variant="ghost">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() =>
+                        navigate(`/admin/customers/${customer.id}/message`)
+                      }
+                    >
                       <Mail className="h-4 w-4" />
                     </Button>
                   </div>

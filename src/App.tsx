@@ -22,6 +22,11 @@ import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminChat from "./pages/admin/AdminChat";
+import AdminProductDetails from "./pages/admin/AdminProductDetails";
+import AdminProductEdit from "./pages/admin/AdminProductEdit";
+import AdminOrderDetails from "./pages/admin/AdminOrderDetails";
+import AdminCustomerDetails from "./pages/admin/AdminCustomerDetails";
+import AdminCustomerMessage from "./pages/admin/AdminCustomerMessage";
 import NotFound from "./pages/NotFound";
 import Register from "./pages/authentication/register";
 import Login from "./pages/authentication/login";
@@ -82,6 +87,14 @@ const App = () => (
                   </ProtectedRoute>
                 }
               />
+              <Route
+                path="chat/:conversationId"
+                element={
+                  <ProtectedRoute>
+                    <Chat />
+                  </ProtectedRoute>
+                }
+              />
 
               {/* Farmer Routes */}
               <Route path="/farmer-register" element={<FarmerRegister />} />
@@ -105,11 +118,20 @@ const App = () => (
                 }
               />
               <Route path="products" element={<AdminProducts />} />
+              <Route path="products/:productId" element={<AdminProductDetails />} />
+              <Route path="products/:productId/edit" element={<AdminProductEdit />} />
               <Route path="orders" element={<AdminOrders />} />
+              <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="customers" element={<AdminCustomers />} />
+              <Route path="customers/:customerId" element={<AdminCustomerDetails />} />
+              <Route
+                path="customers/:customerId/message"
+                element={<AdminCustomerMessage />}
+              />
               <Route path="analytics" element={<AdminAnalytics />} />
               <Route path="settings" element={<AdminSettings />} />
               <Route path="chat" element={<AdminChat />} />
+              <Route path="chat/:conversationId" element={<AdminChat />} />
             </Route>
 
             <Route path="/login" element={<Login />} />

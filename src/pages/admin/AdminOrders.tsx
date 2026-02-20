@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -13,57 +14,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Search, ShoppingCart, Eye, Calendar, ArrowUp, ArrowDown } from "lucide-react";
-
-// Mock data for orders
-const orders = [
-  {
-    id: "ORD-001",
-    customer: "John Doe",
-    date: "2025-05-10",
-    status: "Delivered",
-    total: 125.99,
-    items: 3,
-    payment: "Credit Card"
-  },
-  {
-    id: "ORD-002",
-    customer: "Jane Smith",
-    date: "2025-05-09",
-    status: "Processing",
-    total: 75.50,
-    items: 1,
-    payment: "PayPal"
-  },
-  {
-    id: "ORD-003",
-    customer: "Robert Johnson",
-    date: "2025-05-08",
-    status: "Pending",
-    total: 210.25,
-    items: 5,
-    payment: "Bank Transfer"
-  },
-  {
-    id: "ORD-004",
-    customer: "Lisa Anderson",
-    date: "2025-05-07",
-    status: "Delivered",
-    total: 62.75,
-    items: 2,
-    payment: "Credit Card"
-  },
-  {
-    id: "ORD-005",
-    customer: "Michael Brown",
-    date: "2025-05-06",
-    status: "Cancelled",
-    total: 150.00,
-    items: 4,
-    payment: "PayPal"
-  }
-];
+import { adminOrders as orders } from "@/data/adminDashboard";
 
 export default function AdminOrders() {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState("date");
   const [sortDirection, setSortDirection] = useState("desc");
@@ -222,7 +176,15 @@ export default function AdminOrders() {
             {sortedOrders.map((order) => (
               <TableRow key={order.id}>
                 <TableCell className="font-medium">{order.id}</TableCell>
-                <TableCell>{order.customer}</TableCell>
+                <TableCell>
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/admin/customers/${order.customerId}`)}
+                    className="text-primary hover:underline"
+                  >
+                    {order.customer}
+                  </button>
+                </TableCell>
                 <TableCell>{order.date}</TableCell>
                 <TableCell>
                   <Badge variant="outline" className={getStatusColor(order.status)}>
@@ -233,7 +195,11 @@ export default function AdminOrders() {
                 <TableCell>{order.payment}</TableCell>
                 <TableCell>
                   <div className="flex justify-center">
-                    <Button size="sm" variant="ghost">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => navigate(`/admin/orders/${order.id}`)}
+                    >
                       <Eye className="h-4 w-4" />
                       <span className="ml-1 hidden md:inline">View</span>
                     </Button>

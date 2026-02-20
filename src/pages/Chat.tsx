@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Navigate, useNavigate } from "react-router-dom";
 import ChatInterface from "@/components/chat/ChatInterface";
 import ChatList from "@/components/chat/ChatList";
@@ -33,6 +33,10 @@ export default function Chat() {
   const [messages, setMessages] = useState<ChatMessage[]>(
     conversation ? conversation.messages : []
   );
+
+  useEffect(() => {
+    setMessages(conversation ? conversation.messages : []);
+  }, [conversationId]);
 
   const handleSendMessage = (content: string) => {
     if (!conversation) return;

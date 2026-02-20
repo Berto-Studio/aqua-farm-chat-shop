@@ -9,11 +9,13 @@ import { ChatConversation } from "@/types/chat";
 interface ChatListProps {
   conversations: ChatConversation[];
   activeConversationId?: string;
+  basePath?: string;
 }
 
 export default function ChatList({
   conversations,
   activeConversationId,
+  basePath = "/chat",
 }: ChatListProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -73,7 +75,7 @@ export default function ChatList({
                 return (
                   <Link
                     key={conversation.id}
-                    to={`/chat/${conversation.id}`}
+                    to={`${basePath}/${conversation.id}`}
                     className={`block p-3 rounded-lg transition-colors ${
                       activeConversationId === conversation.id
                         ? "bg-primary/10"

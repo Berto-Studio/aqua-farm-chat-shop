@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +13,7 @@ import {
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
+  Eye,
   LayoutGrid,
   List,
   Pencil,
@@ -32,6 +34,8 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
 import { normalizeCategoryName } from "@/constants/categories";
+import { DeleteProduct } from "@/services/products";
+import { useToast } from "@/hooks/use-toast";
 
 type StockFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
 type SortOption =
@@ -64,13 +68,16 @@ const stockBadgeClass: Record<Exclude<StockFilter, "all">, string> = {
 };
 
 export default function AdminProducts() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("name-asc");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
-  const { data: products = [], isLoading, error } = useProducts();
+  const { data: products = [], isLoading, error, refetch } = useProducts();
 
   const categoryOptions = useMemo(() => {
     const uniqueCategories = new Set<string>();
@@ -139,6 +146,35 @@ export default function AdminProducts() {
     setCategoryFilter("all");
     setStockFilter("all");
     setSortOption("name-asc");
+  };
+
+  const handleDeleteProduct = async (productId: string | number) => {
+    const confirmed = window.confirm(
+      "Delete this product? This action cannot be undone."
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingId(productId);
+      const response = await DeleteProduct(productId);
+      if (!response.success) {
+        throw new Error(response.message || "Failed to delete product");
+      }
+
+      toast({
+        title: "Product Deleted",
+        description: "The product was removed successfully.",
+      });
+      await refetch();
+    } catch (err) {
+      toast({
+        title: "Delete Failed",
+        description: err instanceof Error ? err.message : "Unable to delete product.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -322,7 +358,15 @@ export default function AdminProducts() {
                           />
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{product.title}</TableCell>
+                      <TableCell className="font-medium">
+                        <button
+                          type="button"
+                          className="text-left hover:text-primary hover:underline"
+                          onClick={() => navigate(`/admin/products/${product.id}`)}
+                        >
+                          {product.title}
+                        </button>
+                      </TableCell>
                       <TableCell>
                         <Badge variant="outline" className="capitalize">
                           {normalizeCategoryName(product.category)}
@@ -344,10 +388,28 @@ export default function AdminProducts() {
                       </TableCell>
                       <TableCell>
                         <div className="flex justify-center gap-2">
-                          <Button size="sm" variant="ghost">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => navigate(`/admin/products/${product.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() =>
+                              navigate(`/admin/products/${product.id}/edit`)
+                            }
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button size="sm" variant="ghost">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleDeleteProduct(product.id!)}
+                            disabled={deletingId === product.id}
+                          >
                             <Trash className="h-4 w-4" />
                           </Button>
                         </div>
@@ -399,7 +461,11 @@ export default function AdminProducts() {
               return (
                 <Card key={product.id} className="border shadow-sm">
                   <CardContent className="p-4 space-y-4">
-                    <div className="h-44 w-full overflow-hidden rounded-md bg-muted">
+                    <button
+                      type="button"
+                      className="h-44 w-full overflow-hidden rounded-md bg-muted"
+                      onClick={() => navigate(`/admin/products/${product.id}`)}
+                    >
                       <img
                         src={
                           product.image_url ||
@@ -408,13 +474,17 @@ export default function AdminProducts() {
                         alt={product.title}
                         className="h-full w-full object-cover"
                       />
-                    </div>
+                    </button>
 
                     <div className="space-y-2">
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="line-clamp-1 text-base font-semibold">
+                        <button
+                          type="button"
+                          className="line-clamp-1 text-left text-base font-semibold hover:text-primary hover:underline"
+                          onClick={() => navigate(`/admin/products/${product.id}`)}
+                        >
                           {product.title}
-                        </h3>
+                        </button>
                         <Badge variant="outline" className="capitalize">
                           {normalizeCategoryName(product.category)}
                         </Badge>
@@ -439,11 +509,29 @@ export default function AdminProducts() {
                     </div>
 
                     <div className="flex items-center justify-end gap-2 pt-1">
-                      <Button size="sm" variant="outline">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/admin/products/${product.id}`)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                      >
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit
                       </Button>
-                      <Button size="sm" variant="outline" className="text-destructive">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-destructive"
+                        onClick={() => handleDeleteProduct(product.id!)}
+                        disabled={deletingId === product.id}
+                      >
                         <Trash className="mr-2 h-4 w-4" />
                         Delete
                       </Button>

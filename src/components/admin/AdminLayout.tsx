@@ -1,28 +1,22 @@
-
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
-import { Menu, X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import AdminHeader from "./AdminHeader";
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
+  const pathname = useLocation().pathname;
+
+  useEffect(() => {
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [pathname, isMobile]);
 
   return (
-    <div className="flex h-screen">
-      {/* Mobile menu button */}
-      {isMobile && (
-        <div className="fixed top-4 left-4 z-50 lg:hidden">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-md bg-white shadow-md border"
-          >
-            {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
-      )}
-
+    <div className="flex h-screen bg-gray-50">
       {/* Overlay for mobile */}
       {isMobile && sidebarOpen && (
         <div
@@ -38,15 +32,21 @@ export default function AdminLayout() {
             ? `fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out ${
                 sidebarOpen ? "translate-x-0" : "-translate-x-full"
               }`
-            : "relative"
+            : "relative w-64 shrink-0"
         }`}
       >
         <AdminSidebar />
       </div>
 
       {/* Main content */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
-        <Outlet />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <AdminHeader
+          showMenuButton={isMobile}
+          onMenuToggle={() => setSidebarOpen((prev) => !prev)}
+        />
+        <div className="flex-1 overflow-y-auto">
+          <Outlet />
+        </div>
       </div>
     </div>
   );

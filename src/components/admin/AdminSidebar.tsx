@@ -1,15 +1,28 @@
-
-import { Link, useLocation } from "react-router-dom";
+import { useMemo } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { 
-  Home, 
-  Package, 
-  ShoppingCart, 
-  Users, 
-  MessageCircle, 
+import {
+  ChartBar,
+  ChevronUp,
+  Home,
+  House,
+  LogOut,
+  Package,
   Settings,
-  ChartBar
+  ShoppingCart,
+  Users,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useUserStore } from "@/store/store";
+import { logoutUser } from "@/services/auth/logout";
 
 interface NavLinkProps {
   to: string;
@@ -38,6 +51,8 @@ function NavLink({ to, icon, label, isActive }: NavLinkProps) {
 export default function AdminSidebar() {
   const location = useLocation();
   const pathname = location.pathname;
+  const navigate = useNavigate();
+  const user = useUserStore((state) => state.user);
   
   const navItems = [
     {
@@ -61,24 +76,34 @@ export default function AdminSidebar() {
       label: "Customers",
     },
     {
-      to: "/admin/chat",
-      icon: <MessageCircle className="h-5 w-5" />,
-      label: "Messages",
-    },
-    {
       to: "/admin/analytics",
       icon: <ChartBar className="h-5 w-5" />,
       label: "Analytics",
     },
-    {
-      to: "/admin/settings",
-      icon: <Settings className="h-5 w-5" />,
-      label: "Settings",
-    },
   ];
 
+  const userInitials = useMemo(() => {
+    if (!user?.full_name && !user?.email) return "A";
+
+    if (user?.full_name) {
+      return user.full_name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part.charAt(0).toUpperCase())
+        .join("");
+    }
+
+    return user?.email?.charAt(0).toUpperCase() || "A";
+  }, [user?.email, user?.full_name]);
+
+  const handleLogout = async () => {
+    await logoutUser();
+    navigate("/login", { replace: true });
+  };
+
   return (
-    <div className="border-r h-full bg-white p-4 w-64 flex flex-col gap-6">
+    <div className="h-full w-64 border-r bg-white p-4 flex flex-col gap-6">
       <div className="flex items-center gap-2 px-2">
         <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
           FS
@@ -106,15 +131,54 @@ export default function AdminSidebar() {
       </nav>
       
       <div className="border-t pt-3">
-        <div className="flex items-center gap-3 px-3">
-          <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
-            A
-          </div>
-          <div>
-            <div className="font-medium text-sm">Admin User</div>
-            <div className="text-xs text-muted-foreground">admin@fishfarm.com</div>
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              className="h-auto w-full justify-between px-3 py-2"
+            >
+              <div className="flex items-center gap-3 text-left">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user?.image_url} alt={user?.full_name} />
+                  <AvatarFallback className="bg-primary/10 text-primary">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <div className="font-medium text-sm">
+                    {user?.full_name || "Admin User"}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {user?.email || "admin@fishfarm.com"}
+                  </div>
+                </div>
+              </div>
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" side="top" className="w-56">
+            <DropdownMenuItem asChild>
+              <Link to="/">
+                <House className="mr-2 h-4 w-4" />
+                Home
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+              <Link to="/admin/settings">
+                <Settings className="mr-2 h-4 w-4" />
+                Settings
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleLogout}
+              className="text-destructive focus:text-destructive"
+            >
+              <LogOut className="mr-2 h-4 w-4" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

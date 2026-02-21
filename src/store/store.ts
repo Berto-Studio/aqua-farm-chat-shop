@@ -3,6 +3,8 @@ import { persist } from "zustand/middleware";
 import Cookies from "js-cookie";
 
 const ACCESS_TOKEN_COOKIE = "access_token";
+const REFRESH_TOKEN_COOKIE = "refresh_token";
+const CSRF_TOKEN_COOKIE = "csrf_token";
 const REFRESH_CSRF_COOKIE = "refresh_csrf_token";
 const LEGACY_REFRESH_CSRF_COOKIE = "csrf_refresh_token";
 const ACCESS_TOKEN_STORAGE_KEY = "access_token";
@@ -20,15 +22,29 @@ const normalizeUserType = (userType?: string) => {
 
 const getRefreshCsrfToken = () => {
   const cookieToken =
-    Cookies.get(REFRESH_CSRF_COOKIE) || Cookies.get(LEGACY_REFRESH_CSRF_COOKIE);
+    Cookies.get(CSRF_TOKEN_COOKIE) ||
+    Cookies.get(REFRESH_CSRF_COOKIE) ||
+    Cookies.get(LEGACY_REFRESH_CSRF_COOKIE);
   if (cookieToken) return cookieToken;
 
   try {
     return (
+      localStorage.getItem(CSRF_TOKEN_COOKIE) ||
       localStorage.getItem(REFRESH_CSRF_COOKIE) ||
       localStorage.getItem(LEGACY_REFRESH_CSRF_COOKIE) ||
       undefined
     );
+  } catch {
+    return undefined;
+  }
+};
+
+const getRefreshToken = () => {
+  const cookieToken = Cookies.get(REFRESH_TOKEN_COOKIE);
+  if (cookieToken) return cookieToken;
+
+  try {
+    return localStorage.getItem(REFRESH_TOKEN_COOKIE) || undefined;
   } catch {
     return undefined;
   }
@@ -46,7 +62,7 @@ const getAccessToken = () => {
 };
 
 const hasActiveSession = () => {
-  return Boolean(getAccessToken() || getRefreshCsrfToken());
+  return Boolean(getAccessToken() || getRefreshToken() || getRefreshCsrfToken());
 };
 
 type User = {
@@ -106,10 +122,14 @@ export const useUserStore = create<UserState>()(
       setHasHydrated: (hasHydrated) => set({ hasHydrated }),
       logout: () => {
         Cookies.remove(ACCESS_TOKEN_COOKIE);
+        Cookies.remove(REFRESH_TOKEN_COOKIE);
+        Cookies.remove(CSRF_TOKEN_COOKIE);
         Cookies.remove(REFRESH_CSRF_COOKIE);
         Cookies.remove(LEGACY_REFRESH_CSRF_COOKIE);
         try {
           localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+          localStorage.removeItem(REFRESH_TOKEN_COOKIE);
+          localStorage.removeItem(CSRF_TOKEN_COOKIE);
           localStorage.removeItem(REFRESH_CSRF_COOKIE);
           localStorage.removeItem(LEGACY_REFRESH_CSRF_COOKIE);
         } catch {

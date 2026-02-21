@@ -3,9 +3,12 @@ import { Navigate } from "react-router-dom";
 
 export default function ProtectedRoute({
   children,
+  requireAdmin = false,
 }: {
   children: JSX.Element;
+  requireAdmin?: boolean;
 }) {
+  const user = useUserStore((state) => state.user);
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
   const isLoading = useUserStore((state) => state.isLoading);
   const hasHydrated = useUserStore((state) => state.hasHydrated);
@@ -19,5 +22,20 @@ export default function ProtectedRoute({
     );
   }
 
-  return isLoggedIn ? children : <Navigate to="/login" replace />;
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (requireAdmin) {
+    const isAdminUser =
+      Boolean(user?.is_admin) ||
+      String(user?.user_type || "").toLowerCase() === "admin" ||
+      String(user?.role || "").toLowerCase() === "admin";
+
+    if (!isAdminUser) {
+      return <Navigate to="/login" replace />;
+    }
+  }
+
+  return children;
 }

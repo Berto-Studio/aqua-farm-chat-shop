@@ -4,6 +4,8 @@ import Cookies from "js-cookie";
 // src/api/client.ts
 const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const ACCESS_TOKEN_COOKIE = "access_token";
+const REFRESH_TOKEN_COOKIE = "refresh_token";
+const CSRF_TOKEN_COOKIE = "csrf_token";
 const REFRESH_CSRF_COOKIE = "refresh_csrf_token";
 const LEGACY_REFRESH_CSRF_COOKIE = "csrf_refresh_token";
 const ACCESS_TOKEN_STORAGE_KEY = "access_token";
@@ -76,11 +78,14 @@ const getAccessToken = () => {
 
 const getRefreshCsrfToken = () => {
   const cookieToken =
-    Cookies.get(REFRESH_CSRF_COOKIE) || Cookies.get(LEGACY_REFRESH_CSRF_COOKIE);
+    Cookies.get(CSRF_TOKEN_COOKIE) ||
+    Cookies.get(REFRESH_CSRF_COOKIE) ||
+    Cookies.get(LEGACY_REFRESH_CSRF_COOKIE);
   if (cookieToken) return cookieToken;
 
   try {
     return (
+      localStorage.getItem(CSRF_TOKEN_COOKIE) ||
       localStorage.getItem(REFRESH_CSRF_COOKIE) ||
       localStorage.getItem(LEGACY_REFRESH_CSRF_COOKIE) ||
       undefined
@@ -90,12 +95,47 @@ const getRefreshCsrfToken = () => {
   }
 };
 
+const getRefreshToken = () => {
+  const cookieToken = Cookies.get(REFRESH_TOKEN_COOKIE);
+  if (cookieToken) return cookieToken;
+
+  try {
+    return localStorage.getItem(REFRESH_TOKEN_COOKIE) || undefined;
+  } catch {
+    return undefined;
+  }
+};
+
+const setRefreshToken = (refreshToken?: string) => {
+  if (!refreshToken) return;
+
+  Cookies.set(REFRESH_TOKEN_COOKIE, refreshToken, getCookieOptions(30));
+
+  try {
+    localStorage.setItem(REFRESH_TOKEN_COOKIE, refreshToken);
+  } catch {
+    // Ignore storage errors in private browsing / restricted environments.
+  }
+};
+
+const clearRefreshToken = () => {
+  Cookies.remove(REFRESH_TOKEN_COOKIE);
+
+  try {
+    localStorage.removeItem(REFRESH_TOKEN_COOKIE);
+  } catch {
+    // Ignore storage errors in private browsing / restricted environments.
+  }
+};
+
 const setRefreshCsrfToken = (csrfToken?: string) => {
   if (!csrfToken) return;
 
+  Cookies.set(CSRF_TOKEN_COOKIE, csrfToken, getCookieOptions(30));
   Cookies.set(REFRESH_CSRF_COOKIE, csrfToken, getCookieOptions(7));
 
   try {
+    localStorage.setItem(CSRF_TOKEN_COOKIE, csrfToken);
     localStorage.setItem(REFRESH_CSRF_COOKIE, csrfToken);
   } catch {
     // Ignore storage errors in private browsing / restricted environments.
@@ -103,10 +143,12 @@ const setRefreshCsrfToken = (csrfToken?: string) => {
 };
 
 const clearRefreshCsrfToken = () => {
+  Cookies.remove(CSRF_TOKEN_COOKIE);
   Cookies.remove(REFRESH_CSRF_COOKIE);
   Cookies.remove(LEGACY_REFRESH_CSRF_COOKIE);
 
   try {
+    localStorage.removeItem(CSRF_TOKEN_COOKIE);
     localStorage.removeItem(REFRESH_CSRF_COOKIE);
     localStorage.removeItem(LEGACY_REFRESH_CSRF_COOKIE);
   } catch {
@@ -157,7 +199,10 @@ const shouldAttemptRefresh = (
   ];
 
   const hasSessionContext = Boolean(
-    getAccessToken() || getRefreshCsrfToken() || useUserStore.getState().isLoggedIn
+    getAccessToken() ||
+      getRefreshCsrfToken() ||
+      getRefreshToken() ||
+      useUserStore.getState().isLoggedIn
   );
 
   return hasSessionContext && tokenErrorPatterns.some((pattern) => message.includes(pattern));
@@ -249,8 +294,23 @@ const parseResponse = async <T>(response: Response): Promise<T> => {
 
 const clearAuthState = () => {
   clearAccessToken();
+  clearRefreshToken();
   clearRefreshCsrfToken();
   useUserStore.getState().logout();
+};
+
+const extractRefreshPayload = (payload: Record<string, any> | null) => {
+  const nestedData =
+    payload?.data && typeof payload.data === "object" ? payload.data : payload;
+
+  return {
+    accessToken: nestedData?.access_token as string | undefined,
+    refreshToken: nestedData?.refresh_token as string | undefined,
+    csrfToken: nestedData?.csrf_token as string | undefined,
+    requiresRetry: Boolean(
+      nestedData?.requires_retry ?? payload?.requires_retry
+    ),
+  };
 };
 
 const refreshAccessToken = async (): Promise<boolean> => {
@@ -260,39 +320,56 @@ const refreshAccessToken = async (): Promise<boolean> => {
 
   activeRefreshRequest = (async () => {
     try {
+      const refreshToken = getRefreshToken();
+      const refreshBody = refreshToken ? { refresh_token: refreshToken } : undefined;
       const refreshResponse = await performRequest(
         REFRESH_ENDPOINT,
         "POST",
-        undefined,
+        refreshBody,
         false,
         { skipAuth: true, skipRefresh: true }
       );
 
       const refreshPayload = await safeParseJson<Record<string, any>>(refreshResponse);
+      const refreshData = extractRefreshPayload(refreshPayload);
 
-      if (!refreshResponse.ok || !refreshPayload?.access_token) {
+      if (!refreshResponse.ok || !refreshData.accessToken) {
         clearAuthState();
         return false;
       }
 
-      setAuthSession(refreshPayload.access_token, refreshPayload.csrf_token);
+      setAuthSession(
+        refreshData.accessToken,
+        refreshData.csrfToken,
+        refreshData.refreshToken
+      );
 
-      if (refreshPayload.requires_retry) {
+      if (refreshData.requiresRetry) {
+        const retryRefreshToken = refreshData.refreshToken || getRefreshToken();
+        const retryBody = retryRefreshToken
+          ? { refresh_token: retryRefreshToken }
+          : undefined;
         const retryResponse = await performRequest(
           REFRESH_ENDPOINT,
           "POST",
-          undefined,
+          retryBody,
           false,
           { skipAuth: true, skipRefresh: true }
         );
 
         const retryPayload = await safeParseJson<Record<string, any>>(retryResponse);
-        if (!retryResponse.ok || !retryPayload?.access_token) {
+        const retryData = extractRefreshPayload(retryPayload);
+
+        if (!retryResponse.ok || !retryData.accessToken) {
           clearAuthState();
           return false;
         }
 
-        setAuthSession(retryPayload.access_token, retryPayload.csrf_token);
+        setAuthSession(
+          retryData.accessToken,
+          retryData.csrfToken,
+          retryData.refreshToken
+        );
       }
 
       return true;
@@ -316,9 +393,14 @@ export const setAccessToken = (token: string) => {
   }
 };
 
-export const setAuthSession = (accessToken: string, csrfToken?: string) => {
+export const setAuthSession = (
+  accessToken: string,
+  csrfToken?: string,
+  refreshToken?: string
+) => {
   setAccessToken(accessToken);
   setRefreshCsrfToken(csrfToken);
+  setRefreshToken(refreshToken);
 };
 
 export const clearAuthSession = () => {

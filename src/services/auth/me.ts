@@ -9,8 +9,20 @@ export interface AuthMeData {
 }
 
 interface AuthMeResponse {
-  data: AuthMeData | null;
+  data?: AuthMeData | { user?: AuthMeData; data?: AuthMeData } | null;
+  message?: string;
+  status?: number;
 }
+
+const extractAuthMeUser = (
+  payload?: AuthMeResponse["data"]
+): AuthMeData | undefined => {
+  if (!payload) return undefined;
+  if ("id" in (payload as AuthMeData)) return payload as AuthMeData;
+
+  const wrapped = payload as { user?: AuthMeData; data?: AuthMeData };
+  return wrapped.user || wrapped.data;
+};
 
 export async function getAuthMe(): Promise<{
   success: boolean;
@@ -20,20 +32,21 @@ export async function getAuthMe(): Promise<{
 }> {
   try {
     const response = await apiRequest<AuthMeResponse>("auth/me", "GET");
+    const userData = extractAuthMeUser(response?.data);
 
-    if (!response?.data) {
+    if (!userData) {
       return {
         success: false,
-        message: "No authenticated user data found",
+        message: response?.message || "No authenticated user data found",
         status: 404,
       };
     }
 
     return {
       success: true,
-      data: response.data,
-      message: "Authenticated user retrieved",
-      status: 200,
+      data: userData,
+      message: response?.message || "Authenticated user retrieved",
+      status: response?.status || 200,
     };
   } catch (error) {
     return {

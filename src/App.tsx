@@ -108,15 +108,15 @@ const App = () => (
               />
             </Route>
 
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route
-                index
-                element={
-                  <ProtectedRoute>
-                    <AdminDashboard />
-                  </ProtectedRoute>
-                }
-              />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <AdminLayout />
+                </ProtectedRoute>
+              }
+            >
+              <Route index element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
               <Route path="products/:productId" element={<AdminProductDetails />} />
               <Route path="products/:productId/edit" element={<AdminProductEdit />} />
@@ -124,18 +124,9 @@ const App = () => (
               <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="users" element={<AdminCustomers />} />
               <Route path="users/:userId" element={<AdminCustomerDetails />} />
-              <Route
-                path="users/:userId/message"
-                element={<AdminCustomerMessage />}
-              />
-              <Route
-                path="customers"
-                element={<AdminCustomers />}
-              />
-              <Route
-                path="customers/:customerId"
-                element={<AdminCustomerDetails />}
-              />
+              <Route path="users/:userId/message" element={<AdminCustomerMessage />} />
+              <Route path="customers" element={<AdminCustomers />} />
+              <Route path="customers/:customerId" element={<AdminCustomerDetails />} />
               <Route
                 path="customers/:customerId/message"
                 element={<AdminCustomerMessage />}

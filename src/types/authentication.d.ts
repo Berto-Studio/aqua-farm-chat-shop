@@ -19,11 +19,14 @@ export interface AuthenticatedUser {
 export interface LoginResponse {
   data: {
     access_token: string;
+    refresh_token?: string;
     csrf_token?: string;
-    data: AuthenticatedUser;
+    user?: AuthenticatedUser;
+    data?: AuthenticatedUser;
   } | null;
   status: number;
   message?: string;
+  success?: boolean;
 }
 
 export interface RegisterProps {

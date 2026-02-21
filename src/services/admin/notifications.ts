@@ -1,3 +1,4 @@
+import { apiRequest } from "@/hooks/useClient";
 import {
   AdminNotificationRecord,
   ApiListResponse,
@@ -8,7 +9,6 @@ import {
   extractListData,
   extractMeta,
   extractSingleData,
-  requestWithFallback,
 } from "./common";
 
 export interface GetAdminNotificationsParams {
@@ -17,13 +17,13 @@ export interface GetAdminNotificationsParams {
 }
 
 export const GetAdminNotifications = async (
-  params: GetAdminNotificationsParams = {}
+  params: GetAdminNotificationsParams = {},
 ): Promise<ApiListResponse<AdminNotificationRecord>> => {
   try {
     const query = buildQueryString(params as Record<string, unknown>);
-    const response = await requestWithFallback(
-      [`admin/notifications${query}`, `notifications${query}`],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `admin/notifications${query}`,
+      "GET",
     );
     const data = extractListData<AdminNotificationRecord>(response, [
       "notifications",
@@ -47,20 +47,25 @@ export const GetAdminNotifications = async (
       success: false,
       data: [],
       message:
-        error instanceof Error ? error.message : "Failed to fetch notifications",
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch notifications",
       status: 500,
     };
   }
 };
 
 export const CreateAdminNotification = async (
-  payload: Omit<AdminNotificationRecord, "id" | "created_at" | "createdAt" | "read">
+  payload: Omit<
+    AdminNotificationRecord,
+    "id" | "created_at" | "createdAt" | "read"
+  >,
 ): Promise<ApiSingleResponse<AdminNotificationRecord>> => {
   try {
-    const response = await requestWithFallback(
-      ["admin/notifications", "notifications"],
+    const response = await apiRequest<Record<string, any>>(
+      "admin/notifications",
       "POST",
-      payload
+      payload,
     );
     const data = extractSingleData<AdminNotificationRecord>(response, [
       "notification",
@@ -77,22 +82,21 @@ export const CreateAdminNotification = async (
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to create notification",
+        error instanceof Error
+          ? error.message
+          : "Failed to create notification",
       status: 500,
     };
   }
 };
 
 export const MarkAdminNotificationRead = async (
-  notificationId: string
+  notificationId: string,
 ): Promise<ApiSingleResponse<AdminNotificationRecord>> => {
   try {
-    const response = await requestWithFallback(
-      [
-        `admin/notifications/${notificationId}/read`,
-        `notifications/${notificationId}/read`,
-      ],
-      "PATCH"
+    const response = await apiRequest<Record<string, any>>(
+      `admin/notifications/${notificationId}/read`,
+      "PATCH",
     );
     const data = extractSingleData<AdminNotificationRecord>(response, [
       "notification",
@@ -123,9 +127,9 @@ export const MarkAllAdminNotificationsRead = async (): Promise<{
   status: number;
 }> => {
   try {
-    const response = await requestWithFallback(
-      ["admin/notifications/read-all", "notifications/read-all"],
-      "PATCH"
+    const response = await apiRequest<Record<string, any>>(
+      "admin/notifications/read-all",
+      "PATCH",
     );
 
     return {

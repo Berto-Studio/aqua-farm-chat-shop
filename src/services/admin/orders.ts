@@ -1,3 +1,4 @@
+import { apiRequest } from "@/hooks/useClient";
 import {
   AdminOrderRecord,
   AdminOrderStats,
@@ -9,7 +10,6 @@ import {
   extractListData,
   extractMeta,
   extractSingleData,
-  requestWithFallback,
 } from "./common";
 
 export interface GetAdminOrdersParams {
@@ -24,13 +24,13 @@ export interface GetAdminOrdersParams {
 }
 
 export const GetAdminOrders = async (
-  params: GetAdminOrdersParams = {}
+  params: GetAdminOrdersParams = {},
 ): Promise<ApiListResponse<AdminOrderRecord>> => {
   try {
     const query = buildQueryString(params as Record<string, unknown>);
-    const response = await requestWithFallback(
-      [`admin/orders${query}`, `orders${query}`],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `orders${query}`,
+      "GET",
     );
 
     const data = extractListData<AdminOrderRecord>(response, ["orders"]);
@@ -53,7 +53,8 @@ export const GetAdminOrders = async (
     return {
       success: false,
       data: [],
-      message: error instanceof Error ? error.message : "Failed to fetch orders",
+      message:
+        error instanceof Error ? error.message : "Failed to fetch orders",
       status: 500,
       meta: {
         page: params.page ?? 1,
@@ -66,12 +67,12 @@ export const GetAdminOrders = async (
 };
 
 export const GetAdminOrder = async (
-  orderId: string | number
+  orderId: string | number,
 ): Promise<ApiSingleResponse<AdminOrderRecord>> => {
   try {
-    const response = await requestWithFallback(
-      [`admin/orders/${orderId}`, `orders/${orderId}`],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `orders/${orderId}`,
+      "GET",
     );
     const data = extractSingleData<AdminOrderRecord>(response, ["order"]);
 
@@ -93,13 +94,13 @@ export const GetAdminOrder = async (
 
 export const UpdateAdminOrderStatus = async (
   orderId: string | number,
-  status: string
+  status: string,
 ): Promise<ApiSingleResponse<AdminOrderRecord>> => {
   try {
-    const response = await requestWithFallback(
-      [`admin/orders/${orderId}/status`, `orders/${orderId}/status`],
+    const response = await apiRequest<Record<string, any>>(
+      `orders/${orderId}/status`,
       "PATCH",
-      { status }
+      { status },
     );
     const data = extractSingleData<AdminOrderRecord>(response, ["order"]);
 
@@ -114,19 +115,26 @@ export const UpdateAdminOrderStatus = async (
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to update order status",
+        error instanceof Error
+          ? error.message
+          : "Failed to update order status",
       status: 500,
     };
   }
 };
 
-export const GetAdminOrderStats = async (): Promise<ApiSingleResponse<AdminOrderStats>> => {
+export const GetAdminOrderStats = async (): Promise<
+  ApiSingleResponse<AdminOrderStats>
+> => {
   try {
-    const response = await requestWithFallback(
-      ["admin/orders/stats/overview", "orders/stats/overview"],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      "orders/stats/overview",
+      "GET",
     );
-    const data = extractSingleData<AdminOrderStats>(response, ["stats", "data"]);
+    const data = extractSingleData<AdminOrderStats>(response, [
+      "stats",
+      "data",
+    ]);
 
     return {
       success: true,

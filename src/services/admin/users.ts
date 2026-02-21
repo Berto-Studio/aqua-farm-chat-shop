@@ -1,3 +1,4 @@
+import { apiRequest } from "@/hooks/useClient";
 import {
   AdminOrderRecord,
   AdminUserRecord,
@@ -9,7 +10,6 @@ import {
   extractListData,
   extractMeta,
   extractSingleData,
-  requestWithFallback,
 } from "./common";
 
 export interface GetAdminUsersParams {
@@ -20,13 +20,13 @@ export interface GetAdminUsersParams {
 }
 
 export const GetAdminUsers = async (
-  params: GetAdminUsersParams = {}
+  params: GetAdminUsersParams = {},
 ): Promise<ApiListResponse<AdminUserRecord>> => {
   try {
     const query = buildQueryString(params as Record<string, unknown>);
-    const response = await requestWithFallback(
-      [`admin/users${query}`, `users${query}`],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `users${query}`,
+      "GET",
     );
 
     const data = extractListData<AdminUserRecord>(response, ["users"]);
@@ -62,12 +62,12 @@ export const GetAdminUsers = async (
 };
 
 export const GetAdminUser = async (
-  userId: string | number
+  userId: string | number,
 ): Promise<ApiSingleResponse<AdminUserRecord>> => {
   try {
-    const response = await requestWithFallback(
-      [`admin/users/${userId}`, `users/${userId}`],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `users/${userId}`,
+      "GET",
     );
     const data = extractSingleData<AdminUserRecord>(response, ["user"]);
 
@@ -89,16 +89,13 @@ export const GetAdminUser = async (
 
 export const GetAdminUserOrders = async (
   userId: string | number,
-  params: { page?: number; per_page?: number } = {}
+  params: { page?: number; per_page?: number } = {},
 ): Promise<ApiListResponse<AdminOrderRecord>> => {
   try {
     const query = buildQueryString(params as Record<string, unknown>);
-    const response = await requestWithFallback(
-      [
-        `admin/users/${userId}/orders${query}`,
-        `users/${userId}/orders${query}`,
-      ],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `users/${userId}/orders${query}`,
+      "GET",
     );
 
     const data = extractListData<AdminOrderRecord>(response, ["orders"]);

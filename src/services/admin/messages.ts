@@ -1,3 +1,4 @@
+import { apiRequest } from "@/hooks/useClient";
 import {
   AdminConversationRecord,
   AdminMessageRecord,
@@ -9,16 +10,15 @@ import {
   extractListData,
   extractMeta,
   extractSingleData,
-  requestWithFallback,
 } from "./common";
 
 export const GetAdminConversations = async (): Promise<
   ApiListResponse<AdminConversationRecord>
 > => {
   try {
-    const response = await requestWithFallback(
-      ["admin/messages/conversations", "messages/conversations"],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      "admin/messages/conversations",
+      "GET",
     );
 
     const data = extractListData<AdminConversationRecord>(response, [
@@ -43,20 +43,22 @@ export const GetAdminConversations = async (): Promise<
       success: false,
       data: [],
       message:
-        error instanceof Error ? error.message : "Failed to fetch conversations",
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch conversations",
       status: 500,
     };
   }
 };
 
 export const CreateAdminConversation = async (
-  userId: string | number
+  userId: string | number,
 ): Promise<ApiSingleResponse<AdminConversationRecord>> => {
   try {
-    const response = await requestWithFallback(
-      ["admin/messages/conversations", "messages/conversations"],
+    const response = await apiRequest<Record<string, any>>(
+      "admin/messages/conversations",
       "POST",
-      { user_id: userId }
+      { user_id: userId },
     );
     const data = extractSingleData<AdminConversationRecord>(response, [
       "conversation",
@@ -73,22 +75,21 @@ export const CreateAdminConversation = async (
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to create conversation",
+        error instanceof Error
+          ? error.message
+          : "Failed to create conversation",
       status: 500,
     };
   }
 };
 
 export const GetAdminConversation = async (
-  conversationId: string
+  conversationId: string,
 ): Promise<ApiSingleResponse<AdminConversationRecord>> => {
   try {
-    const response = await requestWithFallback(
-      [
-        `admin/messages/conversations/${conversationId}`,
-        `messages/conversations/${conversationId}`,
-      ],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `admin/messages/conversations/${conversationId}`,
+      "GET",
     );
     const data = extractSingleData<AdminConversationRecord>(response, [
       "conversation",
@@ -113,16 +114,13 @@ export const GetAdminConversation = async (
 
 export const GetAdminConversationMessages = async (
   conversationId: string,
-  params: { page?: number; per_page?: number } = {}
+  params: { page?: number; per_page?: number } = {},
 ): Promise<ApiListResponse<AdminMessageRecord>> => {
   try {
     const query = buildQueryString(params as Record<string, unknown>);
-    const response = await requestWithFallback(
-      [
-        `admin/messages/conversations/${conversationId}/messages${query}`,
-        `messages/conversations/${conversationId}/messages${query}`,
-      ],
-      "GET"
+    const response = await apiRequest<Record<string, any>>(
+      `admin/messages/conversations/${conversationId}/messages${query}`,
+      "GET",
     );
     const data = extractListData<AdminMessageRecord>(response, ["messages"]);
 
@@ -143,7 +141,8 @@ export const GetAdminConversationMessages = async (
     return {
       success: false,
       data: [],
-      message: error instanceof Error ? error.message : "Failed to fetch messages",
+      message:
+        error instanceof Error ? error.message : "Failed to fetch messages",
       status: 500,
     };
   }
@@ -151,16 +150,13 @@ export const GetAdminConversationMessages = async (
 
 export const SendAdminConversationMessage = async (
   conversationId: string,
-  content: string
+  content: string,
 ): Promise<ApiSingleResponse<AdminMessageRecord>> => {
   try {
-    const response = await requestWithFallback(
-      [
-        `admin/messages/conversations/${conversationId}/messages`,
-        `messages/conversations/${conversationId}/messages`,
-      ],
+    const response = await apiRequest<Record<string, any>>(
+      `admin/messages/conversations/${conversationId}/messages`,
       "POST",
-      { content }
+      { content },
     );
     const data = extractSingleData<AdminMessageRecord>(response, ["message"]);
 
@@ -174,22 +170,20 @@ export const SendAdminConversationMessage = async (
     console.error("Error sending admin message:", error);
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Failed to send message",
+      message:
+        error instanceof Error ? error.message : "Failed to send message",
       status: 500,
     };
   }
 };
 
 export const MarkAdminConversationRead = async (
-  conversationId: string
+  conversationId: string,
 ): Promise<{ success: boolean; message: string; status: number }> => {
   try {
-    const response = await requestWithFallback(
-      [
-        `admin/messages/conversations/${conversationId}/read`,
-        `messages/conversations/${conversationId}/read`,
-      ],
-      "POST"
+    const response = await apiRequest<Record<string, any>>(
+      `admin/messages/conversations/${conversationId}/read`,
+      "POST",
     );
 
     return {

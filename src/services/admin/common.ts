@@ -1,4 +1,3 @@
-import { apiRequest } from "@/hooks/useClient";
 import { PaginationMeta } from "@/types/admin";
 
 export const toNumber = (value: unknown, fallback = 0) => {
@@ -69,30 +68,4 @@ export const extractSingleData = <T>(
   }
 
   return undefined;
-};
-
-type RequestMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
-
-export const requestWithFallback = async (
-  endpoints: string[],
-  method: RequestMethod = "GET",
-  body?: unknown
-) => {
-  let lastError: unknown;
-
-  for (const endpoint of endpoints) {
-    try {
-      return await apiRequest<Record<string, any>>(
-        endpoint,
-        method,
-        body
-      );
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError instanceof Error
-    ? lastError
-    : new Error("Request failed for all fallback endpoints");
 };

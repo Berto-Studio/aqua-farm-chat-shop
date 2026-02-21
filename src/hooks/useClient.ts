@@ -20,6 +20,7 @@ type ApiRequestOptions = {
 };
 
 let activeRefreshRequest: Promise<boolean> | null = null;
+let refreshFailed = false;
 
 const normalizeEndpoint = (endpoint: string) => endpoint.replace(/^\/+/, "");
 
@@ -186,9 +187,10 @@ const shouldAttemptRefresh = (
   statusCode: number,
   payload: Record<string, any> | null
 ) => {
-  if (statusCode !== 401 && statusCode !== 422) return false;
+  if (statusCode !== 401 && statusCode !== 403 && statusCode !== 422) {
+    return false;
+  }
 
-  const message = extractErrorMessage(payload, "").toLowerCase();
   const tokenErrorPatterns = [
     "token has expired",
     "signature has expired",
@@ -196,6 +198,8 @@ const shouldAttemptRefresh = (
     "missing authorization header",
     "jwt",
     "token",
+    "subject must be a string",
+    "invalid subject",
   ];
 
   const hasSessionContext = Boolean(
@@ -205,7 +209,14 @@ const shouldAttemptRefresh = (
       useUserStore.getState().isLoggedIn
   );
 
-  return hasSessionContext && tokenErrorPatterns.some((pattern) => message.includes(pattern));
+  if (!hasSessionContext) return false;
+
+  if (statusCode === 401 || statusCode === 403) {
+    return true;
+  }
+
+  const message = extractErrorMessage(payload, "").toLowerCase();
+  return tokenErrorPatterns.some((pattern) => message.includes(pattern));
 };
 
 const buildHeaders = (
@@ -334,6 +345,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
       const refreshData = extractRefreshPayload(refreshPayload);
 
       if (!refreshResponse.ok || !refreshData.accessToken) {
+        refreshFailed = true;
         clearAuthState();
         return false;
       }
@@ -361,6 +373,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
         const retryData = extractRefreshPayload(retryPayload);
 
         if (!retryResponse.ok || !retryData.accessToken) {
+          refreshFailed = true;
           clearAuthState();
           return false;
         }
@@ -374,6 +387,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
 
       return true;
     } catch (error) {
+      refreshFailed = true;
       clearAuthState();
       return false;
     } finally {
@@ -398,6 +412,7 @@ export const setAuthSession = (
   csrfToken?: string,
   refreshToken?: string
 ) => {
+  refreshFailed = false;
   setAccessToken(accessToken);
   setRefreshCsrfToken(csrfToken);
   setRefreshToken(refreshToken);
@@ -414,6 +429,16 @@ export const apiRequest = async <T>(
   isFormData: boolean = false,
   options: ApiRequestOptions = {}
 ): Promise<T> => {
+  if (!options.skipRefresh && refreshFailed) {
+    const stillHasSession = Boolean(
+      getAccessToken() || getRefreshToken() || getRefreshCsrfToken()
+    );
+    if (stillHasSession) {
+      throw new Error("Session expired. Please log in again.");
+    }
+    refreshFailed = false;
+  }
+
   const normalizedEndpoint = normalizeEndpoint(endpoint);
   const isRefreshEndpoint = normalizedEndpoint === REFRESH_ENDPOINT;
 
@@ -439,15 +464,24 @@ export const apiRequest = async <T>(
         const retryErrorPayload = await safeParseJson<Record<string, any>>(response);
         throw new Error(extractErrorMessage(retryErrorPayload));
       }
+
+      refreshFailed = true;
+      clearAuthState();
+      throw new Error("Session expired. Please log in again.");
     }
 
     const lowerMessage = extractErrorMessage(errorPayload, "").toLowerCase();
     if (
-      (response.status === 401 || response.status === 422) &&
+      (response.status === 401 ||
+        response.status === 403 ||
+        response.status === 422) &&
       (lowerMessage.includes("token") ||
         lowerMessage.includes("authorization") ||
-        lowerMessage.includes("jwt"))
+        lowerMessage.includes("jwt") ||
+        lowerMessage.includes("subject must be a string") ||
+        lowerMessage.includes("invalid subject"))
     ) {
+      refreshFailed = true;
       clearAuthState();
       throw new Error("Session expired. Please log in again.");
     }

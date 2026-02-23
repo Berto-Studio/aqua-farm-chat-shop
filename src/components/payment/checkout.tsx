@@ -1,6 +1,6 @@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -10,85 +10,149 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-export default function Checkout() {
+export type ShippingMethod = "standard" | "express" | "pickup";
+export type PaymentMethod = "card" | "mobile" | "paypal" | "cod";
+
+export interface CheckoutFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  address: string;
+  city: string;
+  region: string;
+  postalCode: string;
+  shippingMethod: ShippingMethod | "";
+  paymentMethod: PaymentMethod | "";
+}
+
+interface CheckoutProps {
+  value: CheckoutFormData;
+  onChange: (updates: Partial<CheckoutFormData>) => void;
+  onBackToCart?: () => void;
+}
+
+export default function Checkout({ value, onChange, onBackToCart }: CheckoutProps) {
+  const isPickup = value.shippingMethod === "pickup";
+
   return (
     <div>
-      <Card className=" mx-auto">
-        <CardContent className="p-6 space-y-6">
-          {/* Contact Info */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <Card className="mx-auto">
+        <CardContent className="space-y-6 p-6">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium mb-2">
-                First Name
-              </label>
-              <Input placeholder="Enter first name" />
+              <label className="mb-2 block text-sm font-medium">First Name</label>
+              <Input
+                placeholder="Enter first name"
+                value={value.firstName}
+                onChange={(event) => onChange({ firstName: event.target.value })}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Last Name
-              </label>
-              <Input placeholder="Enter last name" />
+              <label className="mb-2 block text-sm font-medium">Last Name</label>
+              <Input
+                placeholder="Enter last name"
+                value={value.lastName}
+                onChange={(event) => onChange({ lastName: event.target.value })}
+              />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">Email</label>
-            <Input type="email" placeholder="Enter your email" />
+            <label className="mb-2 block text-sm font-medium">Email</label>
+            <Input
+              type="email"
+              placeholder="Enter your email"
+              value={value.email}
+              onChange={(event) => onChange({ email: event.target.value })}
+            />
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Phone Number
-            </label>
-            <Input type="tel" placeholder="Enter phone number" />
+            <label className="mb-2 block text-sm font-medium">Phone Number</label>
+            <Input
+              type="tel"
+              placeholder="Enter phone number"
+              value={value.phone}
+              onChange={(event) => onChange({ phone: event.target.value })}
+            />
           </div>
 
-          {/* Shipping Address */}
           <div>
-            <label className="block text-sm font-medium mb-2">Address</label>
-            <Textarea placeholder="Street address, building, etc." />
+            <label className="mb-2 block text-sm font-medium">Address</label>
+            <Textarea
+              placeholder={
+                isPickup
+                  ? "Pickup selected. Address is optional."
+                  : "Street address, building, etc."
+              }
+              value={value.address}
+              onChange={(event) => onChange({ address: event.target.value })}
+            />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <label className="block text-sm font-medium mb-2">City</label>
-              <Input placeholder="City" />
+              <label className="mb-2 block text-sm font-medium">City</label>
+              <Input
+                placeholder="City"
+                value={value.city}
+                onChange={(event) => onChange({ city: event.target.value })}
+                disabled={isPickup}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">Region</label>
-              <Input placeholder="Region/State" />
+              <label className="mb-2 block text-sm font-medium">Region</label>
+              <Input
+                placeholder="Region/State"
+                value={value.region}
+                onChange={(event) => onChange({ region: event.target.value })}
+                disabled={isPickup}
+              />
             </div>
             <div>
-              <label className="block text-sm font-medium mb-2">
-                Postal Code
-              </label>
-              <Input placeholder="Postal Code" />
+              <label className="mb-2 block text-sm font-medium">Postal Code</label>
+              <Input
+                placeholder="Postal Code"
+                value={value.postalCode}
+                onChange={(event) => onChange({ postalCode: event.target.value })}
+                disabled={isPickup}
+              />
             </div>
           </div>
 
-          {/* Shipping Method */}
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Shipping Method
-            </label>
-            <Select>
+            <label className="mb-2 block text-sm font-medium">Shipping Method</label>
+            <Select
+              value={value.shippingMethod}
+              onValueChange={(nextValue: ShippingMethod) =>
+                onChange({
+                  shippingMethod: nextValue,
+                  ...(nextValue === "pickup"
+                    ? { address: "", city: "", region: "", postalCode: "" }
+                    : {}),
+                })
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select shipping" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard (3–5 days)</SelectItem>
-                <SelectItem value="express">Express (1–2 days)</SelectItem>
+                <SelectItem value="standard">Standard (3-5 days)</SelectItem>
+                <SelectItem value="express">Express (1-2 days)</SelectItem>
                 <SelectItem value="pickup">Pickup</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
-          {/* Payment Method */}
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Payment Method
-            </label>
-            <Select>
+            <label className="mb-2 block text-sm font-medium">Payment Method</label>
+            <Select
+              value={value.paymentMethod}
+              onValueChange={(nextValue: PaymentMethod) =>
+                onChange({ paymentMethod: nextValue })
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select payment" />
               </SelectTrigger>
@@ -102,8 +166,8 @@ export default function Checkout() {
           </div>
         </CardContent>
       </Card>
-      <Button variant="outline" className="mt-4">
-        Go back to carts
+      <Button variant="outline" className="mt-4" onClick={onBackToCart}>
+        Go back to cart
       </Button>
     </div>
   );

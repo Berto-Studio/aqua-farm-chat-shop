@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Menu, X, MessageCircle, User } from "lucide-react";
+import { ShoppingCart, Menu, MessageCircle, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -26,9 +26,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SearchDropdown from "./SearchDropdown";
-import ChatInterface from "@/components/chat/ChatInterface";
-import ChatList from "@/components/chat/ChatList";
-import { getAllConversations } from "@/data/chat";
+import CustomerServiceChat from "@/components/chat/CustomerServiceChat";
+import { getSupportConversation } from "@/data/chat";
 import { ChatMessage } from "@/types/chat";
 import { useUserStore } from "@/store/store";
 import { useCarts } from "@/hooks/useCart";
@@ -41,20 +40,16 @@ export default function Navbar() {
 
   // Zustand store for user and login state
   const { user, isLoggedIn, isLoading } = useUserStore();
-
-  const allConversations = getAllConversations();
-  const conversation = allConversations[0];
+  const supportConversation = getSupportConversation();
 
   // Initialize messages when conversation changes
   useEffect(() => {
-    if (conversation && messages.length === 0) {
-      setMessages(conversation.messages);
+    if (messages.length === 0) {
+      setMessages(supportConversation.messages);
     }
-  }, [conversation, messages.length]);
+  }, [messages.length, supportConversation.messages]);
 
   const handleSendMessage = (content: string) => {
-    if (!conversation) return;
-
     const newMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
       senderId: "user-current",
@@ -77,7 +72,7 @@ export default function Navbar() {
           "Thank you for your message. Our team will get back to you shortly.",
         timestamp: new Date(),
         isRead: true,
-        senderName: "Admin",
+        senderName: "Customer Support",
       };
 
       setMessages((prev) => [...prev, adminResponse]);
@@ -182,17 +177,16 @@ export default function Navbar() {
 
               {isLoggedIn && (
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="relative"
-                    onClick={() => setIsChatOpen(true)}
-                  >
-                    <MessageCircle className="h-5 w-5" />
-                    <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                      2
-                    </Badge>
-                  </Button>
+                  {user?.user_type !== "admin" && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="relative"
+                      onClick={() => setIsChatOpen(true)}
+                    >
+                      <MessageCircle className="h-5 w-5" />
+                    </Button>
+                  )}
 
                   <Link to="/cart">
                     <Button variant="ghost" size="icon" className="relative">
@@ -300,65 +294,33 @@ export default function Navbar() {
           ${
             isMobile
               ? "w-[100vw] h-[100vh] max-w-none max-h-none m-0 rounded-none"
-              : "w-[90vw] h-[85vh] max-w-5xl max-h-[700px]"
+              : "w-[92vw] h-[84vh] max-w-4xl max-h-[760px]"
           } 
-          p-0 overflow-y-scroll
+          p-0 overflow-hidden
         `}
         >
           <DialogHeader className="p-4 pb-2 border-b border-border">
             <DialogTitle className="flex items-center gap-2">
               <MessageCircle className="h-5 w-5" />
-              Customer Support
+              Customer Service
             </DialogTitle>
             <DialogDescription>
-              Chat with our support team for help with your orders and questions
+              You are connected directly to admin support.
             </DialogDescription>
           </DialogHeader>
 
           <div
             className={`
-            flex h-full p-4 pt-0 gap-4 
-            ${isMobile ? "flex-col" : "flex-row"}
+            p-4 bg-slate-100/70
+            ${isMobile ? "h-[calc(100vh-5rem)]" : "h-[calc(84vh-4.5rem)]"}
           `}
           >
-            <div
-              className={`
-              ${isMobile ? "w-full h-[200px] flex-shrink-0" : "w-1/3 h-full"}
-            `}
-            >
-              <ChatList
-                conversations={allConversations}
-                activeConversationId={conversation?.id}
-              />
-            </div>
-
-            <div
-              className={`
-                
-              ${isMobile ? "h-[65vh] min-h-0" : "h-[60vh]"}
-            `}
-            >
-              {conversation ? (
-                <ChatInterface
-                  messages={messages}
-                  onSendMessage={handleSendMessage}
-                  currentUserId="user-current"
-                />
-              ) : (
-                <div className="h-full border rounded-lg flex flex-col items-center justify-center p-6 bg-background">
-                  <div className="text-center mb-4">
-                    <h3 className="text-lg font-semibold mb-2">
-                      Start a New Conversation
-                    </h3>
-                    <p className="text-muted-foreground">
-                      Need help with your order or have questions about our
-                      products?
-                    </p>
-                  </div>
-                  <Button>New Conversation</Button>
-                </div>
-              )}
-            </div>
+            <CustomerServiceChat
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              currentUserId="user-current"
+              supportName="Customer Support (Admin)"
+            />
           </div>
         </DialogContent>
       </Dialog>

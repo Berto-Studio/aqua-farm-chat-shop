@@ -1,83 +1,50 @@
+import { ChatConversation } from "@/types/chat";
 
-import { ChatMessage, ChatConversation } from "@/types/chat";
+const supportConversation: ChatConversation = {
+  id: "support-admin-thread",
+  userId: "admin",
+  userName: "Customer Support",
+  lastMessageTime: new Date("2026-02-23T09:30:00"),
+  unreadCount: 1,
+  messages: [
+    {
+      id: "msg-1",
+      senderId: "admin",
+      receiverId: "user-current",
+      content:
+        "Welcome to customer support. Share your order number and we will help right away.",
+      timestamp: new Date("2026-02-23T09:00:00"),
+      isRead: true,
+      senderName: "Customer Support",
+    },
+    {
+      id: "msg-2",
+      senderId: "user-current",
+      receiverId: "admin",
+      content: "I want to confirm if my shipment is arriving tomorrow.",
+      timestamp: new Date("2026-02-23T09:21:00"),
+      isRead: true,
+      senderName: "You",
+    },
+    {
+      id: "msg-3",
+      senderId: "admin",
+      receiverId: "user-current",
+      content:
+        "Please share your order ID and we will check the latest delivery status.",
+      timestamp: new Date("2026-02-23T09:30:00"),
+      isRead: false,
+      senderName: "Customer Support",
+    },
+  ],
+};
 
-// Mock chat data
-export const mockConversations: ChatConversation[] = [
-  {
-    id: "conv-1",
-    userId: "user-1",
-    userName: "John Doe",
-    lastMessageTime: new Date("2025-05-14T10:23:00"),
-    unreadCount: 2,
-    messages: [
-      {
-        id: "msg-1",
-        senderId: "user-1",
-        receiverId: "admin",
-        content: "Hello, I'm interested in purchasing some catfish fingerlings. Do you ship to California?",
-        timestamp: new Date("2025-05-14T10:20:00"),
-        isRead: true,
-        senderName: "John Doe"
-      },
-      {
-        id: "msg-2",
-        senderId: "admin",
-        receiverId: "user-1",
-        content: "Hi John, yes we do ship to California! Our shipping typically takes 1-2 business days depending on your location.",
-        timestamp: new Date("2025-05-14T10:22:00"),
-        isRead: true,
-        senderName: "Admin"
-      },
-      {
-        id: "msg-3",
-        senderId: "user-1",
-        receiverId: "admin",
-        content: "Great! What's the minimum order quantity?",
-        timestamp: new Date("2025-05-14T10:23:00"),
-        isRead: false,
-        senderName: "John Doe"
-      }
-    ]
-  },
-  {
-    id: "conv-2",
-    userId: "user-2",
-    userName: "Sarah Smith",
-    lastMessageTime: new Date("2025-05-14T09:45:00"),
-    unreadCount: 1,
-    messages: [
-      {
-        id: "msg-4",
-        senderId: "user-2",
-        receiverId: "admin",
-        content: "Hi there, I received my order of tilapia but one of the fish looks unhealthy. Can you help?",
-        timestamp: new Date("2025-05-14T09:40:00"),
-        isRead: true,
-        senderName: "Sarah Smith"
-      },
-      {
-        id: "msg-5",
-        senderId: "admin",
-        receiverId: "user-2",
-        content: "I'm sorry to hear that. Could you please send a photo so we can assess the situation better?",
-        timestamp: new Date("2025-05-14T09:43:00"),
-        isRead: true,
-        senderName: "Admin"
-      },
-      {
-        id: "msg-6",
-        senderId: "user-2",
-        receiverId: "admin",
-        content: "Here's a photo of the fish [image attached]",
-        timestamp: new Date("2025-05-14T09:45:00"),
-        isRead: false,
-        senderName: "Sarah Smith"
-      }
-    ]
-  }
-];
+// User-facing chat has a single support/admin thread.
+export const mockConversations: ChatConversation[] = [supportConversation];
 
-export const getConversationById = (id: string) => 
-  mockConversations.find(conversation => conversation.id === id);
+export const getConversationById = (id: string) =>
+  mockConversations.find((conversation) => conversation.id === id);
 
 export const getAllConversations = () => mockConversations;
+
+export const getSupportConversation = () => supportConversation;

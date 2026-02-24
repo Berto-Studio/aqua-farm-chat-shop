@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => {
           target: parsed.origin,
           changeOrigin: true,
           secure: false,
+          ws: true,
         },
       };
     } catch {

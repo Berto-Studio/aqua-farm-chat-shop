@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import CustomerServiceChat from "@/components/chat/CustomerServiceChat";
 import {
@@ -8,56 +8,80 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { getSupportConversation } from "@/data/chat";
-import { ChatMessage } from "@/types/chat";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
+import {
+  useMarkUserSupportConversationRead,
+  useSendUserSupportMessage,
+  useUserSupportConversation,
+  useUserSupportMessages,
+} from "@/hooks/useUserMessages";
+import { mapAdminMessageToChatMessage } from "@/lib/adminTransformers";
+import { useUserStore } from "@/store/store";
 import { MessageCircle } from "lucide-react";
 
 export default function Chat() {
   const { conversationId } = useParams<{ conversationId: string }>();
   const navigate = useNavigate();
-  const supportConversation = getSupportConversation();
+  const user = useUserStore((state) => state.user);
+  const currentUserId = String(user?.id ?? "user-current");
 
-  if (conversationId && conversationId !== supportConversation.id) {
-    return <Navigate to="/chat" replace />;
+  if (String(user?.user_type || "").toLowerCase() === "admin") {
+    return <Navigate to="/admin/chat" replace />;
   }
 
   const [isOpen, setIsOpen] = useState(true);
-  const [messages, setMessages] = useState<ChatMessage[]>(
-    supportConversation.messages,
+  const { data: conversation } = useUserSupportConversation({
+    enabled: isOpen,
+  });
+  const {
+    data: messagesResponse,
+    isLoading: isMessagesLoading,
+    isError: isMessagesError,
+    error: messagesError,
+  } = useUserSupportMessages(
+    { per_page: 100 },
+    {
+      enabled: isOpen,
+    }
+  );
+  const { mutateAsync: sendSupportMessageAsync, isPending: isSendingMessage } =
+    useSendUserSupportMessage();
+  const { mutate: markConversationRead } = useMarkUserSupportConversationRead();
+
+  const activeConversationId = conversation?.id ? String(conversation.id) : undefined;
+
+  useChatRealtime({
+    enabled: isOpen,
+    role: "user",
+    conversationId: activeConversationId,
+  });
+
+  const messages = useMemo(
+    () =>
+      (messagesResponse?.data || [])
+        .map((message) => mapAdminMessageToChatMessage(message, "Customer Support"))
+        .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+    [messagesResponse?.data]
   );
 
   useEffect(() => {
-    setMessages(supportConversation.messages);
-  }, [supportConversation.messages]);
+    if (isOpen && activeConversationId) {
+      markConversationRead();
+    }
+  }, [isOpen, markConversationRead, activeConversationId]);
 
-  const handleSendMessage = (content: string) => {
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      senderId: "user-current",
-      receiverId: "admin",
-      content,
-      timestamp: new Date(),
-      isRead: false,
-      senderName: "You",
-    };
+  if (conversationId) {
+    return <Navigate to="/chat" replace />;
+  }
 
-    setMessages((prevMessages) => [...prevMessages, newMessage]);
+  const handleSendMessage = async (content: string) => {
+    if (!content.trim()) return;
 
-    // Simulate admin response after a delay
-    setTimeout(() => {
-      const adminResponse: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        senderId: "admin",
-        receiverId: "user-current",
-        content:
-          "Thank you for your message. Our team will get back to you shortly.",
-        timestamp: new Date(),
-        isRead: true,
-        senderName: "Customer Support",
-      };
-
-      setMessages((prevMessages) => [...prevMessages, adminResponse]);
-    }, 1000);
+    try {
+      await sendSupportMessageAsync(content.trim());
+    } catch (sendError) {
+      console.error("Failed to send support message:", sendError);
+    }
   };
 
   const handleClose = () => {
@@ -85,12 +109,23 @@ export default function Chat() {
         </DialogHeader>
 
         <div className="h-[calc(85vh-5rem)] p-4 bg-slate-100/70">
-          <CustomerServiceChat
-            messages={messages}
-            onSendMessage={handleSendMessage}
-            currentUserId="user-current"
-            supportName="Customer Support (Admin)"
-          />
+          {isMessagesError ? (
+            <div className="rounded-lg border bg-white p-4 text-sm text-destructive">
+              {(messagesError as Error)?.message || "Failed to load messages."}
+            </div>
+          ) : (
+            <CustomerServiceChat
+              messages={messages}
+              onSendMessage={handleSendMessage}
+              currentUserId={currentUserId}
+              supportName="Customer Support (Admin)"
+            />
+          )}
+          {(isMessagesLoading || isSendingMessage) && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              {isSendingMessage ? "Sending message..." : "Loading messages..."}
+            </p>
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -11,6 +11,7 @@ import {
   useMarkAdminConversationRead,
   useSendAdminConversationMessage,
 } from "@/hooks/useAdminMessages";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
 import { useAdminUser } from "@/hooks/useAdminUsers";
 import {
   getUserDisplayName,
@@ -51,6 +52,11 @@ export default function AdminCustomerMessage() {
 
   const { data: messagesResponse, isLoading: isMessagesLoading } =
     useAdminConversationMessages(activeConversation?.id, { per_page: 100 });
+
+  useChatRealtime({
+    role: "admin",
+    conversationId: activeConversation?.id ? String(activeConversation.id) : undefined,
+  });
 
   const messages = useMemo(
     () =>

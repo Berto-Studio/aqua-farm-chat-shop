@@ -8,6 +8,7 @@ import {
   useMarkAdminConversationRead,
   useSendAdminConversationMessage,
 } from "@/hooks/useAdminMessages";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
 import {
   mapAdminConversationToChatConversation,
   mapAdminMessageToChatMessage,
@@ -51,6 +52,11 @@ export default function AdminChat() {
 
   const { data: messagesResponse, isLoading: isMessagesLoading } =
     useAdminConversationMessages(activeConversationId, { per_page: 100 });
+
+  useChatRealtime({
+    role: "admin",
+    conversationId: activeConversationId,
+  });
 
   const messages = useMemo(
     () =>

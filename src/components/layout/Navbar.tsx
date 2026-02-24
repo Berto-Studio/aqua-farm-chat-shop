@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Menu, MessageCircle, User } from "lucide-react";
@@ -27,8 +27,14 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SearchDropdown from "./SearchDropdown";
 import CustomerServiceChat from "@/components/chat/CustomerServiceChat";
-import { getSupportConversation } from "@/data/chat";
-import { ChatMessage } from "@/types/chat";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
+import {
+  useMarkUserSupportConversationRead,
+  useSendUserSupportMessage,
+  useUserSupportConversation,
+  useUserSupportMessages,
+} from "@/hooks/useUserMessages";
+import { mapAdminMessageToChatMessage } from "@/lib/adminTransformers";
 import { useUserStore } from "@/store/store";
 import { useCarts } from "@/hooks/useCart";
 import { logoutUser } from "@/services/auth/logout";
@@ -36,47 +42,63 @@ import { logoutUser } from "@/services/auth/logout";
 export default function Navbar() {
   const isMobile = useIsMobile();
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
 
   // Zustand store for user and login state
   const { user, isLoggedIn, isLoading } = useUserStore();
-  const supportConversation = getSupportConversation();
-
-  // Initialize messages when conversation changes
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages(supportConversation.messages);
+  const currentUserId = String(user?.id ?? "user-current");
+  const isConsumerUser = Boolean(isLoggedIn && user?.user_type !== "admin");
+  const { data: supportConversation } = useUserSupportConversation({
+    enabled: isConsumerUser,
+  });
+  const {
+    data: messagesResponse,
+    isLoading: isMessagesLoading,
+    isError: isMessagesError,
+    error: messagesError,
+  } = useUserSupportMessages(
+    { per_page: 100 },
+    {
+      enabled: isConsumerUser && isChatOpen,
     }
-  }, [messages.length, supportConversation.messages]);
+  );
+  const { mutateAsync: sendSupportMessageAsync, isPending: isSendingMessage } =
+    useSendUserSupportMessage();
+  const { mutate: markConversationRead } = useMarkUserSupportConversationRead();
 
-  const handleSendMessage = (content: string) => {
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      senderId: "user-current",
-      receiverId: "admin",
-      content,
-      timestamp: new Date(),
-      isRead: false,
-      senderName: "You",
-    };
+  const activeConversationId = supportConversation?.id
+    ? String(supportConversation.id)
+    : undefined;
+  const messages = useMemo(
+    () =>
+      (messagesResponse?.data || [])
+        .map((message) => mapAdminMessageToChatMessage(message, "Customer Support"))
+        .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
+    [messagesResponse?.data]
+  );
+  const unreadMessages = Number(
+    supportConversation?.unread_count ?? supportConversation?.unreadCount ?? 0
+  );
 
-    setMessages((prev) => [...prev, newMessage]);
+  useEffect(() => {
+    if (isLoggedIn && isChatOpen && activeConversationId) {
+      markConversationRead();
+    }
+  }, [isLoggedIn, isChatOpen, markConversationRead, activeConversationId]);
 
-    // Simulate admin response after a delay
-    setTimeout(() => {
-      const adminResponse: ChatMessage = {
-        id: `msg-${Date.now() + 1}`,
-        senderId: "admin",
-        receiverId: "user-current",
-        content:
-          "Thank you for your message. Our team will get back to you shortly.",
-        timestamp: new Date(),
-        isRead: true,
-        senderName: "Customer Support",
-      };
+  useChatRealtime({
+    enabled: isConsumerUser && isChatOpen,
+    role: "user",
+    conversationId: activeConversationId,
+  });
 
-      setMessages((prev) => [...prev, adminResponse]);
-    }, 1000);
+  const handleSendMessage = async (content: string) => {
+    if (!content.trim()) return;
+
+    try {
+      await sendSupportMessageAsync(content.trim());
+    } catch (sendError) {
+      console.error("Failed to send support message:", sendError);
+    }
   };
 
   const NavLinks = () => (
@@ -185,6 +207,11 @@ export default function Navbar() {
                       onClick={() => setIsChatOpen(true)}
                     >
                       <MessageCircle className="h-5 w-5" />
+                      {unreadMessages > 0 && (
+                        <Badge className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center text-xs">
+                          {unreadMessages}
+                        </Badge>
+                      )}
                     </Button>
                   )}
 
@@ -315,12 +342,23 @@ export default function Navbar() {
             ${isMobile ? "h-[calc(100vh-5rem)]" : "h-[calc(84vh-4.5rem)]"}
           `}
           >
-            <CustomerServiceChat
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              currentUserId="user-current"
-              supportName="Customer Support (Admin)"
-            />
+            {isMessagesError ? (
+              <div className="rounded-lg border bg-white p-4 text-sm text-destructive">
+                {(messagesError as Error)?.message || "Failed to load messages."}
+              </div>
+            ) : (
+              <CustomerServiceChat
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                currentUserId={currentUserId}
+                supportName="Customer Support (Admin)"
+              />
+            )}
+            {(isMessagesLoading || isSendingMessage) && (
+              <p className="mt-2 text-xs text-muted-foreground">
+                {isSendingMessage ? "Sending message..." : "Loading messages..."}
+              </p>
+            )}
           </div>
         </DialogContent>
       </Dialog>

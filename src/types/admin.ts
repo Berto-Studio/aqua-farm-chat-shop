@@ -34,7 +34,7 @@ export interface AdminUserRecord {
   updated_at?: string;
   orders?: number;
   orders_count?: number;
-  spent?: number;
+  amount_spent?: number;
   total_spent?: number;
   profile_image_url?: string;
 }

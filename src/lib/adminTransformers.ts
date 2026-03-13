@@ -12,7 +12,9 @@ const toIsoDate = (value?: string) => {
   if (!value) return new Date().toISOString();
 
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();
+  return Number.isNaN(parsed.getTime())
+    ? new Date().toISOString()
+    : parsed.toISOString();
 };
 
 const toFiniteNumber = (value: unknown, fallback = 0) => {
@@ -41,7 +43,7 @@ export const getUserOrderCount = (user?: AdminUserRecord) =>
   toFiniteNumber(user?.orders_count ?? user?.orders);
 
 export const getUserTotalSpent = (user?: AdminUserRecord) =>
-  toFiniteNumber(user?.total_spent ?? user?.spent);
+  toFiniteNumber(user?.total_spent ?? user?.amount_spent);
 
 export const getUserJoinedAt = (user?: AdminUserRecord) =>
   user?.created_at || user?.updated_at || undefined;
@@ -65,7 +67,7 @@ export const getOrderItemsCount = (order?: AdminOrderRecord) =>
   Array.isArray(order?.items)
     ? order!.items!.reduce(
         (sum, item) => sum + toFiniteNumber(item.quantity, 0),
-        0
+        0,
       )
     : 0;
 
@@ -76,7 +78,7 @@ export const getOrderItemUnitPrice = (item?: AdminOrderItemRecord) =>
   toFiniteNumber(item?.unit_price);
 
 export const mapAdminConversationToChatConversation = (
-  conversation: AdminConversationRecord
+  conversation: AdminConversationRecord,
 ): ChatConversation => {
   const latestMessageContent =
     conversation.latest_message || conversation.latestMessage || "";
@@ -86,12 +88,10 @@ export const mapAdminConversationToChatConversation = (
     userId: String(conversation.user_id),
     userName: conversation.user_name || conversation.user_email || "User",
     lastMessageTime: new Date(
-      toIsoDate(
-        conversation.last_message_at || conversation.lastMessageAt
-      )
+      toIsoDate(conversation.last_message_at || conversation.lastMessageAt),
     ),
     unreadCount: toFiniteNumber(
-      conversation.unread_count ?? conversation.unreadCount
+      conversation.unread_count ?? conversation.unreadCount,
     ),
     messages: latestMessageContent
       ? [
@@ -102,12 +102,12 @@ export const mapAdminConversationToChatConversation = (
             content: latestMessageContent,
             timestamp: new Date(
               toIsoDate(
-                conversation.last_message_at || conversation.lastMessageAt
-              )
+                conversation.last_message_at || conversation.lastMessageAt,
+              ),
             ),
             isRead:
               toFiniteNumber(
-                conversation.unread_count ?? conversation.unreadCount
+                conversation.unread_count ?? conversation.unreadCount,
               ) === 0,
             senderName: conversation.user_name || "User",
           },
@@ -118,7 +118,7 @@ export const mapAdminConversationToChatConversation = (
 
 export const mapAdminMessageToChatMessage = (
   message: AdminMessageRecord,
-  fallbackSenderName?: string
+  fallbackSenderName?: string,
 ): ChatMessage => ({
   id: String(message.id),
   senderId: String(message.sender_id),
@@ -140,7 +140,7 @@ export type NormalizedAdminNotification = {
 };
 
 export const normalizeAdminNotification = (
-  notification: AdminNotificationRecord
+  notification: AdminNotificationRecord,
 ): NormalizedAdminNotification => ({
   id: String(notification.id),
   type: notification.type || "system",

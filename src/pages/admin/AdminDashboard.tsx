@@ -107,7 +107,7 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 pt-28">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
           <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
             <div className="overflow-x-auto">
@@ -190,7 +190,7 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white p-4 sm:p-6 rounded-lg border-0 shadow-sm">
+          <div className="bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Recent Messages</h2>
             <div className="space-y-4">
               {recentMessages.length === 0 ? (

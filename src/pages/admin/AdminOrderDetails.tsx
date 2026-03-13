@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAdminOrder, useUpdateAdminOrderStatus } from "@/hooks/useAdminOrders";
+import { useToast } from "@/hooks/use-toast";
 import {
   getOrderItemName,
   getOrderItemUnitPrice,
@@ -35,10 +36,12 @@ const toStatusLabel = (value: string) =>
 
 export default function AdminOrderDetails() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { orderId } = useParams<{ orderId: string }>();
   const { data: order, isLoading, isError, error } = useAdminOrder(orderId);
-  const { mutate: updateStatus, isPending: isUpdatingStatus } =
+  const { mutateAsync: updateStatusAsync, isPending: isUpdatingStatus } =
     useUpdateAdminOrderStatus();
+  const [selectedStatus, setSelectedStatus] = useState("pending");
 
   const normalizedStatus = useMemo(
     () => String(getOrderStatusLabel(order)).toLowerCase(),
@@ -47,6 +50,7 @@ export default function AdminOrderDetails() {
   const selectStatusValue = statusOptions.includes(normalizedStatus)
     ? normalizedStatus
     : undefined;
+  const hasStatusChanged = selectedStatus !== (selectStatusValue || "pending");
 
   const formatDate = (value?: string) => {
     if (!value) return "N/A";
@@ -54,6 +58,35 @@ export default function AdminOrderDetails() {
     return Number.isNaN(parsed.getTime())
       ? value
       : parsed.toLocaleString();
+  };
+
+  useEffect(() => {
+    setSelectedStatus(selectStatusValue || "pending");
+  }, [selectStatusValue]);
+
+  const handleUpdateStatus = async () => {
+    if (!order || !hasStatusChanged) return;
+
+    try {
+      await updateStatusAsync({
+        orderId: order.id,
+        status: selectedStatus,
+      });
+
+      toast({
+        title: "Order Updated",
+        description: `Order #${order.id} is now ${toStatusLabel(selectedStatus)}.`,
+      });
+    } catch (updateError) {
+      toast({
+        title: "Update Failed",
+        description:
+          updateError instanceof Error
+            ? updateError.message
+            : "Unable to update order status.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (!orderId) {
@@ -190,13 +223,8 @@ export default function AdminOrderDetails() {
                   {toStatusLabel(normalizedStatus)}
                 </Badge>
                 <Select
-                  value={selectStatusValue}
-                  onValueChange={(value) =>
-                    updateStatus({
-                      orderId: order.id,
-                      status: value,
-                    })
-                  }
+                  value={selectedStatus}
+                  onValueChange={setSelectedStatus}
                   disabled={isUpdatingStatus}
                 >
                   <SelectTrigger className="w-full">
@@ -210,6 +238,13 @@ export default function AdminOrderDetails() {
                     ))}
                   </SelectContent>
                 </Select>
+                <Button
+                  className="w-full"
+                  disabled={!hasStatusChanged || isUpdatingStatus}
+                  onClick={() => void handleUpdateStatus()}
+                >
+                  {isUpdatingStatus ? "Updating Status..." : "Update Status"}
+                </Button>
               </div>
             </div>
 

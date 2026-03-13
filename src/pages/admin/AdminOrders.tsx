@@ -13,6 +13,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Search,
   ShoppingCart,
   Eye,
@@ -20,7 +27,12 @@ import {
   ArrowUp,
   ArrowDown,
 } from "lucide-react";
-import { useAdminOrders, useAdminOrderStats } from "@/hooks/useAdminOrders";
+import {
+  useAdminOrders,
+  useAdminOrderStats,
+  useUpdateAdminOrderStatus,
+} from "@/hooks/useAdminOrders";
+import { useToast } from "@/hooks/use-toast";
 import {
   getOrderPaymentLabel,
   getOrderStatusLabel,
@@ -38,13 +50,27 @@ const statusClass: Record<string, string> = {
   cancelled: "bg-red-100 text-red-800",
 };
 
+const statusOptions = ["pending", "processing", "delivered", "cancelled"] as const;
+
+const toStatusLabel = (value: string) =>
+  value.charAt(0).toUpperCase() + value.slice(1);
+
+const normalizeOrderStatus = (value: string) =>
+  statusOptions.includes(value as (typeof statusOptions)[number])
+    ? value
+    : "pending";
+
 export default function AdminOrders() {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortColumn>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const { data, isLoading, isError, error } = useAdminOrders({ per_page: 300 });
   const { data: orderStats } = useAdminOrderStats();
+  const { mutateAsync: updateOrderStatusAsync } = useUpdateAdminOrderStatus();
 
   const orders = data?.data || [];
 
@@ -129,6 +155,55 @@ export default function AdminOrders() {
   const getStatusColor = (status: string) =>
     statusClass[status.toLowerCase()] || "bg-gray-100 text-gray-800";
 
+  const handleStatusDraftChange = (orderId: string | number, value: string) => {
+    setStatusDrafts((current) => ({
+      ...current,
+      [String(orderId)]: value,
+    }));
+  };
+
+  const handleUpdateStatus = async (
+    orderId: string | number,
+    currentStatus: string,
+  ) => {
+    const orderKey = String(orderId);
+    const nextStatus = statusDrafts[orderKey] || currentStatus;
+
+    if (nextStatus === currentStatus) {
+      return;
+    }
+
+    try {
+      setUpdatingOrderId(orderKey);
+      await updateOrderStatusAsync({
+        orderId,
+        status: nextStatus,
+      });
+
+      setStatusDrafts((current) => {
+        const nextDrafts = { ...current };
+        delete nextDrafts[orderKey];
+        return nextDrafts;
+      });
+
+      toast({
+        title: "Order Updated",
+        description: `Order #${orderId} is now ${toStatusLabel(nextStatus)}.`,
+      });
+    } catch (updateError) {
+      toast({
+        title: "Update Failed",
+        description:
+          updateError instanceof Error
+            ? updateError.message
+            : "Unable to update order status.",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Orders Management</h1>
@@ -211,7 +286,7 @@ export default function AdminOrders() {
         </Card>
       ) : null}
 
-      <div className="border rounded-lg overflow-hidden">
+      <div className="overflow-x-auto rounded-lg border">
         <Table>
           <TableHeader>
             <TableRow>
@@ -223,6 +298,7 @@ export default function AdminOrders() {
                 </div>
               </TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="min-w-[220px]">Update Status</TableHead>
               <TableHead className="cursor-pointer" onClick={() => handleSort("total")}>
                 <div className="flex items-center gap-1">
                   Total {getSortIcon("total")}
@@ -235,13 +311,18 @@ export default function AdminOrders() {
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   Loading orders...
                 </TableCell>
               </TableRow>
             ) : null}
             {sortedOrders.map((order) => {
               const status = getOrderStatusLabel(order);
+              const normalizedStatus = normalizeOrderStatus(status.toLowerCase());
+              const orderKey = String(order.id);
+              const draftStatus = statusDrafts[orderKey] || normalizedStatus;
+              const hasStatusChanged = draftStatus !== normalizedStatus;
+              const isUpdatingThisOrder = updatingOrderId === orderKey;
 
               return (
                 <TableRow key={order.id}>
@@ -260,6 +341,39 @@ export default function AdminOrders() {
                     <Badge variant="outline" className={getStatusColor(status)}>
                       {status}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex min-w-[220px] flex-col gap-2 sm:flex-row">
+                      <Select
+                        value={draftStatus}
+                        onValueChange={(value) =>
+                          handleStatusDraftChange(order.id, value)
+                        }
+                        disabled={isUpdatingThisOrder}
+                      >
+                        <SelectTrigger className="h-9 w-full sm:w-[150px]">
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map((option) => (
+                            <SelectItem key={option} value={option}>
+                              {toStatusLabel(option)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Button
+                        size="sm"
+                        className="sm:min-w-[88px]"
+                        disabled={!hasStatusChanged || isUpdatingThisOrder}
+                        onClick={() =>
+                          void handleUpdateStatus(order.id, normalizedStatus)
+                        }
+                      >
+                        {isUpdatingThisOrder ? "Updating..." : "Update"}
+                      </Button>
+                    </div>
                   </TableCell>
                   <TableCell>${getOrderTotal(order).toFixed(2)}</TableCell>
                   <TableCell>{getOrderPaymentLabel(order)}</TableCell>
@@ -280,7 +394,7 @@ export default function AdminOrders() {
             })}
             {!isLoading && sortedOrders.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   No orders found.
                 </TableCell>
               </TableRow>

@@ -37,14 +37,13 @@ export default function AdminDashboard() {
   const orders = ordersResponse?.data || [];
   const conversations = (conversationsResponse?.data || [])
     .map(mapAdminConversationToChatConversation)
-    .sort(
-      (a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime()
-    );
+    .sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime());
 
   const totalRevenue =
     orderStats?.total_revenue ??
     orders.reduce((sum, order) => sum + getOrderTotal(order), 0);
-  const totalOrders = orderStats?.total_orders ?? ordersResponse?.meta?.total ?? orders.length;
+  const totalOrders =
+    orderStats?.total_orders ?? ordersResponse?.meta?.total ?? orders.length;
   const totalUsers = usersResponse?.meta?.total ?? users.length;
   const totalProducts = products.length;
 
@@ -52,7 +51,7 @@ export default function AdminDashboard() {
     .sort(
       (a, b) =>
         new Date(b.created_at || "").getTime() -
-        new Date(a.created_at || "").getTime()
+        new Date(a.created_at || "").getTime(),
     )
     .slice(0, 5);
 
@@ -75,21 +74,25 @@ export default function AdminDashboard() {
             title="Total Revenue"
             value={`$${Number(totalRevenue || 0).toFixed(2)}`}
             icon={<DollarSign className="h-4 w-4" />}
+            className="border"
           />
           <DashboardCard
             title="Orders"
             value={totalOrders}
             icon={<ShoppingCart className="h-4 w-4" />}
+            className="border"
           />
           <DashboardCard
             title="Products"
             value={totalProducts}
             icon={<Package className="h-4 w-4" />}
+            className="border"
           />
           <DashboardCard
             title="Users"
             value={totalUsers}
             icon={<Users className="h-4 w-4" />}
+            className="border"
           />
         </div>
 
@@ -104,18 +107,28 @@ export default function AdminDashboard() {
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-lg border border-0 shadow-sm">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 pt-28">
+          <div className="lg:col-span-2 bg-white p-4 sm:p-6 rounded-lg border shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Recent Orders</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="text-left py-3 px-2 font-semibold text-gray-700">Order ID</th>
-                    <th className="text-left py-3 px-2 font-semibold text-gray-700 hidden sm:table-cell">User</th>
-                    <th className="text-left py-3 px-2 font-semibold text-gray-700">Products</th>
-                    <th className="text-left py-3 px-2 font-semibold text-gray-700">Total</th>
-                    <th className="text-left py-3 px-2 font-semibold text-gray-700">Status</th>
+                    <th className="text-left py-3 px-2 font-semibold text-gray-700">
+                      Order ID
+                    </th>
+                    <th className="text-left py-3 px-2 font-semibold text-gray-700 hidden sm:table-cell">
+                      User
+                    </th>
+                    <th className="text-left py-3 px-2 font-semibold text-gray-700">
+                      Products
+                    </th>
+                    <th className="text-left py-3 px-2 font-semibold text-gray-700">
+                      Total
+                    </th>
+                    <th className="text-left py-3 px-2 font-semibold text-gray-700">
+                      Status
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -177,11 +190,13 @@ export default function AdminDashboard() {
             </div>
           </div>
 
-          <div className="bg-white p-4 sm:p-6 rounded-lg border border-0 shadow-sm">
+          <div className="bg-white p-4 sm:p-6 rounded-lg border-0 shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Recent Messages</h2>
             <div className="space-y-4">
               {recentMessages.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No messages yet.</p>
+                <p className="text-sm text-muted-foreground">
+                  No messages yet.
+                </p>
               ) : (
                 recentMessages.map((conversation) => {
                   const lastMessage =
@@ -211,7 +226,8 @@ export default function AdminDashboard() {
                           </span>
                         </div>
                         <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-                          {lastMessage?.content || "No message preview available."}
+                          {lastMessage?.content ||
+                            "No message preview available."}
                         </p>
                       </div>
                     </div>

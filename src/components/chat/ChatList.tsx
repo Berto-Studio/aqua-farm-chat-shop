@@ -20,7 +20,7 @@ export default function ChatList({
   const [searchTerm, setSearchTerm] = useState("");
 
   const filteredConversations = conversations.filter((conversation) =>
-    conversation.userName.toLowerCase().includes(searchTerm.toLowerCase())
+    conversation.userName.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const formatTime = (date: Date) => {
@@ -50,8 +50,8 @@ export default function ChatList({
   };
 
   return (
-    <Card className="h-full">
-      <CardContent className="p-3 h-full flex flex-col">
+    <Card className="flex h-full min-h-0 flex-col overflow-hidden">
+      <CardContent className="flex h-full min-h-0 flex-col p-3">
         <div className="mb-3">
           <Input
             placeholder="Search conversations..."
@@ -61,7 +61,7 @@ export default function ChatList({
           />
         </div>
 
-        <ScrollArea className="flex-grow">
+        <ScrollArea className="min-h-0 flex-1">
           <div className="space-y-2">
             {filteredConversations.length === 0 ? (
               <div className="text-center py-6 text-muted-foreground">

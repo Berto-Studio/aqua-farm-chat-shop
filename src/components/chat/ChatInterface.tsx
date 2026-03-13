@@ -43,8 +43,8 @@ export default function ChatInterface({
   }, [messages]);
 
   return (
-    <div className="flex flex-col h-full border rounded-lg flex-1 bg-white">
-      <ScrollArea className="flex-grow p-4">
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-lg border bg-white">
+      <ScrollArea className="min-h-0 flex-1 p-4">
         <div className="space-y-4">
           {messages.map((message) => {
             const isCurrentUser = message.senderId === currentUserId;
@@ -86,7 +86,7 @@ export default function ChatInterface({
         </div>
       </ScrollArea>
 
-      <form onSubmit={handleSubmit} className="p-3 border-t">
+      <form onSubmit={handleSubmit} className="shrink-0 border-t p-3">
         <div className="flex gap-2">
           <Textarea
             value={newMessage}

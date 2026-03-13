@@ -35,15 +35,16 @@ export default function AdminChat() {
       (conversationResponse?.data || [])
         .map(mapAdminConversationToChatConversation)
         .sort(
-          (a, b) =>
-            b.lastMessageTime.getTime() - a.lastMessageTime.getTime()
+          (a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime(),
         ),
-    [conversationResponse?.data]
+    [conversationResponse?.data],
   );
 
   const activeConversation = useMemo(() => {
     if (conversationId) {
-      return allConversations.find((conversation) => conversation.id === conversationId);
+      return allConversations.find(
+        (conversation) => conversation.id === conversationId,
+      );
     }
     return allConversations[0];
   }, [allConversations, conversationId]);
@@ -62,10 +63,10 @@ export default function AdminChat() {
     () =>
       (messagesResponse?.data || [])
         .map((message) =>
-          mapAdminMessageToChatMessage(message, activeConversation?.userName)
+          mapAdminMessageToChatMessage(message, activeConversation?.userName),
         )
         .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-    [activeConversation?.userName, messagesResponse?.data]
+    [activeConversation?.userName, messagesResponse?.data],
   );
 
   useEffect(() => {
@@ -88,21 +89,21 @@ export default function AdminChat() {
   };
 
   return (
-    <div className="p-6">
-      <div className="mb-6">
+    <div className="flex h-full flex-col gap-6 p-6">
+      <div className="shrink-0">
         <h1 className="text-2xl font-bold">User Messages</h1>
         <p className="text-muted-foreground">Respond to user inquiries</p>
       </div>
 
       {isConversationsError ? (
-        <div className="rounded-lg border p-6 text-destructive">
+        <div className="shrink-0 rounded-lg border p-6 text-destructive">
           {(conversationsError as Error)?.message ||
             "Failed to load conversations."}
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[calc(100vh-12rem)]">
-        <div className="md:col-span-1">
+      <div className="flex flex-col gap-6 md:min-h-0 md:flex-1 md:grid md:grid-cols-3 md:overflow-hidden">
+        <div className="min-h-[18rem] md:col-span-1 md:min-h-0">
           <ChatList
             conversations={allConversations}
             activeConversationId={activeConversation?.id}
@@ -110,15 +111,17 @@ export default function AdminChat() {
           />
         </div>
 
-        <div className="md:col-span-2">
+        <div className="flex min-h-[24rem] flex-col md:col-span-2 md:min-h-0">
           {activeConversation ? (
-            <ChatInterface
-              messages={messages}
-              onSendMessage={handleSendMessage}
-              currentUserId={currentUserId}
-            />
+            <div className="min-h-0 flex-1">
+              <ChatInterface
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                currentUserId={currentUserId}
+              />
+            </div>
           ) : (
-            <div className="h-full border rounded-lg flex flex-col items-center justify-center p-6 bg-white">
+            <div className="flex min-h-[24rem] flex-1 flex-col items-center justify-center rounded-lg border bg-white p-6 md:min-h-0">
               <p className="text-center text-muted-foreground">
                 {isConversationsLoading
                   ? "Loading conversations..."
@@ -128,7 +131,9 @@ export default function AdminChat() {
           )}
           {(isMessagesLoading || isSendingMessage) && activeConversation ? (
             <p className="mt-2 text-xs text-muted-foreground">
-              {isSendingMessage ? "Sending message..." : "Refreshing messages..."}
+              {isSendingMessage
+                ? "Sending message..."
+                : "Refreshing messages..."}
             </p>
           ) : null}
         </div>

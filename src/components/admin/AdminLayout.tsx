@@ -44,7 +44,7 @@ export default function AdminLayout() {
           showMenuButton={isMobile}
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
         />
-        <div className="flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </div>
       </div>

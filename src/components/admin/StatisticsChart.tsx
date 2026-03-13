@@ -1,4 +1,24 @@
-import { useState } from "react";
+import { useId } from "react";
+import {
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ComposedChart,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import type { ChartConfig } from "@/components/ui/chart";
 import {
   Card,
   CardContent,
@@ -6,263 +26,356 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Legend,
-  Area,
-  AreaChart,
-} from "recharts";
+import { cn } from "@/lib/utils";
 
-const data = [
-  { name: "Jan", catfish: 4000, tilapia: 2400 },
-  { name: "Feb", catfish: 3000, tilapia: 1398 },
-  { name: "Mar", catfish: 2000, tilapia: 9800 },
-  { name: "Apr", catfish: 2780, tilapia: 3908 },
-  { name: "May", catfish: 1890, tilapia: 4800 },
-  { name: "Jun", catfish: 2390, tilapia: 3800 },
-  { name: "Jul", catfish: 3490, tilapia: 4300 },
-];
+type ChartKind = "area" | "bar" | "line" | "composed";
+type SeriesKind = "area" | "bar" | "line";
+
+export interface StatisticsChartSeries {
+  key: string;
+  label: string;
+  color: string;
+  kind?: SeriesKind;
+  stackId?: string;
+  radius?: [number, number, number, number];
+  strokeWidth?: number;
+}
 
 interface StatisticsChartProps {
   title: string;
   description?: string;
+  data: Array<Record<string, string | number>>;
+  xKey: string;
+  series: StatisticsChartSeries[];
+  kind?: ChartKind;
+  layout?: "horizontal" | "vertical";
+  emptyMessage?: string;
+  className?: string;
+  contentClassName?: string;
+  valueFormatter?: (value: number) => string;
 }
-
-const chartConfig = {
-  catfish: {
-    label: "Catfish",
-    color: "hsl(var(--primary))",
-  },
-  tilapia: {
-    label: "Tilapia",
-    color: "#10b981",
-  },
-};
 
 const axisTick = { fontSize: 12, fill: "#64748b" };
 
 const chartMargin = {
   top: 8,
   right: 8,
-  left: -20,
+  left: -12,
   bottom: 0,
 };
+
+const defaultFormatValue = (value: number) => value.toLocaleString();
+
+const getGradientId = (chartId: string, key: string) =>
+  `${chartId}-${key.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-gradient`;
 
 export default function StatisticsChart({
   title,
   description,
+  data,
+  xKey,
+  series,
+  kind = "line",
+  layout = "horizontal",
+  emptyMessage = "No chart data available yet.",
+  className,
+  contentClassName,
+  valueFormatter = defaultFormatValue,
 }: StatisticsChartProps) {
-  const [period, setPeriod] = useState("monthly");
+  const rawId = useId();
+  const chartId = rawId.replace(/:/g, "");
+
+  const chartConfig = series.reduce<ChartConfig>((config, item) => {
+    config[item.key] = {
+      label: item.label,
+      color: item.color,
+    };
+    return config;
+  }, {});
+
+  const renderTooltipValue = (value: unknown, name: string) => {
+    const numericValue = Number(value);
+
+    return (
+      <div className="flex min-w-[140px] items-center gap-2">
+        <span className="text-muted-foreground">{name}</span>
+        <span className="ml-auto font-mono font-medium text-foreground">
+          {Number.isFinite(numericValue)
+            ? valueFormatter(numericValue)
+            : String(value)}
+        </span>
+      </div>
+    );
+  };
+
+  const renderSeries = () =>
+    series.map((item) => {
+      const seriesKind = item.kind || (kind === "composed" ? "line" : kind);
+
+      if (seriesKind === "area") {
+        const gradientId = getGradientId(chartId, item.key);
+
+        return (
+          <Area
+            key={item.key}
+            type="monotone"
+            dataKey={item.key}
+            name={item.label}
+            stroke={`var(--color-${item.key})`}
+            fill={`url(#${gradientId})`}
+            fillOpacity={1}
+            stackId={item.stackId}
+            strokeWidth={item.strokeWidth || 2}
+          />
+        );
+      }
+
+      if (seriesKind === "bar") {
+        return (
+          <Bar
+            key={item.key}
+            dataKey={item.key}
+            name={item.label}
+            fill={`var(--color-${item.key})`}
+            radius={item.radius || [6, 6, 0, 0]}
+            stackId={item.stackId}
+          />
+        );
+      }
+
+      return (
+        <Line
+          key={item.key}
+          type="monotone"
+          dataKey={item.key}
+          name={item.label}
+          stroke={`var(--color-${item.key})`}
+          strokeWidth={item.strokeWidth || 3}
+          dot={{ r: 3, fill: `var(--color-${item.key})` }}
+          activeDot={{ r: 5 }}
+        />
+      );
+    });
+
+  const renderGradients = () =>
+    series
+      .filter((item) => (item.kind || kind) === "area")
+      .map((item) => {
+        const gradientId = getGradientId(chartId, item.key);
+
+        return (
+          <linearGradient
+            key={gradientId}
+            id={gradientId}
+            x1="0"
+            y1="0"
+            x2="0"
+            y2="1"
+          >
+            <stop
+              offset="5%"
+              stopColor={`var(--color-${item.key})`}
+              stopOpacity={0.3}
+            />
+            <stop
+              offset="95%"
+              stopColor={`var(--color-${item.key})`}
+              stopOpacity={0}
+            />
+          </linearGradient>
+        );
+      });
+
+  const commonChartProps = {
+    data,
+    margin:
+      layout === "vertical"
+        ? { top: 8, right: 8, left: 24, bottom: 0 }
+        : chartMargin,
+  };
+
+  const renderChart = () => {
+    if (kind === "area") {
+      return (
+        <AreaChart {...commonChartProps}>
+          <defs>{renderGradients()}</defs>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+          <XAxis
+            dataKey={xKey}
+            axisLine={false}
+            tickLine={false}
+            tickMargin={8}
+            minTickGap={20}
+            tick={axisTick}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            width={44}
+            tick={axisTick}
+            tickFormatter={(value) => valueFormatter(Number(value))}
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value, name) =>
+                  renderTooltipValue(value, String(name))
+                }
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent />} />
+          {renderSeries()}
+        </AreaChart>
+      );
+    }
+
+    if (kind === "bar") {
+      return (
+        <BarChart {...commonChartProps} layout={layout}>
+          <CartesianGrid
+            vertical={layout !== "vertical"}
+            horizontal={layout === "vertical"}
+            strokeDasharray="3 3"
+          />
+          {layout === "vertical" ? (
+            <>
+              <XAxis
+                type="number"
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                tick={axisTick}
+                tickFormatter={(value) => valueFormatter(Number(value))}
+              />
+              <YAxis
+                type="category"
+                dataKey={xKey}
+                axisLine={false}
+                tickLine={false}
+                width={110}
+                tick={axisTick}
+              />
+            </>
+          ) : (
+            <>
+              <XAxis
+                dataKey={xKey}
+                axisLine={false}
+                tickLine={false}
+                tickMargin={8}
+                minTickGap={20}
+                tick={axisTick}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                width={44}
+                tick={axisTick}
+                tickFormatter={(value) => valueFormatter(Number(value))}
+              />
+            </>
+          )}
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value, name) =>
+                  renderTooltipValue(value, String(name))
+                }
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent />} />
+          {renderSeries()}
+        </BarChart>
+      );
+    }
+
+    if (kind === "composed") {
+      return (
+        <ComposedChart {...commonChartProps}>
+          <defs>{renderGradients()}</defs>
+          <CartesianGrid vertical={false} strokeDasharray="3 3" />
+          <XAxis
+            dataKey={xKey}
+            axisLine={false}
+            tickLine={false}
+            tickMargin={8}
+            minTickGap={20}
+            tick={axisTick}
+          />
+          <YAxis
+            axisLine={false}
+            tickLine={false}
+            width={44}
+            tick={axisTick}
+            tickFormatter={(value) => valueFormatter(Number(value))}
+          />
+          <ChartTooltip
+            content={
+              <ChartTooltipContent
+                formatter={(value, name) =>
+                  renderTooltipValue(value, String(name))
+                }
+              />
+            }
+          />
+          <ChartLegend content={<ChartLegendContent />} />
+          {renderSeries()}
+        </ComposedChart>
+      );
+    }
+
+    return (
+      <LineChart {...commonChartProps}>
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis
+          dataKey={xKey}
+          axisLine={false}
+          tickLine={false}
+          tickMargin={8}
+          minTickGap={20}
+          tick={axisTick}
+        />
+        <YAxis
+          axisLine={false}
+          tickLine={false}
+          width={44}
+          tick={axisTick}
+          tickFormatter={(value) => valueFormatter(Number(value))}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              formatter={(value, name) => renderTooltipValue(value, String(name))}
+            />
+          }
+        />
+        <ChartLegend content={<ChartLegendContent />} />
+        {renderSeries()}
+      </LineChart>
+    );
+  };
 
   return (
-    <Card className="flex h-full min-h-[32rem] flex-col overflow-hidden border shadow-sm">
-      <CardHeader className="flex flex-col gap-4 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <CardTitle className="text-xl font-semibold">{title}</CardTitle>
-          {description && (
-            <CardDescription className="mt-1">{description}</CardDescription>
-          )}
-        </div>
-        <Tabs value={period} onValueChange={setPeriod} className="w-full sm:w-auto">
-          <TabsList className="grid h-9 w-full grid-cols-3 bg-muted/30 sm:w-auto">
-            <TabsTrigger value="weekly" className="text-xs">
-              Weekly
-            </TabsTrigger>
-            <TabsTrigger value="monthly" className="text-xs">
-              Monthly
-            </TabsTrigger>
-            <TabsTrigger value="yearly" className="text-xs">
-              Yearly
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+    <Card className={cn("flex h-full min-h-[24rem] flex-col border shadow-sm", className)}>
+      <CardHeader className="space-y-1 pb-3">
+        <CardTitle className="text-xl font-semibold">{title}</CardTitle>
+        {description ? <CardDescription>{description}</CardDescription> : null}
       </CardHeader>
-      <CardContent className="flex min-h-0 flex-1 flex-col p-0">
-        <Tabs defaultValue="area" className="flex min-h-0 flex-1 flex-col">
-          <div className="flex shrink-0 justify-end px-4 sm:px-6">
-            <TabsList className="grid h-9 w-full grid-cols-3 bg-muted/30 sm:w-auto">
-              <TabsTrigger value="area" className="text-xs">
-                Area
-              </TabsTrigger>
-              <TabsTrigger value="line" className="text-xs">
-                Line
-              </TabsTrigger>
-              <TabsTrigger value="bar" className="text-xs">
-                Bar
-              </TabsTrigger>
-            </TabsList>
+      <CardContent className={cn("flex min-h-0 flex-1 p-0", contentClassName)}>
+        {data.length === 0 ? (
+          <div className="flex min-h-[18rem] flex-1 items-center justify-center px-6 text-center text-sm text-muted-foreground">
+            {emptyMessage}
           </div>
-
-          <TabsContent
-            value="area"
-            className="mt-0 min-h-0 flex-1 px-4 pb-4 pt-3 sm:px-6 sm:pb-6"
+        ) : (
+          <ChartContainer
+            config={chartConfig}
+            className="h-full min-h-[18rem] w-full aspect-auto px-4 pb-4 sm:px-6 sm:pb-6"
           >
-            <ChartContainer
-              config={chartConfig}
-              className="h-full w-full min-h-[260px] aspect-auto overflow-hidden"
-            >
-              <AreaChart data={data} margin={chartMargin}>
-                <defs>
-                  <linearGradient
-                    id="catfishGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop
-                      offset="5%"
-                      stopColor="hsl(var(--primary))"
-                      stopOpacity={0.3}
-                    />
-                    <stop
-                      offset="95%"
-                      stopColor="hsl(var(--primary))"
-                      stopOpacity={0}
-                    />
-                  </linearGradient>
-                  <linearGradient
-                    id="tilapiaGradient"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                  >
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  minTickGap={20}
-                  tickMargin={8}
-                  tick={axisTick}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                  tick={axisTick}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend verticalAlign="top" height={36} />
-                <Area
-                  type="monotone"
-                  dataKey="catfish"
-                  stackId="1"
-                  stroke="hsl(var(--primary))"
-                  fill="url(#catfishGradient)"
-                  strokeWidth={2}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="tilapia"
-                  stackId="1"
-                  stroke="#10b981"
-                  fill="url(#tilapiaGradient)"
-                  strokeWidth={2}
-                />
-              </AreaChart>
-            </ChartContainer>
-          </TabsContent>
-
-          <TabsContent
-            value="line"
-            className="mt-0 min-h-0 flex-1 px-4 pb-4 pt-3 sm:px-6 sm:pb-6"
-          >
-            <ChartContainer
-              config={chartConfig}
-              className="h-full w-full min-h-[260px] aspect-auto overflow-hidden"
-            >
-              <LineChart data={data} margin={chartMargin}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  minTickGap={20}
-                  tickMargin={8}
-                  tick={axisTick}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                  tick={axisTick}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend verticalAlign="top" height={36} />
-                <Line
-                  type="monotone"
-                  dataKey="catfish"
-                  stroke="hsl(var(--primary))"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="tilapia"
-                  stroke="#10b981"
-                  strokeWidth={3}
-                  dot={{ r: 4, fill: "#10b981" }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ChartContainer>
-          </TabsContent>
-
-          <TabsContent
-            value="bar"
-            className="mt-0 min-h-0 flex-1 px-4 pb-4 pt-3 sm:px-6 sm:pb-6"
-          >
-            <ChartContainer
-              config={chartConfig}
-              className="h-full w-full min-h-[260px] aspect-auto overflow-hidden"
-            >
-              <BarChart data={data} barCategoryGap="20%" margin={chartMargin}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis
-                  dataKey="name"
-                  axisLine={false}
-                  tickLine={false}
-                  minTickGap={20}
-                  tickMargin={8}
-                  tick={axisTick}
-                />
-                <YAxis
-                  axisLine={false}
-                  tickLine={false}
-                  width={40}
-                  tick={axisTick}
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend verticalAlign="top" height={36} />
-                <Bar
-                  dataKey="catfish"
-                  fill="hsl(var(--primary))"
-                  radius={[4, 4, 0, 0]}
-                />
-                <Bar dataKey="tilapia" fill="#10b981" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ChartContainer>
-          </TabsContent>
-        </Tabs>
+            {renderChart()}
+          </ChartContainer>
+        )}
       </CardContent>
     </Card>
   );

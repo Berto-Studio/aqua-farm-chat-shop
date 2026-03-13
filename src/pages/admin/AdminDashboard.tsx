@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { formatDistanceToNow } from "date-fns";
 import DashboardCard from "@/components/admin/DashboardCard";
 import StatisticsChart from "@/components/admin/StatisticsChart";
@@ -6,6 +7,11 @@ import { useProducts } from "@/hooks/useProducts";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
 import { useAdminConversations } from "@/hooks/useAdminMessages";
 import { useAdminOrders, useAdminOrderStats } from "@/hooks/useAdminOrders";
+import {
+  buildAdminAnalyticsDatasets,
+  getAdminAnalyticsDelta,
+  getTopActiveCustomer,
+} from "@/lib/adminAnalytics";
 import {
   getOrderItemsCount,
   getOrderStatusLabel,
@@ -24,28 +30,46 @@ const statusClass: Record<string, string> = {
 
 export default function AdminDashboard() {
   const { data: products = [] } = useProducts();
-  const { data: usersResponse } = useAdminUsers({ per_page: 200 });
+  const { data: usersResponse } = useAdminUsers({ per_page: 300 });
   const { data: ordersResponse, isLoading: isOrdersLoading } = useAdminOrders({
-    per_page: 20,
+    per_page: 300,
     sort_by: "date",
-    sort_dir: "desc",
+    sort_dir: "asc",
   });
   const { data: orderStats } = useAdminOrderStats();
   const { data: conversationsResponse } = useAdminConversations();
 
   const users = usersResponse?.data || [];
   const orders = ordersResponse?.data || [];
+  const rawConversations = conversationsResponse?.data || [];
   const conversations = (conversationsResponse?.data || [])
     .map(mapAdminConversationToChatConversation)
     .sort((a, b) => b.lastMessageTime.getTime() - a.lastMessageTime.getTime());
+  const analytics = useMemo(
+    () =>
+      buildAdminAnalyticsDatasets({
+        orders,
+        users,
+        products,
+        conversations: rawConversations,
+        months: 6,
+      }),
+    [orders, products, rawConversations, users],
+  );
 
   const totalRevenue =
     orderStats?.total_revenue ??
-    orders.reduce((sum, order) => sum + getOrderTotal(order), 0);
+    analytics.summary.totalRevenue;
   const totalOrders =
     orderStats?.total_orders ?? ordersResponse?.meta?.total ?? orders.length;
   const totalUsers = usersResponse?.meta?.total ?? users.length;
   const totalProducts = products.length;
+  const revenueDelta = getAdminAnalyticsDelta(
+    analytics.timeline.map((entry) => entry.revenue),
+  );
+  const orderDelta = getAdminAnalyticsDelta(
+    analytics.timeline.map((entry) => entry.orders),
+  );
 
   const recentOrders = [...orders]
     .sort(
@@ -73,24 +97,32 @@ export default function AdminDashboard() {
           <DashboardCard
             title="Total Revenue"
             value={`$${Number(totalRevenue || 0).toFixed(2)}`}
+            description={`Avg order $${analytics.summary.averageOrderValue.toFixed(2)}`}
             icon={<DollarSign className="h-4 w-4" />}
             className="border"
+            trendValue={revenueDelta}
+            trendLabel="vs last month"
           />
           <DashboardCard
             title="Orders"
             value={totalOrders}
+            description={`${analytics.summary.deliveredOrders} delivered`}
             icon={<ShoppingCart className="h-4 w-4" />}
             className="border"
+            trendValue={orderDelta}
+            trendLabel="vs last month"
           />
           <DashboardCard
             title="Products"
             value={totalProducts}
+            description={`${analytics.summary.inventoryUnits} units in stock`}
             icon={<Package className="h-4 w-4" />}
             className="border"
           />
           <DashboardCard
             title="Users"
             value={totalUsers}
+            description={`Top customer ${getTopActiveCustomer(users)}`}
             icon={<Users className="h-4 w-4" />}
             className="border"
           />
@@ -98,12 +130,61 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <StatisticsChart
-            title="Sales Overview"
-            description="Compare sales by fish type"
+            title="Revenue Trend"
+            description="Monthly revenue flow from recent admin orders"
+            data={analytics.timeline}
+            xKey="period"
+            kind="area"
+            valueFormatter={(value) =>
+              value >= 1000
+                ? `$${(value / 1000).toFixed(1)}k`
+                : `$${value.toFixed(0)}`
+            }
+            series={[
+              {
+                key: "revenue",
+                label: "Revenue",
+                color: "hsl(var(--primary))",
+                kind: "area",
+              },
+            ]}
           />
           <StatisticsChart
-            title="Order Trends"
-            description="Monthly order statistics"
+            title="Fulfillment Trend"
+            description="Delivered, processing, pending and cancelled orders by month"
+            data={analytics.timeline}
+            xKey="period"
+            kind="bar"
+            series={[
+              {
+                key: "delivered",
+                label: "Delivered",
+                color: "#14532d",
+                kind: "bar",
+                stackId: "status",
+              },
+              {
+                key: "processing",
+                label: "Processing",
+                color: "#166534",
+                kind: "bar",
+                stackId: "status",
+              },
+              {
+                key: "pending",
+                label: "Pending",
+                color: "#15803d",
+                kind: "bar",
+                stackId: "status",
+              },
+              {
+                key: "cancelled",
+                label: "Cancelled",
+                color: "#22c55e",
+                kind: "bar",
+                stackId: "status",
+              },
+            ]}
           />
         </div>
 

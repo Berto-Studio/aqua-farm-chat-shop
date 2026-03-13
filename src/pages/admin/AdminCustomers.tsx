@@ -1,19 +1,12 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Search, Eye, Mail, ShoppingCart } from "lucide-react";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   getUserDisplayName,
   getUserLocation,
@@ -22,22 +15,35 @@ import {
   getUserTotalSpent,
   isUserActive,
 } from "@/lib/adminTransformers";
+import type { AdminUserRecord } from "@/types/admin";
+
+const USERS_PER_PAGE = 10;
 
 export default function AdminCustomers() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, isError, error } = useAdminUsers({ per_page: 200 });
 
   const users = data?.data || [];
 
-  const filteredUsers = users.filter((user) => {
-    const q = searchTerm.toLowerCase();
-    return (
-      getUserDisplayName(user).toLowerCase().includes(q) ||
-      user.email.toLowerCase().includes(q) ||
-      getUserLocation(user).toLowerCase().includes(q)
-    );
-  });
+  const filteredUsers = useMemo(
+    () =>
+      users.filter((user) => {
+        const q = searchTerm.toLowerCase();
+        return (
+          getUserDisplayName(user).toLowerCase().includes(q) ||
+          user.email.toLowerCase().includes(q) ||
+          getUserLocation(user).toLowerCase().includes(q)
+        );
+      }),
+    [searchTerm, users]
+  );
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * USERS_PER_PAGE;
+    return filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
+  }, [currentPage, filteredUsers]);
 
   const totalUsers = data?.meta?.total ?? users.length;
   const activeUsers = users.filter((user) => isUserActive(user)).length;
@@ -49,6 +55,82 @@ export default function AdminCustomers() {
     (sum, user) => sum + getUserTotalSpent(user),
     0
   );
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const customerColumns: DataTableColumn<AdminUserRecord>[] = [
+    {
+      id: "id",
+      header: "ID",
+      cell: (user) => <span className="font-medium">{user.id}</span>,
+    },
+    {
+      id: "user",
+      header: "User",
+      cell: (user) => getUserDisplayName(user),
+    },
+    {
+      id: "email",
+      header: "Email",
+      cell: (user) => user.email,
+    },
+    {
+      id: "location",
+      header: "Location",
+      cell: (user) => getUserLocation(user),
+    },
+    {
+      id: "orders",
+      header: "Orders",
+      cell: (user) => getUserOrderCount(user),
+    },
+    {
+      id: "spent",
+      header: "Spent",
+      cell: (user) => `$${getUserTotalSpent(user).toFixed(2)}`,
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (user) => (
+        <Badge variant={isUserActive(user) ? "success" : "secondary"}>
+          {getUserStatusLabel(user)}
+        </Badge>
+      ),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      headerClassName: "text-center",
+      cellClassName: "text-center",
+      cell: (user) => (
+        <div className="flex justify-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(`/admin/users/${user.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(`/admin/users/${user.id}/message`)}
+          >
+            <Mail className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
   
   return (
     <div className="p-6 space-y-6">
@@ -126,83 +208,26 @@ export default function AdminCustomers() {
         </div>
       </div>
 
-      {isError ? (
-        <Card>
-          <CardContent className="p-6 text-destructive">
-            {(error as Error)?.message || "Failed to load users."}
-          </CardContent>
-        </Card>
-      ) : null}
-      
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>ID</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Orders</TableHead>
-              <TableHead>Spent</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  Loading users...
-                </TableCell>
-              </TableRow>
-            ) : null}
-            {filteredUsers.map((user) => (
-              <TableRow key={user.id}>
-                <TableCell className="font-medium">{user.id}</TableCell>
-                <TableCell>{getUserDisplayName(user)}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{getUserLocation(user)}</TableCell>
-                <TableCell>{getUserOrderCount(user)}</TableCell>
-                <TableCell>${getUserTotalSpent(user).toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant={isUserActive(user) ? "success" : "secondary"}
-                  >
-                    {getUserStatusLabel(user)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex justify-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => navigate(`/admin/users/${user.id}`)}
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() =>
-                        navigate(`/admin/users/${user.id}/message`)
-                      }
-                    >
-                      <Mail className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-            {!isLoading && filteredUsers.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  No users found.
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={customerColumns}
+        data={paginatedUsers}
+        getRowKey={(user) => String(user.id)}
+        loading={isLoading}
+        error={isError ? (error as Error)?.message || "Failed to load users." : null}
+        loadingMessage="Loading users..."
+        emptyMessage="No users found."
+        tableClassName="min-w-[920px]"
+        pagination={{
+          page: currentPage,
+          pageSize: USERS_PER_PAGE,
+          totalItems: filteredUsers.length,
+          totalPages,
+          onPrevious: () =>
+            setCurrentPage((page) => Math.max(1, page - 1)),
+          onNext: () =>
+            setCurrentPage((page) => Math.min(totalPages, page + 1)),
+        }}
+      />
     </div>
   );
 }

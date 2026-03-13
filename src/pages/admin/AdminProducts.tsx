@@ -1,15 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -33,10 +25,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent } from "@/components/ui/card";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { normalizeCategoryName } from "@/constants/categories";
 import { DeleteProduct } from "@/services/products";
 import { useToast } from "@/hooks/use-toast";
 import { getProductPrimaryImageUrl } from "@/lib/productMedia";
+import type { Product } from "@/types/product";
 
 type StockFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
 type SortOption =
@@ -68,6 +62,8 @@ const stockBadgeClass: Record<Exclude<StockFilter, "all">, string> = {
   "out-of-stock": "bg-rose-50 text-rose-700 border-rose-200",
 };
 
+const PRODUCTS_PER_PAGE = 10;
+
 export default function AdminProducts() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -78,6 +74,7 @@ export default function AdminProducts() {
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("name-asc");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [currentPage, setCurrentPage] = useState(1);
   const { data: products = [], isLoading, error, refetch } = useProducts();
 
   const categoryOptions = useMemo(() => {
@@ -136,6 +133,14 @@ export default function AdminProducts() {
     });
     return sorted;
   }, [filteredProducts, sortOption]);
+  const totalPages = Math.max(
+    1,
+    Math.ceil(displayedProducts.length / PRODUCTS_PER_PAGE),
+  );
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
+    return displayedProducts.slice(startIndex, startIndex + PRODUCTS_PER_PAGE);
+  }, [currentPage, displayedProducts]);
 
   const hasActiveFilters =
     searchTerm.trim().length > 0 ||
@@ -148,6 +153,16 @@ export default function AdminProducts() {
     setStockFilter("all");
     setSortOption("name-asc");
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, categoryFilter, stockFilter, sortOption]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const handleDeleteProduct = async (productId: string | number) => {
     const confirmed = window.confirm(
@@ -177,6 +192,119 @@ export default function AdminProducts() {
       setDeletingId(null);
     }
   };
+
+  const productColumns: DataTableColumn<Product>[] = [
+    {
+      id: "image",
+      header: "Image",
+      cell: (product) => {
+        const primaryImageUrl = getProductPrimaryImageUrl(product);
+
+        return (
+          <div className="h-10 w-10 overflow-hidden rounded-md bg-muted">
+            <img
+              src={primaryImageUrl || "/placeholder.svg"}
+              alt={product.title}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        );
+      },
+    },
+    {
+      id: "name",
+      header: "Name",
+      cell: (product) => (
+        <button
+          type="button"
+          className="text-left font-medium hover:text-primary hover:underline"
+          onClick={() => navigate(`/admin/products/${product.id}`)}
+        >
+          {product.title}
+        </button>
+      ),
+    },
+    {
+      id: "category",
+      header: "Category",
+      cell: (product) => (
+        <Badge variant="outline" className="capitalize">
+          {normalizeCategoryName(product.category)}
+        </Badge>
+      ),
+    },
+    {
+      id: "price",
+      header: "Price",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      cell: (product) => (
+        <>
+          ${Number(product.price).toFixed(2)}
+          {product.discount_percentage ? (
+            <span className="ml-2 text-xs text-red-500">
+              -{product.discount_percentage}%
+            </span>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      id: "stock",
+      header: "Stock",
+      headerClassName: "text-right",
+      cellClassName: "text-right",
+      cell: (product) => {
+        const quantity = Number(product.quantity) || 0;
+        return `${quantity} units`;
+      },
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (product) => {
+        const status = getStockStatus(Number(product.quantity) || 0);
+
+        return (
+          <Badge variant="outline" className={stockBadgeClass[status]}>
+            {stockLabel[status]}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      headerClassName: "text-center",
+      cellClassName: "text-center",
+      cell: (product) => (
+        <div className="flex justify-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(`/admin/products/${product.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+          >
+            <Pencil className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => handleDeleteProduct(product.id!)}
+            disabled={deletingId === product.id}
+          >
+            <Trash className="h-4 w-4" />
+          </Button>
+        </div>
+      ),
+    },
+  ];
 
   return (
     <div className="p-6 space-y-6">
@@ -301,124 +429,26 @@ export default function AdminProducts() {
       </Card>
 
       {viewMode === "table" ? (
-        <div className="border rounded-lg overflow-hidden bg-white">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Image</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead className="text-right">Price</TableHead>
-                <TableHead className="text-right">Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
-                    Loading products...
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!isLoading && error && (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-destructive">
-                    {error.message || "Failed to load products"}
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!isLoading && !error && displayedProducts.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
-                    No products match your current filters.
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {!isLoading &&
-                !error &&
-                displayedProducts.map((product) => {
-                  const quantity = Number(product.quantity) || 0;
-                  const status = getStockStatus(quantity);
-                  const primaryImageUrl = getProductPrimaryImageUrl(product);
-
-                  return (
-                    <TableRow key={product.id}>
-                      <TableCell>
-                        <div className="h-10 w-10 rounded-md overflow-hidden bg-muted">
-                          <img
-                            src={primaryImageUrl || "/placeholder.svg"}
-                            alt={product.title}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        <button
-                          type="button"
-                          className="text-left hover:text-primary hover:underline"
-                          onClick={() => navigate(`/admin/products/${product.id}`)}
-                        >
-                          {product.title}
-                        </button>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="capitalize">
-                          {normalizeCategoryName(product.category)}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        ${Number(product.price).toFixed(2)}
-                        {product.discount_percentage && (
-                          <span className="ml-2 text-xs text-red-500">
-                            -{product.discount_percentage}%
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">{quantity} units</TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={stockBadgeClass[status]}>
-                          {stockLabel[status]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => navigate(`/admin/products/${product.id}`)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() =>
-                              navigate(`/admin/products/${product.id}/edit`)
-                            }
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleDeleteProduct(product.id!)}
-                            disabled={deletingId === product.id}
-                          >
-                            <Trash className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-            </TableBody>
-          </Table>
-        </div>
+        <DataTable
+          columns={productColumns}
+          data={paginatedProducts}
+          getRowKey={(product) => String(product.id)}
+          loading={isLoading}
+          error={error ? error.message || "Failed to load products" : null}
+          loadingMessage="Loading products..."
+          emptyMessage="No products match your current filters."
+          tableClassName="min-w-[900px]"
+          pagination={{
+            page: currentPage,
+            pageSize: PRODUCTS_PER_PAGE,
+            totalItems: displayedProducts.length,
+            totalPages,
+            onPrevious: () =>
+              setCurrentPage((page) => Math.max(1, page - 1)),
+            onNext: () =>
+              setCurrentPage((page) => Math.min(totalPages, page + 1)),
+          }}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {isLoading &&

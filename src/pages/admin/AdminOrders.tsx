@@ -1,15 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -33,12 +25,14 @@ import {
   useUpdateAdminOrderStatus,
 } from "@/hooks/useAdminOrders";
 import { useToast } from "@/hooks/use-toast";
+import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   getOrderPaymentLabel,
   getOrderStatusLabel,
   getOrderTotal,
   getOrderUserName,
 } from "@/lib/adminTransformers";
+import type { AdminOrderRecord } from "@/types/admin";
 
 type SortColumn = "date" | "total";
 type SortDirection = "asc" | "desc";
@@ -51,6 +45,7 @@ const statusClass: Record<string, string> = {
 };
 
 const statusOptions = ["pending", "processing", "delivered", "cancelled"] as const;
+const ORDERS_PER_PAGE = 10;
 
 const toStatusLabel = (value: string) =>
   value.charAt(0).toUpperCase() + value.slice(1);
@@ -66,6 +61,7 @@ export default function AdminOrders() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<SortColumn>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [currentPage, setCurrentPage] = useState(1);
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const { data, isLoading, isError, error } = useAdminOrders({ per_page: 300 });
@@ -99,6 +95,11 @@ export default function AdminOrders() {
       return sortDirection === "asc" ? aTotal - bTotal : bTotal - aTotal;
     });
   }, [filteredOrders, sortBy, sortDirection]);
+  const totalPages = Math.max(1, Math.ceil(sortedOrders.length / ORDERS_PER_PAGE));
+  const paginatedOrders = useMemo(() => {
+    const startIndex = (currentPage - 1) * ORDERS_PER_PAGE;
+    return sortedOrders.slice(startIndex, startIndex + ORDERS_PER_PAGE);
+  }, [currentPage, sortedOrders]);
 
   const computedTotalOrders = data?.meta?.total ?? orders.length;
   const computedPending = orders.filter(
@@ -124,6 +125,16 @@ export default function AdminOrders() {
   const totalRevenue = Number.isFinite(orderStats?.total_revenue)
     ? Number(orderStats?.total_revenue)
     : computedRevenue;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, sortBy, sortDirection]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
 
   const formatDate = (dateValue?: string) => {
     if (!dateValue) return "N/A";
@@ -204,6 +215,134 @@ export default function AdminOrders() {
     }
   };
 
+  const orderColumns: DataTableColumn<AdminOrderRecord>[] = [
+    {
+      id: "id",
+      header: "Order ID",
+      cell: (order) => <span className="font-medium">{order.id}</span>,
+    },
+    {
+      id: "user",
+      header: "User",
+      cell: (order) => (
+        <button
+          type="button"
+          onClick={() => navigate(`/admin/users/${order.user_id}`)}
+          className="text-primary hover:underline"
+        >
+          {getOrderUserName(order)}
+        </button>
+      ),
+    },
+    {
+      id: "date",
+      header: (
+        <button
+          type="button"
+          className="flex items-center gap-1"
+          onClick={() => handleSort("date")}
+        >
+          <span>Date</span>
+          {getSortIcon("date")}
+        </button>
+      ),
+      cell: (order) => formatDate(order.created_at),
+    },
+    {
+      id: "status",
+      header: "Status",
+      cell: (order) => {
+        const status = getOrderStatusLabel(order);
+        return (
+          <Badge variant="outline" className={getStatusColor(status)}>
+            {status}
+          </Badge>
+        );
+      },
+    },
+    {
+      id: "update-status",
+      header: "Update Status",
+      headerClassName: "min-w-[220px]",
+      cell: (order) => {
+        const normalizedStatus = normalizeOrderStatus(
+          getOrderStatusLabel(order).toLowerCase(),
+        );
+        const orderKey = String(order.id);
+        const draftStatus = statusDrafts[orderKey] || normalizedStatus;
+        const hasStatusChanged = draftStatus !== normalizedStatus;
+        const isUpdatingThisOrder = updatingOrderId === orderKey;
+
+        return (
+          <div className="flex min-w-[220px] flex-col gap-2 sm:flex-row">
+            <Select
+              value={draftStatus}
+              onValueChange={(value) => handleStatusDraftChange(order.id, value)}
+              disabled={isUpdatingThisOrder}
+            >
+              <SelectTrigger className="h-9 w-full sm:w-[150px]">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                {statusOptions.map((option) => (
+                  <SelectItem key={option} value={option}>
+                    {toStatusLabel(option)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Button
+              size="sm"
+              className="sm:min-w-[88px]"
+              disabled={!hasStatusChanged || isUpdatingThisOrder}
+              onClick={() => void handleUpdateStatus(order.id, normalizedStatus)}
+            >
+              {isUpdatingThisOrder ? "Updating..." : "Update"}
+            </Button>
+          </div>
+        );
+      },
+    },
+    {
+      id: "total",
+      header: (
+        <button
+          type="button"
+          className="flex items-center gap-1"
+          onClick={() => handleSort("total")}
+        >
+          <span>Total</span>
+          {getSortIcon("total")}
+        </button>
+      ),
+      cell: (order) => `$${getOrderTotal(order).toFixed(2)}`,
+    },
+    {
+      id: "payment",
+      header: "Payment",
+      cell: (order) => getOrderPaymentLabel(order),
+    },
+    {
+      id: "actions",
+      header: "Actions",
+      headerClassName: "text-center",
+      cellClassName: "text-center",
+      cell: (order) => (
+        <div className="flex justify-center">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => navigate(`/admin/orders/${order.id}`)}
+          >
+            <Eye className="h-4 w-4" />
+            <span className="ml-1 hidden md:inline">View</span>
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">Orders Management</h1>
@@ -278,130 +417,26 @@ export default function AdminOrders() {
         </div>
       </div>
 
-      {isError ? (
-        <Card>
-          <CardContent className="p-6 text-destructive">
-            {(error as Error)?.message || "Failed to load orders."}
-          </CardContent>
-        </Card>
-      ) : null}
-
-      <div className="overflow-x-auto rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("date")}>
-                <div className="flex items-center gap-1">
-                  Date {getSortIcon("date")}
-                </div>
-              </TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="min-w-[220px]">Update Status</TableHead>
-              <TableHead className="cursor-pointer" onClick={() => handleSort("total")}>
-                <div className="flex items-center gap-1">
-                  Total {getSortIcon("total")}
-                </div>
-              </TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  Loading orders...
-                </TableCell>
-              </TableRow>
-            ) : null}
-            {sortedOrders.map((order) => {
-              const status = getOrderStatusLabel(order);
-              const normalizedStatus = normalizeOrderStatus(status.toLowerCase());
-              const orderKey = String(order.id);
-              const draftStatus = statusDrafts[orderKey] || normalizedStatus;
-              const hasStatusChanged = draftStatus !== normalizedStatus;
-              const isUpdatingThisOrder = updatingOrderId === orderKey;
-
-              return (
-                <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/admin/users/${order.user_id}`)}
-                      className="text-primary hover:underline"
-                    >
-                      {getOrderUserName(order)}
-                    </button>
-                  </TableCell>
-                  <TableCell>{formatDate(order.created_at)}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getStatusColor(status)}>
-                      {status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex min-w-[220px] flex-col gap-2 sm:flex-row">
-                      <Select
-                        value={draftStatus}
-                        onValueChange={(value) =>
-                          handleStatusDraftChange(order.id, value)
-                        }
-                        disabled={isUpdatingThisOrder}
-                      >
-                        <SelectTrigger className="h-9 w-full sm:w-[150px]">
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {statusOptions.map((option) => (
-                            <SelectItem key={option} value={option}>
-                              {toStatusLabel(option)}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-
-                      <Button
-                        size="sm"
-                        className="sm:min-w-[88px]"
-                        disabled={!hasStatusChanged || isUpdatingThisOrder}
-                        onClick={() =>
-                          void handleUpdateStatus(order.id, normalizedStatus)
-                        }
-                      >
-                        {isUpdatingThisOrder ? "Updating..." : "Update"}
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell>${getOrderTotal(order).toFixed(2)}</TableCell>
-                  <TableCell>{getOrderPaymentLabel(order)}</TableCell>
-                  <TableCell>
-                    <div className="flex justify-center">
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => navigate(`/admin/orders/${order.id}`)}
-                      >
-                        <Eye className="h-4 w-4" />
-                        <span className="ml-1 hidden md:inline">View</span>
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-            {!isLoading && sortedOrders.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                  No orders found.
-                </TableCell>
-              </TableRow>
-            ) : null}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={orderColumns}
+        data={paginatedOrders}
+        getRowKey={(order) => String(order.id)}
+        loading={isLoading}
+        error={isError ? (error as Error)?.message || "Failed to load orders." : null}
+        loadingMessage="Loading orders..."
+        emptyMessage="No orders found."
+        tableClassName="min-w-[980px]"
+        pagination={{
+          page: currentPage,
+          pageSize: ORDERS_PER_PAGE,
+          totalItems: sortedOrders.length,
+          totalPages,
+          onPrevious: () =>
+            setCurrentPage((page) => Math.max(1, page - 1)),
+          onNext: () =>
+            setCurrentPage((page) => Math.min(totalPages, page + 1)),
+        }}
+      />
     </div>
   );
 }

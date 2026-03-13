@@ -18,7 +18,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useAdminUser, useAdminUserOrders } from "@/hooks/useAdminUsers";
+import {
+  useAdminUser,
+  useAdminUserDetails,
+  useAdminUserOrders,
+} from "@/hooks/useAdminUsers";
 import {
   getOrderItemName,
   getOrderItemUnitPrice,
@@ -34,7 +38,10 @@ import {
   getUserStatusLabel,
   getUserTotalSpent,
 } from "@/lib/adminTransformers";
-import type { AdminOrderRecord } from "@/types/admin";
+import type {
+  AdminOrderRecord,
+  AdminUserDetailsRecord,
+} from "@/types/admin";
 
 const orderStatusClass: Record<string, string> = {
   delivered: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -51,6 +58,143 @@ const getInitials = (name: string) =>
     .map((part) => part.charAt(0).toUpperCase())
     .join("") || "U";
 
+const toFiniteNumber = (value: unknown, fallback = 0) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const readFirstString = (...values: unknown[]) => {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) {
+      return value.trim();
+    }
+  }
+
+  return undefined;
+};
+
+const formatDetailLabel = (value: string) =>
+  value
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (character) => character.toUpperCase());
+
+const getUserDetailsStats = (details?: AdminUserDetailsRecord) =>
+  (details?.stats ||
+    details?.order_stats ||
+    details?.orderStats ||
+    details?.summary) as Record<string, unknown> | undefined;
+
+const getUserDetailsOrders = (details?: AdminUserDetailsRecord) => {
+  const candidate =
+    details?.recent_orders || details?.recentOrders || details?.orders;
+  return Array.isArray(candidate) ? candidate : [];
+};
+
+const getUserAdditionalDetails = (details?: AdminUserDetailsRecord) => {
+  if (!details) return [];
+
+  const topLevelIgnoredKeys = new Set([
+    "user",
+    "recent_orders",
+    "recentOrders",
+    "orders",
+    "latest_order",
+    "latestOrder",
+    "stats",
+    "order_stats",
+    "orderStats",
+    "summary",
+    "preferred_delivery_address",
+    "preferredDeliveryAddress",
+    "latest_payment_method",
+    "latestPaymentMethod",
+    "notes",
+    "highlights",
+  ]);
+  const surfacedKeys = new Set([
+    "totalorders",
+    "totalspent",
+    "averageordervalue",
+    "totalitemspurchased",
+    "deliveredorders",
+    "openorders",
+    "largestordervalue",
+    "lastorderat",
+  ]);
+  const seenKeys = new Set<string>();
+  const entries: Array<{ label: string; value: string }> = [];
+
+  const pushEntry = (key: string, value: unknown) => {
+    if (value === undefined || value === null || value === "") return;
+
+    const normalizedKey = key.replace(/[^a-z0-9]/gi, "").toLowerCase();
+    if (surfacedKeys.has(normalizedKey) || seenKeys.has(normalizedKey)) return;
+
+    let displayValue: string | undefined;
+    if (typeof value === "string") {
+      displayValue = value.trim() || undefined;
+    } else if (typeof value === "number") {
+      displayValue = Number.isFinite(value) ? String(value) : undefined;
+    } else if (typeof value === "boolean") {
+      displayValue = value ? "Yes" : "No";
+    } else if (
+      Array.isArray(value) &&
+      value.every((item) =>
+        ["string", "number", "boolean"].includes(typeof item),
+      )
+    ) {
+      displayValue = value
+        .map((item) =>
+          typeof item === "boolean" ? (item ? "Yes" : "No") : String(item),
+        )
+        .join(", ");
+    }
+
+    if (!displayValue) return;
+
+    seenKeys.add(normalizedKey);
+    entries.push({
+      label: formatDetailLabel(key),
+      value: displayValue,
+    });
+  };
+
+  Object.entries(details).forEach(([key, value]) => {
+    if (topLevelIgnoredKeys.has(key)) return;
+
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      Object.entries(value as Record<string, unknown>).forEach(
+        ([nestedKey, nestedValue]) => {
+          pushEntry(`${key} ${nestedKey}`, nestedValue);
+        },
+      );
+      return;
+    }
+
+    pushEntry(key, value);
+  });
+
+  return entries.slice(0, 8);
+};
+
+const toStringList = (...values: unknown[]) =>
+  values.flatMap((value) => {
+    if (typeof value === "string" && value.trim()) {
+      return [value.trim()];
+    }
+
+    if (Array.isArray(value)) {
+      return value
+        .filter((item) => typeof item === "string" && item.trim())
+        .map((item) => String(item).trim());
+    }
+
+    return [];
+  });
+
 export default function AdminCustomerDetails() {
   const navigate = useNavigate();
   const { userId, customerId } = useParams<{
@@ -65,17 +209,35 @@ export default function AdminCustomerDetails() {
     isError: isUserError,
     error: userError,
   } = useAdminUser(resolvedUserId);
+  const { data: userDetails } = useAdminUserDetails(resolvedUserId, {
+    recent_limit: 5,
+  });
   const { data: orders = [], isLoading: isOrdersLoading } =
     useAdminUserOrders(resolvedUserId);
-
+  const detailsStats = getUserDetailsStats(userDetails);
+  const detailedOrders = useMemo(
+    () => getUserDetailsOrders(userDetails),
+    [userDetails],
+  );
+  const customer = userDetails?.user || user;
+  const latestOrderCandidate =
+    userDetails?.latest_order || userDetails?.latestOrder;
+  const ordersSource =
+    detailedOrders.length > 0
+      ? detailedOrders
+      : orders.length > 0
+        ? orders
+        : latestOrderCandidate
+          ? [latestOrderCandidate]
+          : [];
   const sortedOrders = useMemo(
     () =>
-      [...orders].sort(
+      [...ordersSource].sort(
         (a, b) =>
           new Date(b.created_at || "").getTime() -
           new Date(a.created_at || "").getTime(),
       ),
-    [orders],
+    [ordersSource],
   );
 
   const formatDate = (value?: string) => {
@@ -93,29 +255,44 @@ export default function AdminCustomerDetails() {
   };
 
   const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
-
-  const computedOrders = getUserOrderCount(user) || orders.length;
-  const computedSpent =
-    getUserTotalSpent(user) ||
-    orders.reduce((sum, order) => sum + getOrderTotal(order), 0);
-  const averageOrderValue =
-    computedOrders > 0 ? computedSpent / computedOrders : 0;
-  const totalItemsPurchased = sortedOrders.reduce(
-    (sum, order) => sum + getOrderItemsCount(order),
-    0,
+  const computedOrders = toFiniteNumber(
+    detailsStats?.total_orders ?? detailsStats?.totalOrders,
+    getUserOrderCount(customer) || ordersSource.length,
   );
-  const latestOrder = sortedOrders[0];
+  const computedSpent = toFiniteNumber(
+    detailsStats?.total_spent ?? detailsStats?.totalSpent,
+    getUserTotalSpent(customer) ||
+      ordersSource.reduce((sum, order) => sum + getOrderTotal(order), 0),
+  );
+  const averageOrderValue =
+    computedOrders > 0
+      ? toFiniteNumber(
+          detailsStats?.average_order_value ?? detailsStats?.averageOrderValue,
+          computedSpent / computedOrders,
+        )
+      : 0;
+  const totalItemsPurchased = toFiniteNumber(
+    detailsStats?.total_items_purchased ?? detailsStats?.totalItemsPurchased,
+    sortedOrders.reduce((sum, order) => sum + getOrderItemsCount(order), 0),
+  );
+  const latestOrder = latestOrderCandidate || sortedOrders[0];
   const recentOrders = sortedOrders.slice(0, 5);
   const latestOrderItems = latestOrder?.items?.slice(0, 4) || [];
-  const customerName = getUserDisplayName(user);
+  const customerName = getUserDisplayName(customer);
   const customerInitials = getInitials(customerName);
-  const deliveredOrders = sortedOrders.filter(
-    (order) => getOrderStatusLabel(order).toLowerCase() === "delivered",
-  ).length;
-  const openOrders = sortedOrders.filter((order) => {
-    const status = getOrderStatusLabel(order).toLowerCase();
-    return status === "pending" || status === "processing";
-  }).length;
+  const deliveredOrders = toFiniteNumber(
+    detailsStats?.delivered_orders ?? detailsStats?.deliveredOrders,
+    sortedOrders.filter(
+      (order) => getOrderStatusLabel(order).toLowerCase() === "delivered",
+    ).length,
+  );
+  const openOrders = toFiniteNumber(
+    detailsStats?.open_orders ?? detailsStats?.openOrders,
+    sortedOrders.filter((order) => {
+      const status = getOrderStatusLabel(order).toLowerCase();
+      return status === "pending" || status === "processing";
+    }).length,
+  );
   const biggestOrder = sortedOrders.reduce<AdminOrderRecord | undefined>(
     (largest, order) => {
       if (!largest || getOrderTotal(order) > getOrderTotal(largest)) {
@@ -126,6 +303,33 @@ export default function AdminCustomerDetails() {
     },
     undefined,
   );
+  const biggestOrderValue = toFiniteNumber(
+    detailsStats?.largest_order_value ?? detailsStats?.largestOrderValue,
+    biggestOrder ? getOrderTotal(biggestOrder) : 0,
+  );
+  const preferredDeliveryAddress =
+    readFirstString(
+      userDetails?.preferred_delivery_address,
+      userDetails?.preferredDeliveryAddress,
+      latestOrder ? getOrderShippingAddress(latestOrder) : undefined,
+      getUserLocation(customer),
+    ) || "N/A";
+  const latestPaymentMethod =
+    readFirstString(
+      userDetails?.latest_payment_method,
+      userDetails?.latestPaymentMethod,
+      latestOrder ? getOrderPaymentLabel(latestOrder) : undefined,
+    ) || "N/A";
+  const lastOrderAt = readFirstString(
+    detailsStats?.last_order_at,
+    detailsStats?.lastOrderAt,
+    latestOrder?.created_at,
+  );
+  const endpointNotes = toStringList(userDetails?.notes, userDetails?.highlights);
+  const additionalDetails = getUserAdditionalDetails(userDetails);
+  const showAdditionalDetails =
+    endpointNotes.length > 0 || additionalDetails.length > 0;
+  const isRecentOrdersLoading = isOrdersLoading && ordersSource.length === 0;
 
   if (!resolvedUserId) {
     return (
@@ -191,6 +395,13 @@ export default function AdminCustomerDetails() {
     );
   }
 
+  const activeCustomer = customer || user;
+  const customerIdValue = activeCustomer.id;
+  const customerEmail = activeCustomer.email || user.email;
+  const customerPhone = activeCustomer.phone || "Phone not provided";
+  const customerLocation = getUserLocation(activeCustomer);
+  const joinedAt = getUserJoinedAt(activeCustomer);
+
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -206,7 +417,7 @@ export default function AdminCustomerDetails() {
         <div>
           <h1 className="text-2xl font-bold">{customerName}</h1>
           <p className="text-sm text-muted-foreground">
-            Customer #{user.id} · {user.email}
+            Customer #{customerIdValue} · {customerEmail}
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row">
@@ -219,7 +430,9 @@ export default function AdminCustomerDetails() {
               View Latest Order
             </Button>
           ) : null}
-          <Button onClick={() => navigate(`/admin/users/${user.id}/message`)}>
+          <Button
+            onClick={() => navigate(`/admin/users/${customerIdValue}/message`)}
+          >
             <Mail className="mr-2 h-4 w-4" />
             Message User
           </Button>
@@ -234,7 +447,7 @@ export default function AdminCustomerDetails() {
                 <div className="flex items-start gap-4">
                   <Avatar className="h-20 w-20 border shadow-sm">
                     <AvatarImage
-                      src={user.profile_image_url}
+                      src={activeCustomer.profile_image_url}
                       alt={customerName}
                     />
                     <AvatarFallback className="bg-primary/10 text-xl font-semibold text-primary">
@@ -247,21 +460,23 @@ export default function AdminCustomerDetails() {
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge
                           variant={
-                            getUserStatusLabel(user) === "Active"
+                            getUserStatusLabel(activeCustomer) === "Active"
                               ? "success"
                               : "secondary"
                           }
                         >
-                          {getUserStatusLabel(user)}
+                          {getUserStatusLabel(activeCustomer)}
                         </Badge>
-                        <Badge variant="outline">Customer #{user.id}</Badge>
+                        <Badge variant="outline">
+                          Customer #{customerIdValue}
+                        </Badge>
                       </div>
                       <div>
                         <h2 className="text-3xl font-semibold tracking-tight text-foreground">
                           {customerName}
                         </h2>
                         <p className="text-sm text-muted-foreground">
-                          {user.email}
+                          {customerEmail}
                         </p>
                       </div>
                     </div>
@@ -269,21 +484,21 @@ export default function AdminCustomerDetails() {
                     <div className="grid gap-3 text-sm sm:grid-cols-2">
                       <div className="flex items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2">
                         <MapPin className="h-4 w-4 text-primary" />
-                        <span>{getUserLocation(user)}</span>
+                        <span>{customerLocation}</span>
                       </div>
                       <div className="flex items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2">
                         <Phone className="h-4 w-4 text-primary" />
-                        <span>{user.phone || "Phone not provided"}</span>
+                        <span>{customerPhone}</span>
                       </div>
                       <div className="flex items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2">
                         <CalendarDays className="h-4 w-4 text-primary" />
-                        <span>Joined {formatDate(getUserJoinedAt(user))}</span>
+                        <span>Joined {formatDate(joinedAt)}</span>
                       </div>
                       <div className="flex items-center gap-2 rounded-xl border bg-muted/30 px-3 py-2">
                         <Clock3 className="h-4 w-4 text-primary" />
                         <span>
-                          {latestOrder
-                            ? `Last purchase ${formatRelativeDate(latestOrder.created_at)}`
+                          {lastOrderAt
+                            ? `Last purchase ${formatRelativeDate(lastOrderAt)}`
                             : "No purchases yet"}
                         </span>
                       </div>
@@ -301,28 +516,22 @@ export default function AdminCustomerDetails() {
                         Preferred delivery
                       </span>
                       <span className="max-w-[11rem] text-right font-medium">
-                        {latestOrder
-                          ? getOrderShippingAddress(latestOrder)
-                          : getUserLocation(user)}
+                        {preferredDeliveryAddress}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-muted-foreground">
                         Latest payment
                       </span>
-                      <span className="font-medium">
-                        {latestOrder
-                          ? getOrderPaymentLabel(latestOrder)
-                          : "N/A"}
-                      </span>
+                      <span className="font-medium">{latestPaymentMethod}</span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span className="text-muted-foreground">
                         Largest order
                       </span>
                       <span className="font-medium">
-                        {biggestOrder
-                          ? formatCurrency(getOrderTotal(biggestOrder))
+                        {biggestOrderValue > 0
+                          ? formatCurrency(biggestOrderValue)
                           : "N/A"}
                       </span>
                     </div>
@@ -482,8 +691,8 @@ export default function AdminCustomerDetails() {
                   Largest basket
                 </span>
                 <span className="font-semibold">
-                  {biggestOrder
-                    ? formatCurrency(getOrderTotal(biggestOrder))
+                  {biggestOrderValue > 0
+                    ? formatCurrency(biggestOrderValue)
                     : "N/A"}
                 </span>
               </div>
@@ -492,7 +701,7 @@ export default function AdminCustomerDetails() {
                   Member since
                 </span>
                 <span className="font-semibold">
-                  {formatRelativeDate(getUserJoinedAt(user))}
+                  {formatRelativeDate(joinedAt)}
                 </span>
               </div>
             </CardContent>
@@ -509,10 +718,10 @@ export default function AdminCustomerDetails() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {isOrdersLoading ? (
+            {isRecentOrdersLoading ? (
               <p className="text-muted-foreground">Loading orders...</p>
             ) : null}
-            {!isOrdersLoading && recentOrders.length === 0 ? (
+            {!isRecentOrdersLoading && recentOrders.length === 0 ? (
               <div className="rounded-2xl border border-dashed p-6 text-center">
                 <p className="font-medium">
                   No orders found for this customer.
@@ -621,6 +830,52 @@ export default function AdminCustomerDetails() {
           </CardContent>
         </Card>
       </div>
+
+      {showAdditionalDetails ? (
+        <Card className="border shadow-sm">
+          <CardHeader>
+            <CardTitle>Additional Linked Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {endpointNotes.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                  Highlights
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {endpointNotes.map((note, index) => (
+                    <Badge
+                      key={`${note}-${index}`}
+                      variant="secondary"
+                      className="px-3 py-1"
+                    >
+                      {note}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {additionalDetails.length > 0 ? (
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                {additionalDetails.map((detail) => (
+                  <div
+                    key={`${detail.label}-${detail.value}`}
+                    className="rounded-2xl border bg-muted/20 p-4"
+                  >
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {detail.label}
+                    </p>
+                    <p className="mt-2 text-sm font-medium text-foreground">
+                      {detail.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

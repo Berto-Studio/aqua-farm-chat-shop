@@ -39,6 +39,26 @@ export interface AdminUserRecord {
   profile_image_url?: string;
 }
 
+export interface AdminUserDetailsStats {
+  total_orders?: number;
+  totalOrders?: number;
+  total_spent?: number;
+  totalSpent?: number;
+  average_order_value?: number;
+  averageOrderValue?: number;
+  total_items_purchased?: number;
+  totalItemsPurchased?: number;
+  delivered_orders?: number;
+  deliveredOrders?: number;
+  open_orders?: number;
+  openOrders?: number;
+  largest_order_value?: number;
+  largestOrderValue?: number;
+  last_order_at?: string;
+  lastOrderAt?: string;
+  [key: string]: unknown;
+}
+
 export interface AdminOrderItemRecord {
   id: string | number;
   order_id?: string | number;
@@ -65,6 +85,26 @@ export interface AdminOrderRecord {
   items?: AdminOrderItemRecord[];
   user?: AdminUserRecord;
   user_name?: string;
+}
+
+export interface AdminUserDetailsRecord {
+  user?: AdminUserRecord;
+  recent_orders?: AdminOrderRecord[];
+  recentOrders?: AdminOrderRecord[];
+  orders?: AdminOrderRecord[];
+  latest_order?: AdminOrderRecord;
+  latestOrder?: AdminOrderRecord;
+  stats?: AdminUserDetailsStats;
+  order_stats?: AdminUserDetailsStats;
+  orderStats?: AdminUserDetailsStats;
+  summary?: AdminUserDetailsStats;
+  preferred_delivery_address?: string;
+  preferredDeliveryAddress?: string;
+  latest_payment_method?: string;
+  latestPaymentMethod?: string;
+  notes?: string | string[];
+  highlights?: string | string[];
+  [key: string]: unknown;
 }
 
 export interface AdminConversationRecord {

@@ -37,9 +37,12 @@ export default function AdminCustomers() {
           getUserLocation(user).toLowerCase().includes(q)
         );
       }),
-    [searchTerm, users]
+    [searchTerm, users],
   );
-  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / USERS_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredUsers.length / USERS_PER_PAGE),
+  );
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * USERS_PER_PAGE;
     return filteredUsers.slice(startIndex, startIndex + USERS_PER_PAGE);
@@ -49,11 +52,11 @@ export default function AdminCustomers() {
   const activeUsers = users.filter((user) => isUserActive(user)).length;
   const totalOrders = users.reduce(
     (sum, user) => sum + getUserOrderCount(user),
-    0
+    0,
   );
   const totalRevenue = users.reduce(
     (sum, user) => sum + getUserTotalSpent(user),
-    0
+    0,
   );
 
   useEffect(() => {
@@ -70,7 +73,11 @@ export default function AdminCustomers() {
     {
       id: "id",
       header: "ID",
-      cell: (user) => <span className="font-medium">{user.id}</span>,
+      cell: (_, index) => (
+        <span className="font-medium">
+          {(currentPage - 1) * USERS_PER_PAGE + index + 1}
+        </span>
+      ),
     },
     {
       id: "user",
@@ -131,11 +138,11 @@ export default function AdminCustomers() {
       ),
     },
   ];
-  
+
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">User Management</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="pb-2">
@@ -150,7 +157,7 @@ export default function AdminCustomers() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -164,7 +171,7 @@ export default function AdminCustomers() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -178,7 +185,7 @@ export default function AdminCustomers() {
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -195,7 +202,7 @@ export default function AdminCustomers() {
           </CardContent>
         </Card>
       </div>
-      
+
       <div className="flex items-center gap-4">
         <div className="relative w-full max-w-md">
           <Input
@@ -213,7 +220,9 @@ export default function AdminCustomers() {
         data={paginatedUsers}
         getRowKey={(user) => String(user.id)}
         loading={isLoading}
-        error={isError ? (error as Error)?.message || "Failed to load users." : null}
+        error={
+          isError ? (error as Error)?.message || "Failed to load users." : null
+        }
         loadingMessage="Loading users..."
         emptyMessage="No users found."
         tableClassName="min-w-[920px]"
@@ -222,8 +231,7 @@ export default function AdminCustomers() {
           pageSize: USERS_PER_PAGE,
           totalItems: filteredUsers.length,
           totalPages,
-          onPrevious: () =>
-            setCurrentPage((page) => Math.max(1, page - 1)),
+          onPrevious: () => setCurrentPage((page) => Math.max(1, page - 1)),
           onNext: () =>
             setCurrentPage((page) => Math.min(totalPages, page + 1)),
         }}

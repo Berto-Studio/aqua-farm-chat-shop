@@ -44,7 +44,12 @@ const statusClass: Record<string, string> = {
   cancelled: "bg-red-100 text-red-800",
 };
 
-const statusOptions = ["pending", "processing", "delivered", "cancelled"] as const;
+const statusOptions = [
+  "pending",
+  "processing",
+  "delivered",
+  "cancelled",
+] as const;
 const ORDERS_PER_PAGE = 10;
 
 const toStatusLabel = (value: string) =>
@@ -79,7 +84,7 @@ export default function AdminOrders() {
           getOrderUserName(order).toLowerCase().includes(q)
         );
       }),
-    [orders, searchTerm]
+    [orders, searchTerm],
   );
 
   const sortedOrders = useMemo(() => {
@@ -95,7 +100,10 @@ export default function AdminOrders() {
       return sortDirection === "asc" ? aTotal - bTotal : bTotal - aTotal;
     });
   }, [filteredOrders, sortBy, sortDirection]);
-  const totalPages = Math.max(1, Math.ceil(sortedOrders.length / ORDERS_PER_PAGE));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedOrders.length / ORDERS_PER_PAGE),
+  );
   const paginatedOrders = useMemo(() => {
     const startIndex = (currentPage - 1) * ORDERS_PER_PAGE;
     return sortedOrders.slice(startIndex, startIndex + ORDERS_PER_PAGE);
@@ -103,14 +111,14 @@ export default function AdminOrders() {
 
   const computedTotalOrders = data?.meta?.total ?? orders.length;
   const computedPending = orders.filter(
-    (order) => getOrderStatusLabel(order).toLowerCase() === "pending"
+    (order) => getOrderStatusLabel(order).toLowerCase() === "pending",
   ).length;
   const computedDelivered = orders.filter(
-    (order) => getOrderStatusLabel(order).toLowerCase() === "delivered"
+    (order) => getOrderStatusLabel(order).toLowerCase() === "delivered",
   ).length;
   const computedRevenue = orders.reduce(
     (sum, order) => sum + getOrderTotal(order),
-    0
+    0,
   );
 
   const totalOrders = Number.isFinite(orderStats?.total_orders)
@@ -219,7 +227,11 @@ export default function AdminOrders() {
     {
       id: "id",
       header: "Order ID",
-      cell: (order) => <span className="font-medium">{order.id}</span>,
+      cell: (_, index) => (
+        <span className="font-medium">
+          {(currentPage - 1) * ORDERS_PER_PAGE + index + 1}
+        </span>
+      ),
     },
     {
       id: "user",
@@ -277,7 +289,9 @@ export default function AdminOrders() {
           <div className="flex min-w-[220px] flex-col gap-2 sm:flex-row">
             <Select
               value={draftStatus}
-              onValueChange={(value) => handleStatusDraftChange(order.id, value)}
+              onValueChange={(value) =>
+                handleStatusDraftChange(order.id, value)
+              }
               disabled={isUpdatingThisOrder}
             >
               <SelectTrigger className="h-9 w-full sm:w-[150px]">
@@ -296,7 +310,9 @@ export default function AdminOrders() {
               size="sm"
               className="sm:min-w-[88px]"
               disabled={!hasStatusChanged || isUpdatingThisOrder}
-              onClick={() => void handleUpdateStatus(order.id, normalizedStatus)}
+              onClick={() =>
+                void handleUpdateStatus(order.id, normalizedStatus)
+              }
             >
               {isUpdatingThisOrder ? "Updating..." : "Update"}
             </Button>
@@ -398,7 +414,9 @@ export default function AdminOrders() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">${totalRevenue.toFixed(2)}</div>
+              <div className="text-2xl font-bold">
+                ${totalRevenue.toFixed(2)}
+              </div>
               <ShoppingCart className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
@@ -422,7 +440,9 @@ export default function AdminOrders() {
         data={paginatedOrders}
         getRowKey={(order) => String(order.id)}
         loading={isLoading}
-        error={isError ? (error as Error)?.message || "Failed to load orders." : null}
+        error={
+          isError ? (error as Error)?.message || "Failed to load orders." : null
+        }
         loadingMessage="Loading orders..."
         emptyMessage="No orders found."
         tableClassName="min-w-[980px]"
@@ -431,8 +451,7 @@ export default function AdminOrders() {
           pageSize: ORDERS_PER_PAGE,
           totalItems: sortedOrders.length,
           totalPages,
-          onPrevious: () =>
-            setCurrentPage((page) => Math.max(1, page - 1)),
+          onPrevious: () => setCurrentPage((page) => Math.max(1, page - 1)),
           onNext: () =>
             setCurrentPage((page) => Math.min(totalPages, page + 1)),
         }}

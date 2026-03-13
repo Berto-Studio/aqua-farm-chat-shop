@@ -20,7 +20,7 @@ export interface DataTableColumn<T> {
   id: string;
   header: ReactNode;
   headerClassName?: string;
-  cell: (row: T) => ReactNode;
+  cell: (row: T, index: number) => ReactNode;
   cellClassName?: string | ((row: T) => string | undefined);
 }
 
@@ -142,7 +142,7 @@ export function DataTable<T>({
                     key={column.id}
                     className={resolveClassName(column.cellClassName, row)}
                   >
-                    {column.cell(row)}
+                    {column.cell(row, index)}
                   </TableCell>
                 ))}
               </TableRow>

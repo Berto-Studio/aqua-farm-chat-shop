@@ -1,6 +1,7 @@
 import { apiRequest } from "@/hooks/useClient";
 import {
   AdminOrderRecord,
+  AdminUserDetailsRecord,
   AdminUserRecord,
   ApiListResponse,
   ApiSingleResponse,
@@ -17,6 +18,10 @@ export interface GetAdminUsersParams {
   status?: "active" | "inactive";
   page?: number;
   per_page?: number;
+}
+
+export interface GetAdminUserDetailsParams {
+  recent_limit?: number;
 }
 
 export const GetAdminUsers = async (
@@ -82,6 +87,41 @@ export const GetAdminUser = async (
     return {
       success: false,
       message: error instanceof Error ? error.message : "Failed to fetch user",
+      status: 500,
+    };
+  }
+};
+
+export const GetAdminUserDetails = async (
+  userId: string | number,
+  params: GetAdminUserDetailsParams = {},
+): Promise<ApiSingleResponse<AdminUserDetailsRecord>> => {
+  try {
+    const query = buildQueryString(params as Record<string, unknown>);
+    const response = await apiRequest<Record<string, any>>(
+      `users/${userId}/details${query}`,
+      "GET",
+    );
+    const data = extractSingleData<AdminUserDetailsRecord>(response, [
+      "details",
+      "user_details",
+      "userDetails",
+    ]);
+
+    return {
+      success: true,
+      data,
+      message: response.message || "User details retrieved successfully",
+      status: response.status || 200,
+    };
+  } catch (error) {
+    console.error("Error fetching admin user details:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch user details",
       status: 500,
     };
   }

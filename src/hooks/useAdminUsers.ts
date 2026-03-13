@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import {
   GetAdminUser,
+  GetAdminUserDetails,
+  GetAdminUserDetailsParams,
   GetAdminUserOrders,
   GetAdminUsers,
   GetAdminUsersParams,
@@ -29,6 +31,23 @@ export const useAdminUser = (userId?: string | number) => {
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+  });
+};
+
+export const useAdminUserDetails = (
+  userId?: string | number,
+  params: GetAdminUserDetailsParams = {},
+) => {
+  return useQuery({
+    queryKey: ["admin-user-details", userId, params],
+    enabled: Boolean(userId),
+    queryFn: async () => {
+      const response = await GetAdminUserDetails(userId!, params);
+      if (!response.success) throw new Error(response.message);
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 2,
     refetchOnWindowFocus: false,
   });
 };

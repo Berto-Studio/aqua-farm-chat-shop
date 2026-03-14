@@ -17,6 +17,10 @@ const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const RAW_SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 
 const getSocketBaseUrl = () => {
+  // In development we connect through Vite so Socket.IO stays same-origin
+  // with the app and can reuse the dev proxy instead of hitting backend CORS.
+  if (import.meta.env.DEV) return undefined;
+
   if (RAW_SOCKET_URL) return RAW_SOCKET_URL;
 
   if (!RAW_API_BASE_URL) return undefined;
@@ -52,16 +56,12 @@ const extractConversationId = (payload: Record<string, any> | undefined) => {
   return directId ? String(directId) : undefined;
 };
 
-const emitJoinRoom = (socket: Socket, room: string) => {
-  socket.emit("room:join", { room });
-  socket.emit("join_room", { room });
-  socket.emit("join", { room });
+const emitJoinConversation = (socket: Socket, conversationId: string) => {
+  socket.emit("conversation:join", { conversation_id: conversationId });
 };
 
-const emitLeaveRoom = (socket: Socket, room: string) => {
-  socket.emit("room:leave", { room });
-  socket.emit("leave_room", { room });
-  socket.emit("leave", { room });
+const emitLeaveConversation = (socket: Socket, conversationId: string) => {
+  socket.emit("conversation:leave", { conversation_id: conversationId });
 };
 
 export const useChatRealtime = ({
@@ -77,7 +77,7 @@ export const useChatRealtime = ({
     const accessToken = getAccessToken();
     const socket = io(getSocketBaseUrl(), {
       path: "/socket.io",
-      transports: ["websocket", "polling"],
+      transports: ["polling", "websocket"],
       withCredentials: true,
       auth: accessToken
         ? {
@@ -121,12 +121,8 @@ export const useChatRealtime = ({
     };
 
     socket.on("connect", () => {
-      if (role === "admin") {
-        emitJoinRoom(socket, "admins");
-      }
-
       if (conversationId) {
-        emitJoinRoom(socket, `conversation:${conversationId}`);
+        emitJoinConversation(socket, conversationId);
       }
     });
 
@@ -141,12 +137,8 @@ export const useChatRealtime = ({
       socket.off("message:new", handleEvent);
       socket.off("conversation:read", handleEvent);
 
-      if (role === "admin") {
-        emitLeaveRoom(socket, "admins");
-      }
-
       if (conversationId) {
-        emitLeaveRoom(socket, `conversation:${conversationId}`);
+        emitLeaveConversation(socket, conversationId);
       }
 
       socket.disconnect();

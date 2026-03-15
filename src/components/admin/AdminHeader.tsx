@@ -9,6 +9,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
+import { useAdminConversations } from "@/hooks/useAdminMessages";
 import {
   useAdminNotifications,
   useMarkAdminNotificationRead,
@@ -22,6 +24,11 @@ import {
 type AdminHeaderProps = {
   showMenuButton?: boolean;
   onMenuToggle?: () => void;
+};
+
+const getUnreadValue = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
 const getHeaderTitle = (pathname: string) => {
@@ -48,45 +55,68 @@ export default function AdminHeader({
 }: AdminHeaderProps) {
   const pathname = useLocation().pathname;
   const navigate = useNavigate();
+  const isAdminChatRoute = pathname.startsWith("/admin/chat");
+  const isDirectMessageRoute =
+    /^\/admin\/(?:users|customers)\/[^/]+\/message$/.test(pathname);
   const { data: notificationsResponse } = useAdminNotifications({ per_page: 100 });
+  const { data: conversationsResponse } = useAdminConversations();
   const { mutate: markAsRead } = useMarkAdminNotificationRead();
   const { mutate: markAllAsRead } = useMarkAllAdminNotificationsRead();
 
+  useChatRealtime({
+    enabled: !(isAdminChatRoute || isDirectMessageRoute),
+    role: "admin",
+  });
+
   const notifications = useMemo(
     () => (notificationsResponse?.data || []).map(normalizeAdminNotification),
-    [notificationsResponse?.data]
+    [notificationsResponse?.data],
   );
-  const unreadCount = notifications.filter((notification) => !notification.read).length;
-  const unreadMessageCount = notifications.filter(
-    (notification) => !notification.read && notification.type === "message"
+  const unreadCount = notifications.filter(
+    (notification) => !notification.read,
   ).length;
+  const unreadMessageNotificationCount = notifications.filter(
+    (notification) => !notification.read && notification.type === "message",
+  ).length;
+  const unreadConversationMessageCount = useMemo(() => {
+    if (!conversationsResponse?.data) return null;
+
+    return conversationsResponse.data.reduce(
+      (total, conversation) =>
+        total +
+        getUnreadValue(conversation.unread_count ?? conversation.unreadCount),
+      0,
+    );
+  }, [conversationsResponse?.data]);
+  const unreadMessageCount =
+    unreadConversationMessageCount ?? unreadMessageNotificationCount;
 
   const sortedNotifications = useMemo(
     () =>
       [...notifications].sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       ),
-    [notifications]
+    [notifications],
   );
 
   useEffect(() => {
-    const typeToMark = pathname.startsWith("/admin/chat")
+    const typeToMark = isAdminChatRoute || isDirectMessageRoute
       ? "message"
       : pathname.startsWith("/admin/orders")
-        ? "order"
-        : null;
+      ? "order"
+      : null;
 
     if (!typeToMark) return;
 
     const unreadOfType = notifications.filter(
-      (notification) => !notification.read && notification.type === typeToMark
+      (notification) => !notification.read && notification.type === typeToMark,
     );
 
     unreadOfType.forEach((notification) => {
       markAsRead(notification.id);
     });
-  }, [markAsRead, notifications, pathname]);
+  }, [isAdminChatRoute, isDirectMessageRoute, markAsRead, notifications, pathname]);
 
   const handleNotificationClick = (notification: NormalizedAdminNotification) => {
     if (!notification.read) {
@@ -199,7 +229,7 @@ export default function AdminHeader({
           </DropdownMenu>
 
           <Button
-            variant={pathname.startsWith("/admin/chat") ? "default" : "ghost"}
+            variant={isAdminChatRoute || isDirectMessageRoute ? "default" : "ghost"}
             size="icon"
             asChild
             className="relative"

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Menu, MessageCircle, User } from "lucide-react";
+import { Bell, ShoppingCart, Menu, MessageCircle, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -27,7 +27,6 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import SearchDropdown from "./SearchDropdown";
 import CustomerServiceChat from "@/components/chat/CustomerServiceChat";
-import { useChatRealtime } from "@/hooks/useChatRealtime";
 import {
   useMarkUserSupportConversationRead,
   useSendUserSupportMessage,
@@ -38,6 +37,7 @@ import { mapAdminMessageToChatMessage } from "@/lib/adminTransformers";
 import { useUserStore } from "@/store/store";
 import { useCarts } from "@/hooks/useCart";
 import { logoutUser } from "@/services/auth/logout";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
 
 export default function Navbar() {
   const isMobile = useIsMobile();
@@ -59,7 +59,7 @@ export default function Navbar() {
     { per_page: 100 },
     {
       enabled: isConsumerUser && isChatOpen,
-    }
+    },
   );
   const { mutateAsync: sendSupportMessageAsync, isPending: isSendingMessage } =
     useSendUserSupportMessage();
@@ -71,12 +71,14 @@ export default function Navbar() {
   const messages = useMemo(
     () =>
       (messagesResponse?.data || [])
-        .map((message) => mapAdminMessageToChatMessage(message, "Customer Support"))
+        .map((message) =>
+          mapAdminMessageToChatMessage(message, "Customer Support"),
+        )
         .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
-    [messagesResponse?.data]
+    [messagesResponse?.data],
   );
   const unreadMessages = Number(
-    supportConversation?.unread_count ?? supportConversation?.unreadCount ?? 0
+    supportConversation?.unread_count ?? supportConversation?.unreadCount ?? 0,
   );
 
   useEffect(() => {
@@ -86,7 +88,7 @@ export default function Navbar() {
   }, [isLoggedIn, isChatOpen, markConversationRead, activeConversationId]);
 
   useChatRealtime({
-    enabled: isConsumerUser && isChatOpen,
+    enabled: isConsumerUser,
     role: "user",
     conversationId: activeConversationId,
   });
@@ -199,12 +201,13 @@ export default function Navbar() {
 
               {isLoggedIn && (
                 <div className="flex items-center gap-2">
-                  {user?.user_type !== "admin" && (
+                  <>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="relative"
                       onClick={() => setIsChatOpen(true)}
+                      aria-label="Open messages"
                     >
                       <MessageCircle className="h-5 w-5" />
                       {unreadMessages > 0 && (
@@ -213,7 +216,7 @@ export default function Navbar() {
                         </Badge>
                       )}
                     </Button>
-                  )}
+                  </>
 
                   <Link to="/cart">
                     <Button variant="ghost" size="icon" className="relative">
@@ -344,7 +347,8 @@ export default function Navbar() {
           >
             {isMessagesError ? (
               <div className="rounded-lg border bg-white p-4 text-sm text-destructive">
-                {(messagesError as Error)?.message || "Failed to load messages."}
+                {(messagesError as Error)?.message ||
+                  "Failed to load messages."}
               </div>
             ) : (
               <CustomerServiceChat
@@ -356,7 +360,9 @@ export default function Navbar() {
             )}
             {(isMessagesLoading || isSendingMessage) && (
               <p className="mt-2 text-xs text-muted-foreground">
-                {isSendingMessage ? "Sending message..." : "Loading messages..."}
+                {isSendingMessage
+                  ? "Sending message..."
+                  : "Loading messages..."}
               </p>
             )}
           </div>

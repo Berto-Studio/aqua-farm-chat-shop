@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
@@ -15,10 +16,13 @@ import {
 import { ShoppingBag } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useCarts } from "@/hooks/useCart";
+import { DeleteCartItem } from "@/services/cart";
+import { CreateOrder } from "@/services/orders";
 import Carts from "@/components/payment/cart";
 import Checkout, {
   CheckoutFormData,
   PaymentMethod,
+  ShippingMethod,
 } from "@/components/payment/checkout";
 import { CheckoutSteps } from "@/components/payment/paymentStepsHeading";
 
@@ -53,7 +57,38 @@ const formatPaymentMethodLabel = (method: PaymentMethod | "") => {
   }
 };
 
+const formatShippingMethodLabel = (method: ShippingMethod | "") => {
+  switch (method) {
+    case "standard":
+      return "Standard";
+    case "express":
+      return "Express";
+    case "pickup":
+      return "Pickup";
+    default:
+      return "Not selected";
+  }
+};
+
+const buildShippingAddress = (form: CheckoutFormData) => {
+  if (form.shippingMethod === "pickup") return undefined;
+
+  return [form.address, form.city, form.region, form.postalCode]
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .join(", ");
+};
+
+const buildOrderNotes = (form: CheckoutFormData) =>
+  [
+    `Customer: ${form.firstName.trim()} ${form.lastName.trim()}`,
+    `Email: ${form.email.trim()}`,
+    `Phone: ${form.phone.trim()}`,
+    `Shipping method: ${formatShippingMethodLabel(form.shippingMethod)}`,
+  ].join("\n");
+
 export default function PaymentProccess() {
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [cartItems, setCartItems] = useState<CartProps[]>([]);
   const [couponCode, setCouponCode] = useState("");
@@ -71,7 +106,7 @@ export default function PaymentProccess() {
   const [mobileNumber, setMobileNumber] = useState("");
 
   const [paypalEmail, setPaypalEmail] = useState("");
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   const { cartItems: serverCartItems } = useCarts();
 
@@ -229,44 +264,89 @@ export default function PaymentProccess() {
     }
   };
 
+  const resetCheckoutState = () => {
+    setCartItems([]);
+    setCheckoutForm(defaultCheckoutForm);
+    setCardName("");
+    setCardNumber("");
+    setCardExpiry("");
+    setCardCvv("");
+    setMobileProvider("");
+    setMobileNumber("");
+    setPaypalEmail("");
+    setCouponCode("");
+    setStep("cart");
+  };
+
   const handleCompletePayment = async () => {
     if (step !== "payment") return;
+    if (cartItems.length === 0) {
+      toast({
+        title: "Cart is empty",
+        description: "Add items to your cart before placing an order.",
+        variant: "destructive",
+      });
+      return;
+    }
     if (!validatePaymentForm()) return;
 
     const paymentMethod = checkoutForm.paymentMethod;
     if (!paymentMethod) return;
 
-    setIsProcessingPayment(true);
+    setIsSubmittingOrder(true);
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 700));
-
-      toast({
-        title: "Payment Successful",
-        description: `Order placed using ${formatPaymentMethodLabel(paymentMethod)}.`,
-        variant: "success",
+      const orderResult = await CreateOrder({
+        items: cartItems.map((item) => ({
+          product_id: item.product_id,
+          quantity: item.quantity,
+        })),
+        payment_method: paymentMethod,
+        shipping_address: buildShippingAddress(checkoutForm),
+        notes: buildOrderNotes(checkoutForm),
       });
 
-      setCartItems([]);
-      setCheckoutForm(defaultCheckoutForm);
-      setCardName("");
-      setCardNumber("");
-      setCardExpiry("");
-      setCardCvv("");
-      setMobileProvider("");
-      setMobileNumber("");
-      setPaypalEmail("");
-      setCouponCode("");
-      setStep("cart");
-    } catch (error) {
-      console.error("Payment failed:", error);
+      if (!orderResult.success) {
+        throw new Error(orderResult.message || "Unable to create order.");
+      }
+
+      const cartCleanupResults = await Promise.allSettled(
+        cartItems.map((item) => DeleteCartItem(Number(item.cart_id)))
+      );
+      const hasCartCleanupIssues = cartCleanupResults.some(
+        (result) => result.status === "rejected" || !result.value.success
+      );
+
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["carts"] }),
+        queryClient.invalidateQueries({ queryKey: ["orders"] }),
+      ]);
+
+      resetCheckoutState();
+
+      const orderReference = orderResult.data?.id
+        ? `Order #${orderResult.data.id}`
+        : "Your order";
+
       toast({
-        title: "Payment failed",
-        description: "Unable to process payment now. Please try again.",
+        title: "Order placed",
+        description: hasCartCleanupIssues
+          ? `${orderReference} was created, but some cart items may still appear until the next refresh.`
+          : `${orderReference} was created with ${formatPaymentMethodLabel(paymentMethod)}.`,
+        variant: "success",
+      });
+    } catch (error) {
+      console.error("Order creation failed:", error);
+      toast({
+        title: "Order failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to create your order right now. Please try again.",
         variant: "destructive",
       });
     } finally {
-      setIsProcessingPayment(false);
+      setIsSubmittingOrder(false);
     }
   };
 
@@ -400,9 +480,7 @@ export default function PaymentProccess() {
       ? "Proceed to Checkout"
       : step === "checkout"
       ? "Proceed to Payment"
-      : checkoutForm.paymentMethod === "cod"
-      ? "Place Order (COD)"
-      : "Pay Now";
+      : "Place Order";
 
   const actionHandler = step === "payment" ? handleCompletePayment : handleProceed;
 
@@ -481,9 +559,9 @@ export default function PaymentProccess() {
                   onClick={actionHandler}
                   className="w-full"
                   size="lg"
-                  disabled={isProcessingPayment}
+                  disabled={isSubmittingOrder}
                 >
-                  {isProcessingPayment ? "Processing..." : actionLabel}
+                  {isSubmittingOrder ? "Placing order..." : actionLabel}
                 </Button>
               </CardFooter>
             </Card>

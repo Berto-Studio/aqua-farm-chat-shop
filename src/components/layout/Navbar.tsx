@@ -201,22 +201,24 @@ export default function Navbar() {
 
               {isLoggedIn && (
                 <div className="flex items-center gap-2">
-                  <>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="relative"
-                      onClick={() => setIsChatOpen(true)}
-                      aria-label="Open messages"
-                    >
-                      <MessageCircle className="h-5 w-5" />
-                      {unreadMessages > 0 && (
-                        <Badge className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center text-xs">
-                          {unreadMessages}
-                        </Badge>
-                      )}
-                    </Button>
-                  </>
+                  {user?.user_type !== "admin" && (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="relative"
+                        onClick={() => setIsChatOpen(true)}
+                        aria-label="Open messages"
+                      >
+                        <MessageCircle className="h-5 w-5" />
+                        {unreadMessages > 0 && (
+                          <Badge className="absolute -top-1 -right-1 h-5 min-w-5 px-1 flex items-center justify-center text-xs">
+                            {unreadMessages}
+                          </Badge>
+                        )}
+                      </Button>
+                    </>
+                  )}
 
                   <Link to="/cart">
                     <Button variant="ghost" size="icon" className="relative">

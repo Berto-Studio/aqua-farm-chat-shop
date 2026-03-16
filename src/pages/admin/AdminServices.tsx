@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  EllipsisVertical,
-  Eye,
-  Pencil,
-  Plus,
-  Trash,
-} from "lucide-react";
+import { EllipsisVertical, Eye, Pencil, Plus, Trash } from "lucide-react";
 import ServiceCardsGrid from "@/components/services/ServiceCardsGrid";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -22,10 +16,7 @@ import {
   useFarmServices,
 } from "@/hooks/useServices";
 import { useToast } from "@/hooks/use-toast";
-import {
-  getFarmServiceRouteParam,
-  type FarmService,
-} from "@/lib/services";
+import { getFarmServiceRouteParam, type FarmService } from "@/lib/services";
 
 export default function AdminServices() {
   const navigate = useNavigate();
@@ -76,11 +67,11 @@ export default function AdminServices() {
   return (
     <div className="p-4 space-y-6 sm:p-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-2xl font-bold text-transparent sm:text-3xl lg:text-4xl">
+        <div className="">
+          <h1 className="bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-2xl font-bold text-transparent sm:text-xl lg:text-2xl">
             Services
           </h1>
-          <p className="mt-2 text-sm text-muted-foreground sm:text-base lg:text-lg">
+          <p className=" text-sm text-muted-foreground sm:text-base lg:text-sm">
             Browse the storefront service catalog, open a service for more
             detail, or jump into editing from the card menu.
           </p>
@@ -97,7 +88,7 @@ export default function AdminServices() {
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm text-muted-foreground">
               {isLoading
-                ? "Loading services..."
+                ? `Showing 0 services`
                 : `Showing ${services.length} service${services.length === 1 ? "" : "s"}`}
             </div>
           </div>
@@ -148,7 +139,9 @@ export default function AdminServices() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
-                        onClick={() => navigate(`/admin/services/${routeParam}`)}
+                        onClick={() =>
+                          navigate(`/admin/services/${routeParam}`)
+                        }
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         View

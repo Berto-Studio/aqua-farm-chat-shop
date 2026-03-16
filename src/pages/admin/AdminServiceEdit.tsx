@@ -46,7 +46,9 @@ export default function AdminServiceEdit() {
         id: service.id,
         payload,
       });
-      const nextRouteParam = getFarmServiceRouteParam(updatedService ?? payload);
+      const nextRouteParam = getFarmServiceRouteParam(
+        updatedService ?? payload,
+      );
 
       toast({
         title: "Service Updated",
@@ -95,12 +97,13 @@ export default function AdminServiceEdit() {
 
   return (
     <div className="space-y-6 p-4 sm:p-6">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col justify-center gap-3">
         <Button
           variant="outline"
           onClick={() =>
             navigate(`/admin/services/${getFarmServiceRouteParam(service)}`)
           }
+          className="w-fit"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Service

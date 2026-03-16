@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -69,45 +69,25 @@ export default function AdminOrders() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusDrafts, setStatusDrafts] = useState<Record<string, string>>({});
   const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
-  const { data, isLoading, isError, error } = useAdminOrders({ per_page: 300 });
+  const deferredSearchTerm = useDeferredValue(searchTerm.trim());
+  const orderQueryParams = useMemo(
+    () => ({
+      search: deferredSearchTerm || undefined,
+      sort_by: sortBy,
+      sort_dir: sortDirection,
+      page: currentPage,
+      per_page: ORDERS_PER_PAGE,
+    }),
+    [currentPage, deferredSearchTerm, sortBy, sortDirection],
+  );
+  const { data, isLoading, isError, error, isFetching } =
+    useAdminOrders(orderQueryParams);
   const { data: orderStats } = useAdminOrderStats();
   const { mutateAsync: updateOrderStatusAsync } = useUpdateAdminOrderStatus();
 
   const orders = data?.data || [];
-
-  const filteredOrders = useMemo(
-    () =>
-      orders.filter((order) => {
-        const q = searchTerm.toLowerCase();
-        return (
-          String(order.id).toLowerCase().includes(q) ||
-          getOrderUserName(order).toLowerCase().includes(q)
-        );
-      }),
-    [orders, searchTerm],
-  );
-
-  const sortedOrders = useMemo(() => {
-    return [...filteredOrders].sort((a, b) => {
-      if (sortBy === "date") {
-        const aDate = new Date(a.created_at || "").getTime();
-        const bDate = new Date(b.created_at || "").getTime();
-        return sortDirection === "asc" ? aDate - bDate : bDate - aDate;
-      }
-
-      const aTotal = getOrderTotal(a);
-      const bTotal = getOrderTotal(b);
-      return sortDirection === "asc" ? aTotal - bTotal : bTotal - aTotal;
-    });
-  }, [filteredOrders, sortBy, sortDirection]);
-  const totalPages = Math.max(
-    1,
-    Math.ceil(sortedOrders.length / ORDERS_PER_PAGE),
-  );
-  const paginatedOrders = useMemo(() => {
-    const startIndex = (currentPage - 1) * ORDERS_PER_PAGE;
-    return sortedOrders.slice(startIndex, startIndex + ORDERS_PER_PAGE);
-  }, [currentPage, sortedOrders]);
+  const totalPages = Math.max(1, Number(data?.meta?.pages ?? 1));
+  const totalItems = Number(data?.meta?.total ?? orders.length);
 
   const computedTotalOrders = data?.meta?.total ?? orders.length;
   const computedPending = orders.filter(
@@ -135,10 +115,6 @@ export default function AdminOrders() {
     : computedRevenue;
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, sortBy, sortDirection]);
-
-  useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
     }
@@ -153,6 +129,8 @@ export default function AdminOrders() {
   };
 
   const handleSort = (column: SortColumn) => {
+    setCurrentPage(1);
+
     if (sortBy === column) {
       setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
       return;
@@ -428,16 +406,22 @@ export default function AdminOrders() {
           <Input
             placeholder="Search orders..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-10"
           />
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         </div>
+        {isFetching && !isLoading ? (
+          <span className="text-sm text-muted-foreground">Refreshing...</span>
+        ) : null}
       </div>
 
       <DataTable
         columns={orderColumns}
-        data={paginatedOrders}
+        data={orders}
         getRowKey={(order) => String(order.id)}
         loading={isLoading}
         error={
@@ -449,7 +433,7 @@ export default function AdminOrders() {
         pagination={{
           page: currentPage,
           pageSize: ORDERS_PER_PAGE,
-          totalItems: sortedOrders.length,
+          totalItems,
           totalPages,
           onPrevious: () => setCurrentPage((page) => Math.max(1, page - 1)),
           onNext: () =>

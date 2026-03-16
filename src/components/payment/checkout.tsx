@@ -11,7 +11,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 export type ShippingMethod = "standard" | "express" | "pickup";
-export type PaymentMethod = "card" | "mobile" | "paypal" | "cod";
+export type PaymentMethod = "card" | "mobile" | "cod";
 
 export interface CheckoutFormData {
   firstName: string;
@@ -159,7 +159,6 @@ export default function Checkout({ value, onChange, onBackToCart }: CheckoutProp
               <SelectContent>
                 <SelectItem value="card">Credit/Debit Card</SelectItem>
                 <SelectItem value="mobile">Mobile Money</SelectItem>
-                <SelectItem value="paypal">PayPal</SelectItem>
                 <SelectItem value="cod">Physical Payment</SelectItem>
               </SelectContent>
             </Select>

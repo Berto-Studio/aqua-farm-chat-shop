@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,12 +18,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useCarts } from "@/hooks/useCart";
 import { DeleteCartItem } from "@/services/cart";
 import { CreateOrder } from "@/services/orders";
+import {
+  InitializePayment,
+  VerifyPayment,
+} from "@/services/payments";
 import Carts from "@/components/payment/cart";
 import Checkout, {
   CheckoutFormData,
   ShippingMethod,
 } from "@/components/payment/checkout";
 import { CheckoutSteps } from "@/components/payment/paymentStepsHeading";
+import type { PaymentRecord } from "@/types/payments";
 import {
   formatPaymentMethodLabel,
   isPhysicalPaymentMethodValue,
@@ -31,6 +36,14 @@ import {
 
 type Step = "cart" | "checkout" | "payment";
 type MobileProvider = "mtn" | "airteltigo" | "telecel" | "";
+
+type PendingOnlinePayment = {
+  orderId: number;
+  reference: string;
+  cartItemIds: number[];
+  paymentMethod: string;
+  createdAt: string;
+};
 
 const defaultCheckoutForm: CheckoutFormData = {
   firstName: "",
@@ -45,6 +58,8 @@ const defaultCheckoutForm: CheckoutFormData = {
   paymentMethod: "",
 };
 
+const PENDING_ONLINE_PAYMENTS_STORAGE_KEY = "pending-online-payments";
+
 const formatShippingMethodLabel = (method: ShippingMethod | "") => {
   switch (method) {
     case "standard":
@@ -58,6 +73,26 @@ const formatShippingMethodLabel = (method: ShippingMethod | "") => {
   }
 };
 
+const formatStatusLabel = (value?: string | null) => {
+  const rawValue = String(value || "").trim();
+  if (!rawValue) return "Unknown";
+
+  return rawValue
+    .replace(/[_-]+/g, " ")
+    .split(" ")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+};
+
+const isSuccessfulGatewayPayment = (status?: string | null) => {
+  const normalizedStatus = String(status || "")
+    .trim()
+    .toLowerCase();
+
+  return ["success", "paid", "completed"].includes(normalizedStatus);
+};
+
 const buildShippingAddress = (form: CheckoutFormData) => {
   if (form.shippingMethod === "pickup") return undefined;
 
@@ -67,49 +102,165 @@ const buildShippingAddress = (form: CheckoutFormData) => {
     .join(", ");
 };
 
-const buildOrderNotes = (form: CheckoutFormData) =>
+const buildOrderNotes = (
+  form: CheckoutFormData,
+  mobileProvider: MobileProvider,
+) =>
   [
     `Customer: ${form.firstName.trim()} ${form.lastName.trim()}`,
     `Email: ${form.email.trim()}`,
     `Phone: ${form.phone.trim()}`,
     `Shipping method: ${formatShippingMethodLabel(form.shippingMethod)}`,
     `Payment method: ${formatPaymentMethodLabel(form.paymentMethod)}`,
+    ...(mobileProvider ? [`Mobile provider: ${mobileProvider.toUpperCase()}`] : []),
     ...(isPhysicalPaymentMethodValue(form.paymentMethod)
       ? ["Payment tracking: Physical payment selected for delivery or pickup."]
-      : []),
+      : ["Payment tracking: Online payment to be completed through Paystack."]),
   ].join("\n");
 
+const buildGatewayMetadata = (
+  form: CheckoutFormData,
+  mobileProvider: MobileProvider,
+) => {
+  const metadata: Record<string, unknown> = {
+    checkout_payment_method: form.paymentMethod,
+    shipping_method: form.shippingMethod,
+    customer_name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
+    phone: form.phone.trim(),
+  };
+
+  if (mobileProvider) {
+    metadata.mobile_provider = mobileProvider;
+  }
+
+  return metadata;
+};
+
+const getStoredPendingOnlinePayments = () => {
+  if (typeof window === "undefined") return {} as Record<string, PendingOnlinePayment>;
+
+  try {
+    const rawValue = window.sessionStorage.getItem(
+      PENDING_ONLINE_PAYMENTS_STORAGE_KEY,
+    );
+
+    if (!rawValue) {
+      return {} as Record<string, PendingOnlinePayment>;
+    }
+
+    const parsed = JSON.parse(rawValue) as Record<string, PendingOnlinePayment>;
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {} as Record<string, PendingOnlinePayment>;
+  }
+};
+
+const setStoredPendingOnlinePayments = (
+  payments: Record<string, PendingOnlinePayment>,
+) => {
+  if (typeof window === "undefined") return;
+
+  try {
+    if (Object.keys(payments).length === 0) {
+      window.sessionStorage.removeItem(PENDING_ONLINE_PAYMENTS_STORAGE_KEY);
+      return;
+    }
+
+    window.sessionStorage.setItem(
+      PENDING_ONLINE_PAYMENTS_STORAGE_KEY,
+      JSON.stringify(payments),
+    );
+  } catch {
+    // Ignore session storage errors in restricted browsers.
+  }
+};
+
+const rememberPendingOnlinePayment = (payment: PendingOnlinePayment) => {
+  const currentPayments = getStoredPendingOnlinePayments();
+  currentPayments[payment.reference] = payment;
+  setStoredPendingOnlinePayments(currentPayments);
+};
+
+const getPendingOnlinePayment = (reference: string) =>
+  getStoredPendingOnlinePayments()[reference];
+
+const clearPendingOnlinePayment = (reference: string) => {
+  const currentPayments = getStoredPendingOnlinePayments();
+  delete currentPayments[reference];
+  setStoredPendingOnlinePayments(currentPayments);
+};
+
+const getMostRecentPendingOnlinePayment = () => {
+  const pendingPayments = Object.values(getStoredPendingOnlinePayments());
+
+  if (pendingPayments.length === 0) return undefined;
+
+  return [...pendingPayments].sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt),
+  )[0];
+};
+
+const buildPaymentCallbackUrl = () => {
+  if (typeof window === "undefined") return undefined;
+  return new URL("/cart", window.location.origin).toString();
+};
+
 export default function PaymentProccess() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const [cartItems, setCartItems] = useState<CartProps[]>([]);
   const [couponCode, setCouponCode] = useState("");
   const [step, setStep] = useState<Step>("cart");
   const [checkoutForm, setCheckoutForm] = useState<CheckoutFormData>(
-    defaultCheckoutForm
+    defaultCheckoutForm,
   );
-
   const [cardName, setCardName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
   const [cardExpiry, setCardExpiry] = useState("");
   const [cardCvv, setCardCvv] = useState("");
-
   const [mobileProvider, setMobileProvider] = useState<MobileProvider>("");
   const [mobileNumber, setMobileNumber] = useState("");
-
-  const [paypalEmail, setPaypalEmail] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [verificationAttempt, setVerificationAttempt] = useState(0);
+  const [pendingOnlineOrderId, setPendingOnlineOrderId] = useState<
+    number | null
+  >(null);
+  const [verifiedPayment, setVerifiedPayment] = useState<PaymentRecord | null>(
+    null,
+  );
+  const [paymentErrorMessage, setPaymentErrorMessage] = useState<string | null>(
+    null,
+  );
 
   const { cartItems: serverCartItems } = useCarts();
+  const paymentReference = searchParams.get("reference")?.trim() || "";
 
   useEffect(() => {
     setCartItems(serverCartItems);
   }, [serverCartItems]);
 
+  useEffect(() => {
+    if (paymentReference) return;
+
+    const pendingPayment = getMostRecentPendingOnlinePayment();
+    if (pendingPayment) {
+      setPendingOnlineOrderId(pendingPayment.orderId);
+    }
+  }, [paymentReference]);
+
   const subtotal = cartItems.reduce((total, item) => total + item.totalPrice, 0);
   const delivery = subtotal > 100 ? 0 : 15;
   const discount = 0;
   const total = subtotal + delivery - discount;
+  const isPhysicalPaymentSelected = isPhysicalPaymentMethodValue(
+    checkoutForm.paymentMethod,
+  );
+  const isOnlinePaymentSelected = Boolean(
+    checkoutForm.paymentMethod && !isPhysicalPaymentSelected,
+  );
 
   const applyCoupon = () => {
     if (couponCode.trim() === "") {
@@ -198,10 +349,16 @@ export default function PaymentProccess() {
 
     if (paymentMethod === "card") {
       const digitsOnly = cardNumber.replace(/\D/g, "");
-      if (!cardName || digitsOnly.length < 12 || !cardExpiry || cardCvv.length < 3) {
+      if (
+        !cardName ||
+        digitsOnly.length < 12 ||
+        !cardExpiry ||
+        cardCvv.length < 3
+      ) {
         toast({
           title: "Card details incomplete",
-          description: "Please provide valid card holder name and card details.",
+          description:
+            "Please provide valid card holder name and card details.",
           variant: "destructive",
         });
         return false;
@@ -221,20 +378,140 @@ export default function PaymentProccess() {
       return true;
     }
 
-    if (paymentMethod === "paypal") {
-      if (!paypalEmail) {
-        toast({
-          title: "PayPal email required",
-          description: "Please enter your PayPal email.",
-          variant: "destructive",
-        });
-        return false;
-      }
-      return true;
-    }
-
     return true;
   };
+
+  const resetCheckoutState = () => {
+    setCartItems([]);
+    setCheckoutForm(defaultCheckoutForm);
+    setCardName("");
+    setCardNumber("");
+    setCardExpiry("");
+    setCardCvv("");
+    setMobileProvider("");
+    setMobileNumber("");
+    setCouponCode("");
+    setStep("cart");
+    setPendingOnlineOrderId(null);
+  };
+
+  const cleanUpCartItems = async (cartItemIds: number[]) => {
+    if (cartItemIds.length === 0) {
+      return { hasIssues: false };
+    }
+
+    const cleanupResults = await Promise.allSettled(
+      cartItemIds.map((cartId) => DeleteCartItem(cartId)),
+    );
+
+    const hasIssues = cleanupResults.some(
+      (result) => result.status === "rejected" || !result.value.success,
+    );
+
+    return { hasIssues };
+  };
+
+  useEffect(() => {
+    if (!paymentReference) return;
+
+    let isActive = true;
+
+    const verifyReturnedPayment = async () => {
+      const pendingPayment = getPendingOnlinePayment(paymentReference);
+
+      setIsVerifyingPayment(true);
+      setPaymentErrorMessage(null);
+
+      try {
+        const response = await VerifyPayment(paymentReference);
+        if (!response.success || !response.data) {
+          throw new Error(response.message || "Unable to verify payment.");
+        }
+
+        if (!isActive) return;
+
+        const payment = response.data;
+        setVerifiedPayment(payment);
+
+        if (!isSuccessfulGatewayPayment(payment.status)) {
+          clearPendingOnlinePayment(paymentReference);
+          setPendingOnlineOrderId(pendingPayment?.orderId || null);
+          setPaymentErrorMessage(
+            payment.gateway_response ||
+              `Payment status is ${formatStatusLabel(payment.status)}.`,
+          );
+
+          toast({
+            title: "Payment not completed",
+            description:
+              payment.gateway_response ||
+              `The payment returned with status ${formatStatusLabel(payment.status)}.`,
+            variant: "destructive",
+          });
+
+          navigate("/cart", { replace: true });
+          return;
+        }
+
+        const cleanupSummary = await cleanUpCartItems(
+          pendingPayment?.cartItemIds || [],
+        );
+
+        if (!isActive) return;
+
+        clearPendingOnlinePayment(paymentReference);
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["carts"] }),
+          queryClient.invalidateQueries({ queryKey: ["orders"] }),
+        ]);
+
+        resetCheckoutState();
+
+        toast({
+          title: "Payment successful",
+          description: cleanupSummary.hasIssues
+            ? `Payment ${payment.reference} was verified, but some cart items may still appear until the next refresh.`
+            : `Payment ${payment.reference} was verified successfully.`,
+          variant: "success",
+        });
+
+        navigate("/cart", { replace: true });
+      } catch (error) {
+        if (!isActive) return;
+
+        setPaymentErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "Unable to verify your payment right now.",
+        );
+
+        toast({
+          title: "Verification failed",
+          description:
+            error instanceof Error
+              ? error.message
+              : "Unable to verify your payment right now.",
+          variant: "destructive",
+        });
+      } finally {
+        if (isActive) {
+          setIsVerifyingPayment(false);
+        }
+      }
+    };
+
+    void verifyReturnedPayment();
+
+    return () => {
+      isActive = false;
+    };
+  }, [
+    navigate,
+    paymentReference,
+    queryClient,
+    toast,
+    verificationAttempt,
+  ]);
 
   const handleProceed = () => {
     if (step === "cart") {
@@ -256,22 +533,9 @@ export default function PaymentProccess() {
     }
   };
 
-  const resetCheckoutState = () => {
-    setCartItems([]);
-    setCheckoutForm(defaultCheckoutForm);
-    setCardName("");
-    setCardNumber("");
-    setCardExpiry("");
-    setCardCvv("");
-    setMobileProvider("");
-    setMobileNumber("");
-    setPaypalEmail("");
-    setCouponCode("");
-    setStep("cart");
-  };
-
   const handleCompletePayment = async () => {
     if (step !== "payment") return;
+
     if (cartItems.length === 0) {
       toast({
         title: "Cart is empty",
@@ -280,65 +544,142 @@ export default function PaymentProccess() {
       });
       return;
     }
+
     if (!validatePaymentForm()) return;
 
     const paymentMethod = checkoutForm.paymentMethod;
     if (!paymentMethod) return;
 
     setIsSubmittingOrder(true);
+    setPaymentErrorMessage(null);
+    setVerifiedPayment(null);
+
+    let shouldStaySubmitting = false;
+    let activeOrderId: number | null = null;
 
     try {
-      const orderResult = await CreateOrder({
-        items: cartItems.map((item) => ({
-          product_id: item.product_id,
-          quantity: item.quantity,
-        })),
-        payment_method: paymentMethod,
-        shipping_address: buildShippingAddress(checkoutForm),
-        notes: buildOrderNotes(checkoutForm),
-      });
-
-      if (!orderResult.success) {
-        throw new Error(orderResult.message || "Unable to create order.");
+      if (pendingOnlineOrderId && isPhysicalPaymentMethodValue(paymentMethod)) {
+        toast({
+          title: "Pending online order detected",
+          description: `Order #${pendingOnlineOrderId} is already waiting for online payment. Please resume that payment instead of switching this checkout to physical payment.`,
+          variant: "destructive",
+        });
+        return;
       }
 
-      const cartCleanupResults = await Promise.allSettled(
-        cartItems.map((item) => DeleteCartItem(Number(item.cart_id)))
-      );
-      const hasCartCleanupIssues = cartCleanupResults.some(
-        (result) => result.status === "rejected" || !result.value.success
-      );
+      const orderPaymentMethod = isPhysicalPaymentMethodValue(paymentMethod)
+        ? "physical_payment"
+        : "paystack";
 
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["carts"] }),
-        queryClient.invalidateQueries({ queryKey: ["orders"] }),
-      ]);
+      let orderId = isPhysicalPaymentMethodValue(paymentMethod)
+        ? null
+        : pendingOnlineOrderId;
 
-      resetCheckoutState();
+      if (!orderId) {
+        const orderResult = await CreateOrder({
+          items: cartItems.map((item) => ({
+            product_id: item.product_id,
+            quantity: item.quantity,
+          })),
+          payment_method: orderPaymentMethod,
+          shipping_address: buildShippingAddress(checkoutForm),
+          notes: buildOrderNotes(checkoutForm, mobileProvider),
+        });
 
-      const orderReference = orderResult.data?.id
-        ? `Order #${orderResult.data.id}`
-        : "Your order";
+        if (!orderResult.success || !orderResult.data?.id) {
+          throw new Error(orderResult.message || "Unable to create order.");
+        }
+
+        orderId = Number(orderResult.data.id);
+        setPendingOnlineOrderId(orderId);
+      }
+
+      activeOrderId = orderId;
+
+      if (isPhysicalPaymentMethodValue(paymentMethod)) {
+        const cleanupSummary = await cleanUpCartItems(
+          cartItems
+            .map((item) => Number(item.cart_id))
+            .filter((cartId) => Number.isFinite(cartId)),
+        );
+
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ["carts"] }),
+          queryClient.invalidateQueries({ queryKey: ["orders"] }),
+        ]);
+
+        resetCheckoutState();
+
+        toast({
+          title: "Order placed",
+          description: cleanupSummary.hasIssues
+            ? `Order #${orderId} was created, but some cart items may still appear until the next refresh.`
+            : `Order #${orderId} was created with ${formatPaymentMethodLabel(paymentMethod)}.`,
+          variant: "success",
+        });
+
+        return;
+      }
+
+      const paymentResult = await InitializePayment({
+        order_id: orderId,
+        email: checkoutForm.email.trim(),
+        callback_url: buildPaymentCallbackUrl(),
+        metadata: buildGatewayMetadata(checkoutForm, mobileProvider),
+      });
+
+      if (!paymentResult.success || !paymentResult.data) {
+        throw new Error(
+          paymentResult.message || "Unable to initialize payment.",
+        );
+      }
+
+      const authorizationUrl = paymentResult.data.authorization_url?.trim();
+      const reference = paymentResult.data.reference?.trim();
+
+      if (!authorizationUrl || !reference) {
+        throw new Error("Payment gateway response is missing redirect details.");
+      }
+
+      rememberPendingOnlinePayment({
+        orderId,
+        reference,
+        paymentMethod,
+        cartItemIds: cartItems
+          .map((item) => Number(item.cart_id))
+          .filter((cartId) => Number.isFinite(cartId)),
+        createdAt: new Date().toISOString(),
+      });
+
+      shouldStaySubmitting = true;
 
       toast({
-        title: "Order placed",
-        description: hasCartCleanupIssues
-          ? `${orderReference} was created, but some cart items may still appear until the next refresh.`
-          : `${orderReference} was created with ${formatPaymentMethodLabel(paymentMethod)}.`,
+        title: "Redirecting to payment",
+        description:
+          "Your order was created. Complete the payment on the secure Paystack page.",
         variant: "success",
       });
+
+      window.location.assign(authorizationUrl);
     } catch (error) {
-      console.error("Order creation failed:", error);
+      const description =
+        error instanceof Error
+          ? error.message
+          : "Unable to continue with payment right now.";
+
+      setPaymentErrorMessage(description);
+
       toast({
-        title: "Order failed",
-        description:
-          error instanceof Error
-            ? error.message
-            : "Unable to create your order right now. Please try again.",
+        title: "Payment could not start",
+        description: activeOrderId
+          ? `${description} Order #${activeOrderId} is still waiting for payment, and the same payment button will retry it instead of creating a duplicate.`
+          : description,
         variant: "destructive",
       });
     } finally {
-      setIsSubmittingOrder(false);
+      if (!shouldStaySubmitting) {
+        setIsSubmittingOrder(false);
+      }
     }
   };
 
@@ -361,7 +702,11 @@ export default function PaymentProccess() {
       return (
         <Card>
           <CardContent className="space-y-4 p-6">
-            <h2 className="text-xl font-bold">Pay with Card</h2>
+            <h2 className="text-xl font-bold">Card Checkout</h2>
+            <p className="text-sm text-muted-foreground">
+              We will redirect you to Paystack to complete the secure card
+              payment.
+            </p>
             <div>
               <Label className="mb-2 block">Card Holder Name</Label>
               <Input
@@ -406,7 +751,11 @@ export default function PaymentProccess() {
       return (
         <Card>
           <CardContent className="space-y-4 p-6">
-            <h2 className="text-xl font-bold">Pay with Mobile Money</h2>
+            <h2 className="text-xl font-bold">Mobile Money Checkout</h2>
+            <p className="text-sm text-muted-foreground">
+              We will redirect you to Paystack so you can finish the payment
+              securely.
+            </p>
             <div>
               <Label className="mb-2 block">Provider</Label>
               <Select
@@ -436,25 +785,6 @@ export default function PaymentProccess() {
       );
     }
 
-    if (paymentMethod === "paypal") {
-      return (
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <h2 className="text-xl font-bold">Pay with PayPal</h2>
-            <div>
-              <Label className="mb-2 block">PayPal Email</Label>
-              <Input
-                type="email"
-                placeholder="you@example.com"
-                value={paypalEmail}
-                onChange={(event) => setPaypalEmail(event.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-      );
-    }
-
     return (
       <Card>
         <CardContent className="space-y-3 p-6">
@@ -472,14 +802,85 @@ export default function PaymentProccess() {
     step === "cart"
       ? "Proceed to Checkout"
       : step === "checkout"
-      ? "Proceed to Payment"
-      : "Place Order";
+        ? "Proceed to Payment"
+        : isOnlinePaymentSelected
+          ? pendingOnlineOrderId
+            ? "Resume Secure Payment"
+            : "Continue to Secure Payment"
+          : "Place Order";
 
   const actionHandler = step === "payment" ? handleCompletePayment : handleProceed;
+
+  const paymentStatusCard =
+    isVerifyingPayment || paymentErrorMessage || verifiedPayment || pendingOnlineOrderId ? (
+      <Card className="mb-6">
+        <CardContent className="space-y-4 p-6">
+          {isVerifyingPayment ? (
+            <div className="space-y-1">
+              <h2 className="font-semibold">Verifying payment...</h2>
+              <p className="text-sm text-muted-foreground">
+                We are confirming your Paystack transaction now.
+              </p>
+            </div>
+          ) : null}
+
+          {!isVerifyingPayment && verifiedPayment ? (
+            <div className="space-y-1">
+              <h2 className="font-semibold">
+                Payment {formatStatusLabel(verifiedPayment.status)}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Reference: {verifiedPayment.reference}
+              </p>
+            </div>
+          ) : null}
+
+          {!isVerifyingPayment && paymentErrorMessage ? (
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <h2 className="font-semibold text-destructive">
+                  Payment needs attention
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {paymentErrorMessage}
+                </p>
+              </div>
+              {paymentReference ? (
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={() => setVerificationAttempt((value) => value + 1)}>
+                    Retry Verification
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate("/cart", { replace: true })}
+                  >
+                    Return to Cart
+                  </Button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
+          {!isVerifyingPayment &&
+          !paymentErrorMessage &&
+          pendingOnlineOrderId &&
+          !paymentReference ? (
+            <div className="space-y-1">
+              <h2 className="font-semibold">Pending online payment</h2>
+              <p className="text-sm text-muted-foreground">
+                Order #{pendingOnlineOrderId} is waiting for online payment.
+                Continuing will reuse that order instead of creating a duplicate.
+              </p>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
+    ) : null;
 
   return (
     <div className="container mx-auto px-4 py-8">
       <CheckoutSteps step={step} setStep={setStep} />
+      {paymentStatusCard}
 
       {cartItems.length > 0 ? (
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
@@ -554,9 +955,13 @@ export default function PaymentProccess() {
                   onClick={actionHandler}
                   className="w-full"
                   size="lg"
-                  disabled={isSubmittingOrder}
+                  disabled={isSubmittingOrder || isVerifyingPayment}
                 >
-                  {isSubmittingOrder ? "Placing order..." : actionLabel}
+                  {isSubmittingOrder
+                    ? "Preparing payment..."
+                    : isVerifyingPayment
+                      ? "Verifying payment..."
+                      : actionLabel}
                 </Button>
               </CardFooter>
             </Card>

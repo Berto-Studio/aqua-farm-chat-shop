@@ -13,6 +13,12 @@ interface OrderProps {
   user_id: number;
   status: string;
   total_price: number;
+  payment_method?: string;
+  payment_status?: string;
+  payment_reference?: string;
+  paid_at?: string | null;
+  shipping_address?: string;
+  notes?: string;
   created_at: string;
   updated_at: string;
   items: OrderItemProps[];

@@ -27,12 +27,37 @@ export interface ServicePricingOption {
 }
 
 export interface FarmService {
+  id?: string | number;
   title: string;
   description: string;
   icon: ServiceIconKey;
   features: string[];
   pricing: Record<ServiceTier, ServicePricingOption>;
 }
+
+const slugifyServiceTitle = (title: string) =>
+  title
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+export const getFarmServiceRouteParam = (
+  service: Pick<FarmService, "id" | "title">,
+) => {
+  if (service.id !== undefined && service.id !== null && `${service.id}`.trim()) {
+    return String(service.id);
+  }
+
+  return slugifyServiceTitle(service.title);
+};
+
+export const isFarmServiceMatch = (
+  service: Pick<FarmService, "id" | "title">,
+  routeParam: string,
+) =>
+  getFarmServiceRouteParam(service) === routeParam ||
+  slugifyServiceTitle(service.title) === routeParam;
 
 export const serviceTierLabels: Record<ServiceTier, string> = {
   basic: "Basic",

@@ -1,4 +1,5 @@
-import { Check, EllipsisVertical } from "lucide-react";
+import type { ReactNode } from "react";
+import { Check } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -12,11 +13,13 @@ import {
 interface ServiceCardsGridProps {
   services: FarmService[];
   className?: string;
+  renderActions?: (service: FarmService) => ReactNode;
 }
 
 export default function ServiceCardsGrid({
   services,
   className,
+  renderActions,
 }: ServiceCardsGridProps) {
   return (
     <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-8", className)}>
@@ -24,13 +27,13 @@ export default function ServiceCardsGrid({
         const IconComponent = serviceIconMap[service.icon];
 
         return (
-          <Card key={service.title} className="relative">
+          <Card key={String(service.id ?? service.title)} className="relative">
             <CardHeader>
               <div className="flex justify-between items-center mb-4">
                 <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                   <IconComponent className="h-6 w-6" />
                 </div>
-                <EllipsisVertical className="h-6 w-6 text-gray-800" />
+                {renderActions ? renderActions(service) : null}
               </div>
               <CardTitle className="text-xl">{service.title}</CardTitle>
               <p className="text-muted-foreground">{service.description}</p>

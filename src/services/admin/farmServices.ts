@@ -55,3 +55,54 @@ export const CreateAdminFarmService = async (
     };
   }
 };
+
+export const UpdateAdminFarmService = async (
+  id: string | number,
+  payload: FarmService,
+): Promise<ApiSingleResponse<FarmService>> => {
+  try {
+    const response = await apiRequest<FarmService>(
+      `${FARM_SERVICES_ENDPOINT}${id}`,
+      "PUT",
+      payload,
+    );
+
+    return {
+      success: true,
+      data: response,
+      message: "Service updated successfully",
+      status: 200,
+    };
+  } catch (error) {
+    console.error("Error updating farm service:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to update service",
+      status: 500,
+    };
+  }
+};
+
+export const DeleteAdminFarmService = async (
+  id: string | number,
+): Promise<ApiSingleResponse<null>> => {
+  try {
+    await apiRequest(`${FARM_SERVICES_ENDPOINT}${id}`, "DELETE");
+
+    return {
+      success: true,
+      data: null,
+      message: "Service deleted successfully",
+      status: 200,
+    };
+  } catch (error) {
+    console.error("Error deleting farm service:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to delete service",
+      status: 500,
+    };
+  }
+};

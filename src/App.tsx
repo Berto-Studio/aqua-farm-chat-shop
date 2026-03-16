@@ -21,6 +21,9 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminServices from "./pages/admin/AdminServices";
+import AdminServiceCreate from "./pages/admin/AdminServiceCreate";
+import AdminServiceDetails from "./pages/admin/AdminServiceDetails";
+import AdminServiceEdit from "./pages/admin/AdminServiceEdit";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminChat from "./pages/admin/AdminChat";
 import AdminProductDetails from "./pages/admin/AdminProductDetails";
@@ -122,6 +125,12 @@ const App = () => (
               <Route path="products/:productId" element={<AdminProductDetails />} />
               <Route path="products/:productId/edit" element={<AdminProductEdit />} />
               <Route path="services" element={<AdminServices />} />
+              <Route path="services/new" element={<AdminServiceCreate />} />
+              <Route path="services/:serviceId" element={<AdminServiceDetails />} />
+              <Route
+                path="services/:serviceId/edit"
+                element={<AdminServiceEdit />}
+              />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="users" element={<AdminCustomers />} />

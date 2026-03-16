@@ -48,17 +48,19 @@ export default function ServiceCardsGrid({
 
                 <div className="space-y-3 pt-4 border-t">
                   <h4 className="font-semibold">Pricing Options:</h4>
-                  {serviceTierKeys.map((tier) => {
+                  {serviceTierKeys.map((tier, index) => {
                     const details = service.pricing[tier];
 
                     return (
                       <div
-                        key={`${service.id}-${tier}`}
+                        key={`${index}-${tier}`}
                         className="flex justify-between items-center"
                       >
                         <div>
                           <Badge
-                            variant={tier === "premium" ? "default" : "secondary"}
+                            variant={
+                              tier === "premium" ? "default" : "secondary"
+                            }
                           >
                             {serviceTierLabels[tier]}
                           </Badge>

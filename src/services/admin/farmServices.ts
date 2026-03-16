@@ -2,7 +2,7 @@ import { apiRequest } from "@/hooks/useClient";
 import { FARM_SERVICES_ENDPOINT, type FarmService } from "@/lib/services";
 import { ApiListResponse, ApiSingleResponse } from "@/types/admin";
 
-export const GetAdminFarmServices = async (): Promise<
+export const GetFarmServices = async (): Promise<
   ApiListResponse<FarmService>
 > => {
   try {

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,9 +21,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ServiceCardsGrid from "@/components/services/ServiceCardsGrid";
+import { useFarmServices } from "@/hooks/useServices";
 import { useToast } from "@/hooks/use-toast";
-import type { FarmService } from "@/lib/services";
-import { fetchFarmServices } from "@/services/farmServices";
 import { Check, GraduationCap, Users } from "lucide-react";
 
 const serviceRequestSchema = z.object({
@@ -41,9 +39,18 @@ type ServiceRequestForm = z.infer<typeof serviceRequestSchema>;
 
 export default function Services() {
   const { toast } = useToast();
-  const [services, setServices] = useState<FarmService[]>([]);
-  const [isLoadingServices, setIsLoadingServices] = useState(true);
-  const [servicesError, setServicesError] = useState<string | null>(null);
+  const {
+    data: services = [],
+    isLoading: isLoadingServices,
+    error,
+  } = useFarmServices();
+  const servicesError =
+    error instanceof Error
+      ? error.message
+      : error
+        ? "Unable to load services"
+        : null;
+
   const form = useForm<ServiceRequestForm>({
     resolver: zodResolver(serviceRequestSchema),
     defaultValues: {
@@ -56,38 +63,6 @@ export default function Services() {
       message: "",
     },
   });
-
-  useEffect(() => {
-    let isMounted = true;
-
-    const loadServices = async () => {
-      try {
-        setIsLoadingServices(true);
-        const nextServices = await fetchFarmServices();
-        if (!isMounted) return;
-
-        setServices(nextServices);
-        setServicesError(null);
-      } catch (error) {
-        if (!isMounted) return;
-
-        setServices([]);
-        setServicesError(
-          error instanceof Error ? error.message : "Unable to load services",
-        );
-      } finally {
-        if (isMounted) {
-          setIsLoadingServices(false);
-        }
-      }
-    };
-
-    void loadServices();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   const onSubmit = (data: ServiceRequestForm) => {
     console.log("Service request submitted:", data);

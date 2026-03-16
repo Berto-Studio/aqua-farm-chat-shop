@@ -22,35 +22,28 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  useAdminFarmServices,
   useCreateAdminFarmService,
-} from "@/hooks/useAdminFarmServices";
+  useFarmServices,
+} from "@/hooks/useServices";
 import { useToast } from "@/hooks/use-toast";
 import { serviceIconKeys, serviceIconOptions } from "@/lib/services";
 
 const addServiceSchema = z.object({
   title: z.string().min(3, "Service title must be at least 3 characters"),
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters"),
+  description: z.string().min(10, "Description must be at least 10 characters"),
   icon: z.enum(serviceIconKeys),
-  features: z.string().refine(
-    (value) => {
-      const features = value
-        .split("\n")
-        .map((item) => item.trim())
-        .filter(Boolean);
+  features: z.string().refine((value) => {
+    const features = value
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
 
-      return features.length >= 4 && features.length <= 6;
-    },
-    "Add 4 to 6 features",
-  ),
+    return features.length >= 4 && features.length <= 6;
+  }, "Add 4 to 6 features"),
   basicPrice: z.coerce.number().min(0, "Enter a valid price"),
   basicDuration: z.string().min(2, "Enter the duration for the basic plan"),
   premiumPrice: z.coerce.number().min(0, "Enter a valid price"),
-  premiumDuration: z
-    .string()
-    .min(2, "Enter the duration for the premium plan"),
+  premiumDuration: z.string().min(2, "Enter the duration for the premium plan"),
   enterprisePrice: z.coerce.number().min(0, "Enter a valid price"),
   enterpriseDuration: z
     .string()
@@ -74,7 +67,7 @@ const defaultValues: AddServiceFormValues = {
 
 export default function AdminServices() {
   const { toast } = useToast();
-  const { data: services = [], isLoading, error } = useAdminFarmServices();
+  const { data: services = [], isLoading, error } = useFarmServices();
   const createFarmService = useCreateAdminFarmService();
   const form = useForm<AddServiceFormValues>({
     resolver: zodResolver(addServiceSchema),
@@ -163,7 +156,10 @@ export default function AdminServices() {
                     No services found yet. Use the form to add the first one.
                   </p>
                 ) : (
-                  <ServiceCardsGrid services={services} className="lg:grid-cols-2" />
+                  <ServiceCardsGrid
+                    services={services}
+                    className="lg:grid-cols-2"
+                  />
                 )}
               </CardContent>
             </Card>
@@ -190,7 +186,10 @@ export default function AdminServices() {
                       <FormItem>
                         <FormLabel>Service Title</FormLabel>
                         <FormControl>
-                          <Input placeholder="e.g. Pond Setup Advisory" {...field} />
+                          <Input
+                            placeholder="e.g. Pond Setup Advisory"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -232,7 +231,10 @@ export default function AdminServices() {
                           </FormControl>
                           <SelectContent>
                             {serviceIconOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
+                              <SelectItem
+                                key={option.value}
+                                value={option.value}
+                              >
                                 {option.label}
                               </SelectItem>
                             ))}
@@ -272,7 +274,12 @@ export default function AdminServices() {
                           <FormItem>
                             <FormLabel>Basic Price</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" step="0.01" {...field} />
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -285,7 +292,10 @@ export default function AdminServices() {
                           <FormItem>
                             <FormLabel>Basic Duration</FormLabel>
                             <FormControl>
-                              <Input placeholder="e.g. One-time visit" {...field} />
+                              <Input
+                                placeholder="e.g. One-time visit"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -301,7 +311,12 @@ export default function AdminServices() {
                           <FormItem>
                             <FormLabel>Premium Price</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" step="0.01" {...field} />
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -333,7 +348,12 @@ export default function AdminServices() {
                           <FormItem>
                             <FormLabel>Enterprise Price</FormLabel>
                             <FormControl>
-                              <Input type="number" min="0" step="0.01" {...field} />
+                              <Input
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                {...field}
+                              />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

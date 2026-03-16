@@ -2,14 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { FarmService } from "@/lib/services";
 import {
   CreateAdminFarmService,
-  GetAdminFarmServices,
+  GetFarmServices,
 } from "@/services/admin/farmServices";
 
-export const useAdminFarmServices = () => {
+export const useFarmServices = () => {
   return useQuery({
     queryKey: ["admin-farm-services"],
     queryFn: async () => {
-      const response = await GetAdminFarmServices();
+      const response = await GetFarmServices();
       if (!response.success) throw new Error(response.message);
       return response.data;
     },

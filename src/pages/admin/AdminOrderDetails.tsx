@@ -21,6 +21,11 @@ import {
   getOrderStatusLabel,
   getOrderTotal,
 } from "@/lib/adminTransformers";
+import {
+  getPaymentReference,
+  getPaymentTrackingBadgeClass,
+  getPaymentTrackingStatus,
+} from "@/lib/paymentUtils";
 
 const statusClass: Record<string, string> = {
   delivered: "bg-emerald-50 text-emerald-700 border-emerald-200",
@@ -253,6 +258,19 @@ export default function AdminOrderDetails() {
                 Payment Method
               </p>
               <p className="mt-1 font-semibold">{getOrderPaymentLabel(order)}</p>
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={getPaymentTrackingBadgeClass(
+                    getPaymentTrackingStatus(order),
+                  )}
+                >
+                  {getPaymentTrackingStatus(order)}
+                </Badge>
+                <span className="text-xs text-muted-foreground">
+                  {getPaymentReference(order)}
+                </span>
+              </div>
             </div>
 
             <div className="rounded-lg border p-3">

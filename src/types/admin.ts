@@ -77,6 +77,14 @@ export interface AdminOrderRecord {
   total?: number;
   payment_method?: string;
   payment?: string;
+  payment_status?: string;
+  paymentStatus?: string;
+  transaction_status?: string;
+  transactionStatus?: string;
+  payment_reference?: string;
+  paymentReference?: string;
+  transaction_reference?: string;
+  transactionReference?: string;
   shipping_address?: string;
   shippingAddress?: string;
   notes?: string;

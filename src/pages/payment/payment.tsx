@@ -21,10 +21,13 @@ import { CreateOrder } from "@/services/orders";
 import Carts from "@/components/payment/cart";
 import Checkout, {
   CheckoutFormData,
-  PaymentMethod,
   ShippingMethod,
 } from "@/components/payment/checkout";
 import { CheckoutSteps } from "@/components/payment/paymentStepsHeading";
+import {
+  formatPaymentMethodLabel,
+  isPhysicalPaymentMethodValue,
+} from "@/lib/paymentUtils";
 
 type Step = "cart" | "checkout" | "payment";
 type MobileProvider = "mtn" | "airteltigo" | "telecel" | "";
@@ -40,21 +43,6 @@ const defaultCheckoutForm: CheckoutFormData = {
   postalCode: "",
   shippingMethod: "",
   paymentMethod: "",
-};
-
-const formatPaymentMethodLabel = (method: PaymentMethod | "") => {
-  switch (method) {
-    case "card":
-      return "Credit/Debit Card";
-    case "mobile":
-      return "Mobile Money";
-    case "paypal":
-      return "PayPal";
-    case "cod":
-      return "Cash on Delivery";
-    default:
-      return "Not selected";
-  }
 };
 
 const formatShippingMethodLabel = (method: ShippingMethod | "") => {
@@ -85,6 +73,10 @@ const buildOrderNotes = (form: CheckoutFormData) =>
     `Email: ${form.email.trim()}`,
     `Phone: ${form.phone.trim()}`,
     `Shipping method: ${formatShippingMethodLabel(form.shippingMethod)}`,
+    `Payment method: ${formatPaymentMethodLabel(form.paymentMethod)}`,
+    ...(isPhysicalPaymentMethodValue(form.paymentMethod)
+      ? ["Payment tracking: Physical payment selected for delivery or pickup."]
+      : []),
   ].join("\n");
 
 export default function PaymentProccess() {
@@ -466,9 +458,10 @@ export default function PaymentProccess() {
     return (
       <Card>
         <CardContent className="space-y-3 p-6">
-          <h2 className="text-xl font-bold">Cash on Delivery</h2>
+          <h2 className="text-xl font-bold">Physical Payment</h2>
           <p className="text-sm text-muted-foreground">
-            You will pay when your order is delivered.
+            Pay physically when your order is delivered or when you collect it.
+            Admin will be able to track this payment inside the app.
           </p>
         </CardContent>
       </Card>
@@ -536,7 +529,9 @@ export default function PaymentProccess() {
                   <div className="mt-6 space-y-2 rounded-md border p-3">
                     <p className="text-sm font-medium">Selected Payment Method</p>
                     <p className="text-sm text-muted-foreground">
-                      {formatPaymentMethodLabel(checkoutForm.paymentMethod)}
+                      {checkoutForm.paymentMethod
+                        ? formatPaymentMethodLabel(checkoutForm.paymentMethod)
+                        : "Not selected"}
                     </p>
                   </div>
                 )}

@@ -629,9 +629,9 @@ export default function AdminCustomerDetails() {
                         <p className="mt-1 font-medium">
                           {getOrderItemsCount(latestOrder)} items
                         </p>
-                        <p className="text-xs text-muted-foreground">
-                          Paid via {getOrderPaymentLabel(latestOrder)}
-                        </p>
+                          <p className="text-xs text-muted-foreground">
+                            Payment method: {getOrderPaymentLabel(latestOrder)}
+                          </p>
                       </div>
                     </div>
                   </div>

@@ -160,7 +160,7 @@ export default function Checkout({ value, onChange, onBackToCart }: CheckoutProp
                 <SelectItem value="card">Credit/Debit Card</SelectItem>
                 <SelectItem value="mobile">Mobile Money</SelectItem>
                 <SelectItem value="paypal">PayPal</SelectItem>
-                <SelectItem value="cod">Cash on Delivery</SelectItem>
+                <SelectItem value="cod">Physical Payment</SelectItem>
               </SelectContent>
             </Select>
           </div>

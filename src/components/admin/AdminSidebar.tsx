@@ -11,6 +11,7 @@ import {
   Settings,
   ShoppingCart,
   Users,
+  Wallet,
   Wrench,
 } from "lucide-react";
 import {
@@ -70,6 +71,11 @@ export default function AdminSidebar() {
       to: "/admin/orders",
       icon: <ShoppingCart className="h-5 w-5" />,
       label: "Orders",
+    },
+    {
+      to: "/admin/payments",
+      icon: <Wallet className="h-5 w-5" />,
+      label: "Payments",
     },
     {
       to: "/admin/services",

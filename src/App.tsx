@@ -18,6 +18,7 @@ import Cart from "./pages/payment/payment";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
+import AdminPayments from "./pages/admin/AdminPayments";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminServices from "./pages/admin/AdminServices";
@@ -152,6 +153,7 @@ const App = () => (
               />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:orderId" element={<AdminOrderDetails />} />
+              <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminCustomers />} />
               <Route path="users/:userId" element={<AdminCustomerDetails />} />
               <Route path="users/:userId/message" element={<AdminCustomerMessage />} />

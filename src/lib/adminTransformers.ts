@@ -7,6 +7,7 @@ import {
   AdminUserRecord,
 } from "@/types/admin";
 import { ChatConversation, ChatMessage } from "@/types/chat";
+import { formatPaymentMethodLabel, getRawPaymentMethod } from "@/lib/paymentUtils";
 
 const toIsoDate = (value?: string) => {
   if (!value) return new Date().toISOString();
@@ -55,7 +56,7 @@ export const getOrderStatusLabel = (order?: AdminOrderRecord) =>
   order?.status || "Unknown";
 
 export const getOrderPaymentLabel = (order?: AdminOrderRecord) =>
-  order?.payment_method || order?.payment || "N/A";
+  formatPaymentMethodLabel(getRawPaymentMethod(order));
 
 export const getOrderShippingAddress = (order?: AdminOrderRecord) =>
   order?.shipping_address || order?.shippingAddress || "N/A";

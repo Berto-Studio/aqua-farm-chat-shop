@@ -13,6 +13,7 @@ import {
   getUserJoinedAt,
   isUserActive,
 } from "@/lib/adminTransformers";
+import { formatPaymentMethodLabel, getRawPaymentMethod } from "@/lib/paymentUtils";
 
 export type AdminTimelineRow = {
   monthKey: string;
@@ -181,7 +182,7 @@ export const buildAdminAnalyticsDatasets = ({
     const itemsCount = getOrderItemsCount(order);
     const statusKey = getStatusKey(order);
     const statusLabel = statusKey.charAt(0).toUpperCase() + statusKey.slice(1);
-    const paymentLabel = order.payment_method || order.payment || "Unknown";
+    const paymentLabel = formatPaymentMethodLabel(getRawPaymentMethod(order));
     const paymentKey = toChartKey(paymentLabel);
     const orderDate = parseDate(order.created_at);
 

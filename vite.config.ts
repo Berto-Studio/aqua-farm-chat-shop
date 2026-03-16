@@ -3,15 +3,21 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
+const API_PROXY_TIMEOUT_MS = 30000;
+
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
+  const apiUrl = env.VITE_APP_API_URL;
+  const socketUrl = env.VITE_SOCKET_URL || apiUrl;
 
   const createProxyOptions = (target: string): ProxyOptions => ({
     target,
     changeOrigin: true,
     secure: false,
     ws: true,
+    timeout: API_PROXY_TIMEOUT_MS,
+    proxyTimeout: API_PROXY_TIMEOUT_MS,
   });
 
   const getProxyTarget = (url?: string) => {
@@ -25,10 +31,9 @@ export default defineConfig(({ mode }) => {
   };
 
   const buildDevProxy = () => {
-    const apiUrl = env.VITE_APP_API_URL;
     const proxyConfig: Record<string, ProxyOptions> = {};
     const apiTarget = getProxyTarget(apiUrl);
-    const socketTarget = getProxyTarget(env.VITE_SOCKET_URL || apiUrl);
+    const socketTarget = getProxyTarget(socketUrl);
 
     if (apiUrl && apiTarget) {
       const parsed = new URL(apiUrl);

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Bell, ShoppingCart, Menu, MessageCircle, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -41,12 +41,14 @@ import { useChatRealtime } from "@/hooks/useChatRealtime";
 
 export default function Navbar() {
   const isMobile = useIsMobile();
+  const pathname = useLocation().pathname;
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   // Zustand store for user and login state
   const { user, isLoggedIn, isLoading } = useUserStore();
   const currentUserId = String(user?.id ?? "user-current");
   const isConsumerUser = Boolean(isLoggedIn && user?.user_type !== "admin");
+  const isDedicatedChatRoute = pathname.startsWith("/chat");
   const { data: supportConversation } = useUserSupportConversation({
     enabled: isConsumerUser,
   });
@@ -88,7 +90,7 @@ export default function Navbar() {
   }, [isLoggedIn, isChatOpen, markConversationRead, activeConversationId]);
 
   useChatRealtime({
-    enabled: isConsumerUser,
+    enabled: isConsumerUser && !isDedicatedChatRoute,
     role: "user",
     conversationId: activeConversationId,
   });

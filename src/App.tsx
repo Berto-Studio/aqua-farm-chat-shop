@@ -42,7 +42,26 @@ import FarmerDashboard from "./pages/farmers/FarmerDashboard";
 import OtpVerification from "./pages/authentication/OtpVerification";
 import PaymentProccess from "./pages/payment/payment";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: (failureCount, error) => {
+        const message =
+          error instanceof Error ? error.message.toLowerCase() : "";
+
+        if (
+          message.includes("failed to reach api") ||
+          message.includes("could not reach the backend") ||
+          message.includes("session expired")
+        ) {
+          return false;
+        }
+
+        return failureCount < 1;
+      },
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

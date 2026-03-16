@@ -15,6 +15,10 @@ const ACCESS_TOKEN_COOKIE = "access_token";
 const ACCESS_TOKEN_STORAGE_KEY = "access_token";
 const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const RAW_SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const SOCKET_TRANSPORTS = import.meta.env.DEV
+  ? (["polling"] as const)
+  : (["polling", "websocket"] as const);
+const SHOULD_UPGRADE_SOCKET = !import.meta.env.DEV;
 
 const getSocketBaseUrl = () => {
   // In development we connect through Vite so Socket.IO stays same-origin
@@ -77,7 +81,8 @@ export const useChatRealtime = ({
     const accessToken = getAccessToken();
     const socket = io(getSocketBaseUrl(), {
       path: "/socket.io",
-      transports: ["polling", "websocket"],
+      transports: [...SOCKET_TRANSPORTS],
+      upgrade: SHOULD_UPGRADE_SOCKET,
       withCredentials: true,
       auth: accessToken
         ? {

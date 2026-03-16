@@ -118,7 +118,7 @@ export default function AdminServices() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50/50">
+    <div className="min-h-screen">
       <div className="p-4 sm:p-6 space-y-6">
         <div>
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
@@ -132,14 +132,7 @@ export default function AdminServices() {
 
         <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,2fr)_minmax(320px,420px)] gap-6 items-start">
           <div className="space-y-6">
-            <Card className="border shadow-sm">
-              <CardHeader>
-                <CardTitle>All Services</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  This uses the same card format as the user services page and
-                  shows every available service.
-                </p>
-              </CardHeader>
+            <Card className="border-none bg-transparent shadow-none">
               <CardContent>
                 {isLoading ? (
                   <p className="text-sm text-muted-foreground">

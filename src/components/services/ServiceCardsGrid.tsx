@@ -1,4 +1,4 @@
-import { Check } from "lucide-react";
+import { Check, EllipsisVertical } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -26,8 +26,11 @@ export default function ServiceCardsGrid({
         return (
           <Card key={service.title} className="relative">
             <CardHeader>
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
-                <IconComponent className="h-6 w-6" />
+              <div className="flex justify-between items-center mb-4">
+                <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
+                  <IconComponent className="h-6 w-6" />
+                </div>
+                <EllipsisVertical className="h-6 w-6 text-gray-800" />
               </div>
               <CardTitle className="text-xl">{service.title}</CardTitle>
               <p className="text-muted-foreground">{service.description}</p>

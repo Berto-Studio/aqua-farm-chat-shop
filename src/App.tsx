@@ -20,6 +20,7 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminCustomers from "./pages/admin/AdminCustomers";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
+import AdminServices from "./pages/admin/AdminServices";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminChat from "./pages/admin/AdminChat";
 import AdminProductDetails from "./pages/admin/AdminProductDetails";
@@ -120,6 +121,7 @@ const App = () => (
               <Route path="products" element={<AdminProducts />} />
               <Route path="products/:productId" element={<AdminProductDetails />} />
               <Route path="products/:productId/edit" element={<AdminProductEdit />} />
+              <Route path="services" element={<AdminServices />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="orders/:orderId" element={<AdminOrderDetails />} />
               <Route path="users" element={<AdminCustomers />} />

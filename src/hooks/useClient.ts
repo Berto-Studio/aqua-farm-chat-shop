@@ -59,7 +59,7 @@ const resolveApiBaseUrl = () => {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
-const buildUrl = (endpoint: string) => {
+export const buildApiUrl = (endpoint: string) => {
   const normalizedBase = API_BASE_URL.endsWith("/")
     ? API_BASE_URL
     : `${API_BASE_URL}/`;
@@ -262,7 +262,7 @@ const performRequest = async (
   isFormData: boolean,
   options: ApiRequestOptions
 ) => {
-  const requestUrl = buildUrl(endpoint);
+  const requestUrl = buildApiUrl(endpoint);
 
   try {
     return await fetch(requestUrl, {

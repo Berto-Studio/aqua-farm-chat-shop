@@ -11,6 +11,7 @@ import {
   Settings,
   ShoppingCart,
   Users,
+  Wrench,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -69,6 +70,11 @@ export default function AdminSidebar() {
       to: "/admin/orders",
       icon: <ShoppingCart className="h-5 w-5" />,
       label: "Orders",
+    },
+    {
+      to: "/admin/services",
+      icon: <Wrench className="h-5 w-5" />,
+      label: "Services",
     },
     {
       to: "/admin/users",

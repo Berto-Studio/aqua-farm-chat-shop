@@ -1,12 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
 import {
   Form,
   FormControl,
@@ -22,8 +21,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ServiceCardsGrid from "@/components/services/ServiceCardsGrid";
 import { useToast } from "@/hooks/use-toast";
-import { Check, Users, GraduationCap, Settings } from "lucide-react";
+import type { FarmService } from "@/lib/services";
+import { fetchFarmServices } from "@/services/farmServices";
+import { Check, GraduationCap, Users } from "lucide-react";
 
 const serviceRequestSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -37,73 +39,11 @@ const serviceRequestSchema = z.object({
 
 type ServiceRequestForm = z.infer<typeof serviceRequestSchema>;
 
-const services = [
-  {
-    id: "consultation",
-    title: "Farm Consultation",
-    description:
-      "Professional guidance for setting up and optimizing your fish farm operations",
-    icon: Users,
-    features: [
-      "Site assessment and pond design",
-      "Water quality management",
-      "Feeding strategies and schedules",
-      "Disease prevention protocols",
-      "Business planning and profitability analysis",
-      "Ongoing support for 3 months",
-    ],
-    pricing: {
-      basic: { price: 299, duration: "One-time visit" },
-      premium: { price: 599, duration: "3 visits + 3 months support" },
-      enterprise: { price: 1299, duration: "Complete setup package" },
-    },
-  },
-  {
-    id: "hatchery",
-    title: "Hatchery Operations",
-    description:
-      "Complete hatchery setup and management services for sustainable fish production",
-    icon: Settings,
-    features: [
-      "Hatchery design and construction",
-      "Equipment sourcing and installation",
-      "Breeding stock selection",
-      "Spawning and incubation protocols",
-      "Fingerling production optimization",
-      "Staff training and certification",
-    ],
-    pricing: {
-      basic: { price: 1999, duration: "Setup consultation" },
-      premium: { price: 4999, duration: "Complete setup + training" },
-      enterprise: { price: 9999, duration: "Turnkey hatchery solution" },
-    },
-  },
-  {
-    id: "training",
-    title: "Catfish Fingerling Training",
-    description:
-      "Hands-on training programs to master catfish fingerling production techniques",
-    icon: GraduationCap,
-    features: [
-      "Breeding techniques and timing",
-      "Egg incubation best practices",
-      "Fry care and feeding protocols",
-      "Growth optimization strategies",
-      "Quality control and grading",
-      "Certificate of completion",
-    ],
-    pricing: {
-      basic: { price: 599, duration: "2-day workshop" },
-      premium: { price: 1199, duration: "5-day intensive course" },
-      enterprise: { price: 2499, duration: "2-week apprenticeship" },
-    },
-  },
-];
-
 export default function Services() {
-  const [selectedService, setSelectedService] = useState("");
   const { toast } = useToast();
-
+  const [services, setServices] = useState<FarmService[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(true);
+  const [servicesError, setServicesError] = useState<string | null>(null);
   const form = useForm<ServiceRequestForm>({
     resolver: zodResolver(serviceRequestSchema),
     defaultValues: {
@@ -117,6 +57,38 @@ export default function Services() {
     },
   });
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadServices = async () => {
+      try {
+        setIsLoadingServices(true);
+        const nextServices = await fetchFarmServices();
+        if (!isMounted) return;
+
+        setServices(nextServices);
+        setServicesError(null);
+      } catch (error) {
+        if (!isMounted) return;
+
+        setServices([]);
+        setServicesError(
+          error instanceof Error ? error.message : "Unable to load services",
+        );
+      } finally {
+        if (isMounted) {
+          setIsLoadingServices(false);
+        }
+      }
+    };
+
+    void loadServices();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const onSubmit = (data: ServiceRequestForm) => {
     console.log("Service request submitted:", data);
     toast({
@@ -129,7 +101,6 @@ export default function Services() {
 
   return (
     <div className="min-h-screen">
-      {/* Hero Section */}
       <section className="bg-primary text-white py-16">
         <div className="container text-center">
           <h1 className="text-3xl md:text-5xl font-bold mb-4">
@@ -143,7 +114,6 @@ export default function Services() {
         </div>
       </section>
 
-      {/* Services Grid */}
       <section className="py-16 container">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">Our Services</h2>
@@ -153,68 +123,23 @@ export default function Services() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {services.map((service) => {
-            const IconComponent = service.icon;
-            return (
-              <Card key={service.id} className="relative">
-                <CardHeader>
-                  <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4">
-                    <IconComponent className="h-6 w-6" />
-                  </div>
-                  <CardTitle className="text-xl">{service.title}</CardTitle>
-                  <p className="text-muted-foreground">{service.description}</p>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="font-semibold mb-2">What's Included:</h4>
-                      <ul className="space-y-2">
-                        {service.features.map((feature, index) => (
-                          <li key={index} className="flex items-start gap-2">
-                            <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span className="text-sm">{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    <div className="space-y-3 pt-4 border-t">
-                      <h4 className="font-semibold">Pricing Options:</h4>
-                      {Object.entries(service.pricing).map(
-                        ([tier, details]) => (
-                          <div
-                            key={tier}
-                            className="flex justify-between items-center"
-                          >
-                            <div>
-                              <Badge
-                                variant={
-                                  tier === "premium" ? "default" : "secondary"
-                                }
-                              >
-                                {tier.charAt(0).toUpperCase() + tier.slice(1)}
-                              </Badge>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {details.duration}
-                              </p>
-                            </div>
-                            <span className="font-bold text-lg">
-                              ${details.price}
-                            </span>
-                          </div>
-                        )
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {isLoadingServices ? (
+          <div className="rounded-lg border bg-card p-10 text-center text-muted-foreground">
+            Loading services...
+          </div>
+        ) : servicesError ? (
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
+            {servicesError}
+          </div>
+        ) : services.length === 0 ? (
+          <div className="rounded-lg border bg-card p-10 text-center text-muted-foreground">
+            No services are available right now.
+          </div>
+        ) : (
+          <ServiceCardsGrid services={services} />
+        )}
       </section>
 
-      {/* Service Request Form */}
       <section className="py-16 bg-secondary">
         <div className="container max-w-2xl">
           <div className="text-center mb-8">
@@ -309,6 +234,7 @@ export default function Services() {
                         <FormItem>
                           <FormLabel>Service Needed</FormLabel>
                           <Select
+                            disabled={isLoadingServices}
                             onValueChange={field.onChange}
                             defaultValue={field.value}
                           >
@@ -318,15 +244,14 @@ export default function Services() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="consultation">
-                                Farm Consultation
-                              </SelectItem>
-                              <SelectItem value="hatchery">
-                                Hatchery Operations
-                              </SelectItem>
-                              <SelectItem value="training">
-                                Catfish Fingerling Training
-                              </SelectItem>
+                              {services.map((service) => (
+                                <SelectItem
+                                  key={service.title}
+                                  value={service.title}
+                                >
+                                  {service.title}
+                                </SelectItem>
+                              ))}
                               <SelectItem value="multiple">
                                 Multiple Services
                               </SelectItem>
@@ -401,7 +326,6 @@ export default function Services() {
         </div>
       </section>
 
-      {/* Why Choose Us */}
       <section className="py-16 container">
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold mb-4">

@@ -52,7 +52,7 @@ export default defineConfig(({ mode }) => {
       proxy: mode === "development" ? buildDevProxy() : undefined,
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(
-      Boolean
+      Boolean,
     ),
     resolve: {
       alias: {

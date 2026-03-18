@@ -1,6 +1,18 @@
 {
   "rewrites": [
     {
+      "source": "/api/v1/(.*)",
+      "destination": "https://pomegrid.pythonanywhere.com/api/v1/$1"
+    },
+    {
+      "source": "/socket.io",
+      "destination": "https://pomegrid.pythonanywhere.com/socket.io"
+    },
+    {
+      "source": "/socket.io/(.*)",
+      "destination": "https://pomegrid.pythonanywhere.com/socket.io/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

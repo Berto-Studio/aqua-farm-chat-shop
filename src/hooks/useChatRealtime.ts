@@ -17,14 +17,16 @@ const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const RAW_SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
-const SOCKET_TRANSPORTS = import.meta.env.DEV
+const USE_PLATFORM_PROXY = import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
+const USE_PROXY_TUNNEL = USE_DEV_PROXY || USE_PLATFORM_PROXY;
+const SOCKET_TRANSPORTS = USE_PROXY_TUNNEL
   ? (["polling"] as const)
   : (["polling", "websocket"] as const);
-const SHOULD_UPGRADE_SOCKET = !import.meta.env.DEV;
+const SHOULD_UPGRADE_SOCKET = !USE_PROXY_TUNNEL;
 
 const getSocketBaseUrl = () => {
-  // Keep sockets same-origin only when the dev proxy is explicitly enabled.
-  if (USE_DEV_PROXY) return undefined;
+  // Keep sockets same-origin when a local or deployment proxy is handling requests.
+  if (USE_PROXY_TUNNEL) return undefined;
 
   if (RAW_SOCKET_URL) return RAW_SOCKET_URL;
 

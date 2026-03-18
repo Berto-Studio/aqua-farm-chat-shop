@@ -5,6 +5,8 @@ import Cookies from "js-cookie";
 const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
+const USE_PLATFORM_PROXY = import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
+const USE_PROXY_TUNNEL = USE_DEV_PROXY || USE_PLATFORM_PROXY;
 const ACCESS_TOKEN_COOKIE = "access_token";
 const REFRESH_TOKEN_COOKIE = "refresh_token";
 const CSRF_TOKEN_COOKIE = "csrf_token";
@@ -43,8 +45,8 @@ const getCookieOptions = (expiresInDays: number) => {
 const resolveApiBaseUrl = () => {
   if (!RAW_API_BASE_URL) return "/api/v1/";
 
-  // Opt into relative API paths only when the dev proxy is explicitly enabled.
-  if (USE_DEV_PROXY) {
+  // Use relative API paths when a local or deployment proxy is handling requests.
+  if (USE_PROXY_TUNNEL) {
     try {
       const parsed = new URL(RAW_API_BASE_URL);
       const pathname = parsed.pathname.startsWith("/")

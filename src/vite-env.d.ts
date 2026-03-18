@@ -1,5 +1,15 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+  readonly VITE_APP_API_URL?: string;
+  readonly VITE_SOCKET_URL?: string;
+  readonly VITE_PAYSTACK_PUBLIC_KEY?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
+
 type Category = {
   id: number;
   name: string;

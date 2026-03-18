@@ -7,6 +7,8 @@ import {
   extractSingleData,
 } from "@/services/admin/common";
 
+const PAYMENT_REQUEST_OPTIONS = { skipRefresh: true } as const;
+
 interface InitializePaymentPayload {
   order_id?: string | number;
   amount?: number;
@@ -36,6 +38,9 @@ export const GetPayments = async (
     const response = await apiRequest<Record<string, any>>(
       `payments${query}`,
       "GET",
+      undefined,
+      false,
+      PAYMENT_REQUEST_OPTIONS,
     );
     const data = extractListData<PaymentRecord>(response, ["payments"]);
     const meta = extractMeta(response, {
@@ -77,6 +82,9 @@ export const GetPayment = async (
     const response = await apiRequest<Record<string, any>>(
       `payments/${reference}`,
       "GET",
+      undefined,
+      false,
+      PAYMENT_REQUEST_OPTIONS,
     );
 
     return {
@@ -104,6 +112,8 @@ export const InitializePayment = async (
       "payments/initialize",
       "POST",
       payload,
+      false,
+      PAYMENT_REQUEST_OPTIONS,
     );
 
     return {
@@ -130,6 +140,9 @@ export const VerifyPayment = async (
     const response = await apiRequest<Record<string, any>>(
       `payments/verify/${reference}`,
       "GET",
+      undefined,
+      false,
+      PAYMENT_REQUEST_OPTIONS,
     );
 
     return {

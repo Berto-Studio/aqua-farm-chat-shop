@@ -1,3 +1,4 @@
+import PaystackPop from "@paystack/inline-js";
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -45,6 +46,10 @@ type PendingOnlinePayment = {
   createdAt: string;
 };
 
+type VerifyPaymentOptions = {
+  replaceUrl?: boolean;
+};
+
 const defaultCheckoutForm: CheckoutFormData = {
   firstName: "",
   lastName: "",
@@ -59,6 +64,9 @@ const defaultCheckoutForm: CheckoutFormData = {
 };
 
 const PENDING_ONLINE_PAYMENTS_STORAGE_KEY = "pending-online-payments";
+const PAYSTACK_PUBLIC_KEY = String(
+  import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || "",
+).trim();
 
 const formatShippingMethodLabel = (method: ShippingMethod | "") => {
   switch (method) {
@@ -105,6 +113,7 @@ const buildShippingAddress = (form: CheckoutFormData) => {
 const buildOrderNotes = (
   form: CheckoutFormData,
   mobileProvider: MobileProvider,
+  mobileNumber: string,
 ) =>
   [
     `Customer: ${form.firstName.trim()} ${form.lastName.trim()}`,
@@ -113,6 +122,7 @@ const buildOrderNotes = (
     `Shipping method: ${formatShippingMethodLabel(form.shippingMethod)}`,
     `Payment method: ${formatPaymentMethodLabel(form.paymentMethod)}`,
     ...(mobileProvider ? [`Mobile provider: ${mobileProvider.toUpperCase()}`] : []),
+    ...(mobileNumber.trim() ? [`Mobile number: ${mobileNumber.trim()}`] : []),
     ...(isPhysicalPaymentMethodValue(form.paymentMethod)
       ? ["Payment tracking: Physical payment selected for delivery or pickup."]
       : ["Payment tracking: Online payment to be completed through Paystack."]),
@@ -121,16 +131,52 @@ const buildOrderNotes = (
 const buildGatewayMetadata = (
   form: CheckoutFormData,
   mobileProvider: MobileProvider,
+  mobileNumber: string,
+  orderId: number,
 ) => {
+  const customerName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+  const customFields = [
+    {
+      display_name: "Order ID",
+      variable_name: "order_id",
+      value: String(orderId),
+    },
+    {
+      display_name: "Payment method",
+      variable_name: "checkout_payment_method",
+      value: formatPaymentMethodLabel(form.paymentMethod),
+    },
+    {
+      display_name: "Shipping method",
+      variable_name: "shipping_method",
+      value: formatShippingMethodLabel(form.shippingMethod),
+    },
+  ];
+
   const metadata: Record<string, unknown> = {
     checkout_payment_method: form.paymentMethod,
     shipping_method: form.shippingMethod,
-    customer_name: `${form.firstName.trim()} ${form.lastName.trim()}`.trim(),
+    customer_name: customerName,
     phone: form.phone.trim(),
+    mobile_number: mobileNumber.trim() || undefined,
+    custom_fields: customFields,
   };
 
   if (mobileProvider) {
     metadata.mobile_provider = mobileProvider;
+    customFields.push({
+      display_name: "Mobile provider",
+      variable_name: "mobile_provider",
+      value: mobileProvider.toUpperCase(),
+    });
+  }
+
+  if (mobileNumber.trim()) {
+    customFields.push({
+      display_name: "Mobile number",
+      variable_name: "mobile_number",
+      value: mobileNumber.trim(),
+    });
   }
 
   return metadata;
@@ -216,10 +262,6 @@ export default function PaymentProccess() {
   const [checkoutForm, setCheckoutForm] = useState<CheckoutFormData>(
     defaultCheckoutForm,
   );
-  const [cardName, setCardName] = useState("");
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvv, setCardCvv] = useState("");
   const [mobileProvider, setMobileProvider] = useState<MobileProvider>("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
@@ -347,23 +389,14 @@ export default function PaymentProccess() {
       return false;
     }
 
-    if (paymentMethod === "card") {
-      const digitsOnly = cardNumber.replace(/\D/g, "");
-      if (
-        !cardName ||
-        digitsOnly.length < 12 ||
-        !cardExpiry ||
-        cardCvv.length < 3
-      ) {
-        toast({
-          title: "Card details incomplete",
-          description:
-            "Please provide valid card holder name and card details.",
-          variant: "destructive",
-        });
-        return false;
-      }
-      return true;
+    if (!isPhysicalPaymentMethodValue(paymentMethod) && !PAYSTACK_PUBLIC_KEY) {
+      toast({
+        title: "Paystack not configured",
+        description:
+          "Add your Paystack public key to VITE_PAYSTACK_PUBLIC_KEY before starting online payments.",
+        variant: "destructive",
+      });
+      return false;
     }
 
     if (paymentMethod === "mobile") {
@@ -384,10 +417,6 @@ export default function PaymentProccess() {
   const resetCheckoutState = () => {
     setCartItems([]);
     setCheckoutForm(defaultCheckoutForm);
-    setCardName("");
-    setCardNumber("");
-    setCardExpiry("");
-    setCardCvv("");
     setMobileProvider("");
     setMobileNumber("");
     setCouponCode("");
@@ -411,100 +440,97 @@ export default function PaymentProccess() {
     return { hasIssues };
   };
 
-  useEffect(() => {
-    if (!paymentReference) return;
+  const verifyCompletedPayment = async (
+    reference: string,
+    options: VerifyPaymentOptions = {},
+  ) => {
+    const pendingPayment = getPendingOnlinePayment(reference);
 
-    let isActive = true;
+    setIsVerifyingPayment(true);
+    setPaymentErrorMessage(null);
 
-    const verifyReturnedPayment = async () => {
-      const pendingPayment = getPendingOnlinePayment(paymentReference);
+    try {
+      const response = await VerifyPayment(reference);
+      if (!response.success || !response.data) {
+        throw new Error(response.message || "Unable to verify payment.");
+      }
 
-      setIsVerifyingPayment(true);
-      setPaymentErrorMessage(null);
+      const payment = response.data;
+      setVerifiedPayment(payment);
 
-      try {
-        const response = await VerifyPayment(paymentReference);
-        if (!response.success || !response.data) {
-          throw new Error(response.message || "Unable to verify payment.");
-        }
-
-        if (!isActive) return;
-
-        const payment = response.data;
-        setVerifiedPayment(payment);
-
-        if (!isSuccessfulGatewayPayment(payment.status)) {
-          clearPendingOnlinePayment(paymentReference);
-          setPendingOnlineOrderId(pendingPayment?.orderId || null);
-          setPaymentErrorMessage(
-            payment.gateway_response ||
-              `Payment status is ${formatStatusLabel(payment.status)}.`,
-          );
-
-          toast({
-            title: "Payment not completed",
-            description:
-              payment.gateway_response ||
-              `The payment returned with status ${formatStatusLabel(payment.status)}.`,
-            variant: "destructive",
-          });
-
-          navigate("/cart", { replace: true });
-          return;
-        }
-
-        const cleanupSummary = await cleanUpCartItems(
-          pendingPayment?.cartItemIds || [],
+      if (!isSuccessfulGatewayPayment(payment.status)) {
+        clearPendingOnlinePayment(reference);
+        setPendingOnlineOrderId(pendingPayment?.orderId || null);
+        setPaymentErrorMessage(
+          payment.gateway_response ||
+            `Payment status is ${formatStatusLabel(payment.status)}.`,
         );
 
-        if (!isActive) return;
-
-        clearPendingOnlinePayment(paymentReference);
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["carts"] }),
-          queryClient.invalidateQueries({ queryKey: ["orders"] }),
-        ]);
-
-        resetCheckoutState();
-
         toast({
-          title: "Payment successful",
-          description: cleanupSummary.hasIssues
-            ? `Payment ${payment.reference} was verified, but some cart items may still appear until the next refresh.`
-            : `Payment ${payment.reference} was verified successfully.`,
-          variant: "success",
+          title: "Payment not completed",
+          description:
+            payment.gateway_response ||
+            `The payment returned with status ${formatStatusLabel(payment.status)}.`,
+          variant: "destructive",
         });
 
-        navigate("/cart", { replace: true });
-      } catch (error) {
-        if (!isActive) return;
+        if (options.replaceUrl) {
+          navigate("/cart", { replace: true });
+        }
 
-        setPaymentErrorMessage(
+        return false;
+      }
+
+      const cleanupSummary = await cleanUpCartItems(
+        pendingPayment?.cartItemIds || [],
+      );
+
+      clearPendingOnlinePayment(reference);
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["carts"] }),
+        queryClient.invalidateQueries({ queryKey: ["orders"] }),
+      ]);
+
+      resetCheckoutState();
+
+      toast({
+        title: "Payment successful",
+        description: cleanupSummary.hasIssues
+          ? `Payment ${payment.reference} was verified, but some cart items may still appear until the next refresh.`
+          : `Payment ${payment.reference} was verified successfully.`,
+        variant: "success",
+      });
+
+      if (options.replaceUrl) {
+        navigate("/cart", { replace: true });
+      }
+
+      return true;
+    } catch (error) {
+      setPaymentErrorMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to verify your payment right now.",
+      );
+
+      toast({
+        title: "Verification failed",
+        description:
           error instanceof Error
             ? error.message
             : "Unable to verify your payment right now.",
-        );
+        variant: "destructive",
+      });
 
-        toast({
-          title: "Verification failed",
-          description:
-            error instanceof Error
-              ? error.message
-              : "Unable to verify your payment right now.",
-          variant: "destructive",
-        });
-      } finally {
-        if (isActive) {
-          setIsVerifyingPayment(false);
-        }
-      }
-    };
+      return false;
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
 
-    void verifyReturnedPayment();
-
-    return () => {
-      isActive = false;
-    };
+  useEffect(() => {
+    if (!paymentReference) return;
+    void verifyCompletedPayment(paymentReference, { replaceUrl: true });
   }, [
     navigate,
     paymentReference,
@@ -583,7 +609,7 @@ export default function PaymentProccess() {
           })),
           payment_method: orderPaymentMethod,
           shipping_address: buildShippingAddress(checkoutForm),
-          notes: buildOrderNotes(checkoutForm, mobileProvider),
+          notes: buildOrderNotes(checkoutForm, mobileProvider, mobileNumber),
         });
 
         if (!orderResult.success || !orderResult.data?.id) {
@@ -625,7 +651,12 @@ export default function PaymentProccess() {
         order_id: orderId,
         email: checkoutForm.email.trim(),
         callback_url: buildPaymentCallbackUrl(),
-        metadata: buildGatewayMetadata(checkoutForm, mobileProvider),
+        metadata: buildGatewayMetadata(
+          checkoutForm,
+          mobileProvider,
+          mobileNumber,
+          orderId,
+        ),
       });
 
       if (!paymentResult.success || !paymentResult.data) {
@@ -634,11 +665,12 @@ export default function PaymentProccess() {
         );
       }
 
+      const accessCode = paymentResult.data.access_code?.trim();
       const authorizationUrl = paymentResult.data.authorization_url?.trim();
       const reference = paymentResult.data.reference?.trim();
 
-      if (!authorizationUrl || !reference) {
-        throw new Error("Payment gateway response is missing redirect details.");
+      if (!reference) {
+        throw new Error("Payment gateway response is missing a payment reference.");
       }
 
       rememberPendingOnlinePayment({
@@ -651,16 +683,77 @@ export default function PaymentProccess() {
         createdAt: new Date().toISOString(),
       });
 
-      shouldStaySubmitting = true;
+      if (accessCode && PAYSTACK_PUBLIC_KEY) {
+        const paystackPopup = new PaystackPop();
 
-      toast({
-        title: "Redirecting to payment",
-        description:
-          "Your order was created. Complete the payment on the secure Paystack page.",
-        variant: "success",
-      });
+        toast({
+          title: "Continue in Paystack",
+          description:
+            "Your order was created. Complete the payment in the secure Paystack popup.",
+          variant: "success",
+        });
 
-      window.location.assign(authorizationUrl);
+        paystackPopup.resumeTransaction(accessCode, {
+          onSuccess: ({ reference: completedReference }) => {
+            void verifyCompletedPayment(
+              completedReference?.trim() || reference,
+            );
+          },
+          onCancel: () => {
+            setPaymentErrorMessage(
+              `Order #${orderId} is still waiting for payment. Reopen Paystack when you are ready to finish it.`,
+            );
+            toast({
+              title: "Payment not finished",
+              description:
+                "Your order is still pending. You can reopen the Paystack checkout at any time.",
+              variant: "destructive",
+            });
+          },
+          onError: ({ message }) => {
+            const description =
+              message?.trim() || "Unable to open Paystack checkout right now.";
+
+            if (authorizationUrl) {
+              toast({
+                title: "Opening Paystack redirect",
+                description:
+                  "The inline popup could not load, so we are sending you to Paystack directly.",
+                variant: "success",
+              });
+              window.location.assign(authorizationUrl);
+              return;
+            }
+
+            setPaymentErrorMessage(description);
+            toast({
+              title: "Paystack failed to load",
+              description,
+              variant: "destructive",
+            });
+          },
+        });
+
+        return;
+      }
+
+      if (authorizationUrl) {
+        shouldStaySubmitting = true;
+
+        toast({
+          title: "Redirecting to payment",
+          description:
+            "Your order was created. Complete the payment on the secure Paystack page.",
+          variant: "success",
+        });
+
+        window.location.assign(authorizationUrl);
+        return;
+      }
+
+      throw new Error(
+        "Payment gateway response is missing Paystack checkout details.",
+      );
     } catch (error) {
       const description =
         error instanceof Error
@@ -704,44 +797,18 @@ export default function PaymentProccess() {
           <CardContent className="space-y-4 p-6">
             <h2 className="text-xl font-bold">Card Checkout</h2>
             <p className="text-sm text-muted-foreground">
-              We will redirect you to Paystack to complete the secure card
-              payment.
+              After you continue, Paystack will open a secure popup for the
+              real card entry and authorization step.
             </p>
-            <div>
-              <Label className="mb-2 block">Card Holder Name</Label>
-              <Input
-                placeholder="Name on card"
-                value={cardName}
-                onChange={(event) => setCardName(event.target.value)}
-              />
-            </div>
-            <div>
-              <Label className="mb-2 block">Card Number</Label>
-              <Input
-                placeholder="1234 5678 9012 3456"
-                value={cardNumber}
-                onChange={(event) => setCardNumber(event.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="mb-2 block">Expiry</Label>
-                <Input
-                  placeholder="MM/YY"
-                  value={cardExpiry}
-                  onChange={(event) => setCardExpiry(event.target.value)}
-                />
-              </div>
-              <div>
-                <Label className="mb-2 block">CVV</Label>
-                <Input
-                  type="password"
-                  placeholder="123"
-                  value={cardCvv}
-                  onChange={(event) => setCardCvv(event.target.value)}
-                />
-              </div>
-            </div>
+            {!PAYSTACK_PUBLIC_KEY ? (
+              <p className="text-sm text-destructive">
+                Paystack public key is missing. Add
+                {" "}
+                <code>VITE_PAYSTACK_PUBLIC_KEY</code>
+                {" "}
+                to enable online payments.
+              </p>
+            ) : null}
           </CardContent>
         </Card>
       );
@@ -753,8 +820,8 @@ export default function PaymentProccess() {
           <CardContent className="space-y-4 p-6">
             <h2 className="text-xl font-bold">Mobile Money Checkout</h2>
             <p className="text-sm text-muted-foreground">
-              We will redirect you to Paystack so you can finish the payment
-              securely.
+              After you continue, Paystack will open a secure popup so you can
+              finish the payment.
             </p>
             <div>
               <Label className="mb-2 block">Provider</Label>

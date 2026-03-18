@@ -238,7 +238,11 @@ const buildHeaders = (
     headers.set("Content-Type", "application/json");
   }
 
-  if (!options.skipAuth && !publicAuthEndpoints.has(normalizedEndpoint)) {
+  if (
+    !options.skipAuth &&
+    !publicAuthEndpoints.has(normalizedEndpoint) &&
+    !headers.has("Authorization")
+  ) {
     const token = getAccessToken();
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);

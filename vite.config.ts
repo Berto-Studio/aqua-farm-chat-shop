@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const apiUrl = env.VITE_APP_API_URL;
   const socketUrl = env.VITE_SOCKET_URL || apiUrl;
+  const useDevProxy = env.VITE_USE_DEV_PROXY === "true";
 
   const createProxyOptions = (target: string): ProxyOptions => ({
     target,
@@ -54,7 +55,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
-      proxy: mode === "development" ? buildDevProxy() : undefined,
+      proxy: mode === "development" && useDevProxy ? buildDevProxy() : undefined,
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(
       Boolean,

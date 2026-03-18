@@ -3,6 +3,8 @@ import Cookies from "js-cookie";
 
 // src/api/client.ts
 const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
+const USE_DEV_PROXY =
+  import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
 const ACCESS_TOKEN_COOKIE = "access_token";
 const REFRESH_TOKEN_COOKIE = "refresh_token";
 const CSRF_TOKEN_COOKIE = "csrf_token";
@@ -41,8 +43,8 @@ const getCookieOptions = (expiresInDays: number) => {
 const resolveApiBaseUrl = () => {
   if (!RAW_API_BASE_URL) return "/api/v1/";
 
-  // In dev we prefer relative API paths so Vite proxy can avoid CORS errors.
-  if (import.meta.env.DEV) {
+  // Opt into relative API paths only when the dev proxy is explicitly enabled.
+  if (USE_DEV_PROXY) {
     try {
       const parsed = new URL(RAW_API_BASE_URL);
       const pathname = parsed.pathname.startsWith("/")

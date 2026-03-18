@@ -55,6 +55,7 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "::",
       port: 8080,
+      strictPort: true,
       proxy: mode === "development" && useDevProxy ? buildDevProxy() : undefined,
     },
     plugins: [react(), mode === "development" && componentTagger()].filter(

@@ -183,12 +183,7 @@ export default function Navbar() {
               )}
 
               <Link to="/" className="flex items-center gap-2">
-                <div className="h-10 w-10 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold">
-                  PD
-                </div>
-                <span className="font-bold text-xl hidden sm:inline-block text-foreground">
-                  Pomegid
-                </span>
+                <img src="/logo/logo1.png" alt="" className="w-16 h-13" />
               </Link>
 
               {!isMobile && <NavLinks />}

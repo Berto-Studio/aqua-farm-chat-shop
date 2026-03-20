@@ -12,6 +12,7 @@ import {
   AdminMessageRecord,
   ApiListResponse,
 } from "@/types/admin";
+import { suppressChatRealtimeInvalidation } from "@/lib/chatRealtimeSync";
 
 const appendMessageIfMissing = (
   messages: AdminMessageRecord[],
@@ -88,6 +89,8 @@ export const useSendAdminConversationMessage = () => {
     },
     onSuccess: (response, variables) => {
       const nextMessage = response.data;
+
+      suppressChatRealtimeInvalidation("admin", variables.conversationId);
 
       queryClient.setQueriesData<ApiListResponse<AdminMessageRecord>>(
         { queryKey: ["admin-conversation-messages", variables.conversationId] },
@@ -174,6 +177,8 @@ export const useMarkAdminConversationRead = () => {
       return response;
     },
     onSuccess: (_, conversationId) => {
+      suppressChatRealtimeInvalidation("admin", conversationId);
+
       queryClient.setQueryData<ApiListResponse<AdminConversationRecord>>(
         ["admin-conversations"],
         (existingResponse) => {

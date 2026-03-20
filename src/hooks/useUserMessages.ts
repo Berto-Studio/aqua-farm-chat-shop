@@ -10,6 +10,7 @@ import {
   AdminMessageRecord,
   ApiListResponse,
 } from "@/types/admin";
+import { suppressChatRealtimeInvalidation } from "@/lib/chatRealtimeSync";
 
 const isMissingConversationError = (message: string) =>
   /not found|no conversation|does not exist|404/i.test(message);
@@ -93,6 +94,12 @@ export const useSendUserSupportMessage = () => {
     },
     onSuccess: (response) => {
       const nextMessage = response.data;
+      const conversationId =
+        nextMessage?.conversation_id
+          ? String(nextMessage.conversation_id)
+          : undefined;
+
+      suppressChatRealtimeInvalidation("user", conversationId);
 
       queryClient.setQueryData<AdminConversationRecord | undefined>(
         ["user-support-conversation"],
@@ -153,6 +160,15 @@ export const useMarkUserSupportConversationRead = () => {
       return response;
     },
     onSuccess: () => {
+      const activeConversation = queryClient.getQueryData<
+        AdminConversationRecord | undefined
+      >(["user-support-conversation"]);
+
+      suppressChatRealtimeInvalidation(
+        "user",
+        activeConversation?.id ? String(activeConversation.id) : undefined,
+      );
+
       queryClient.setQueryData<AdminConversationRecord | undefined>(
         ["user-support-conversation"],
         (existingConversation) =>

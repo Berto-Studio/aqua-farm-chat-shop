@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { io, Socket } from "socket.io-client";
+import { shouldSuppressChatRealtimeInvalidation } from "@/lib/chatRealtimeSync";
 
 type ChatRealtimeRole = "admin" | "user";
 
@@ -9,6 +10,15 @@ type UseChatRealtimeOptions = {
   enabled?: boolean;
   role: ChatRealtimeRole;
   conversationId?: string;
+};
+
+type SocketEventPayload = {
+  conversation_id?: string | number;
+  conversationId?: string | number;
+  id?: string | number;
+  conversation?: {
+    id?: string | number;
+  } | null;
 };
 
 const ACCESS_TOKEN_COOKIE = "access_token";
@@ -21,12 +31,11 @@ const USE_PLATFORM_PROXY =
   !import.meta.env.DEV && import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
 const USE_PROXY_TUNNEL = USE_DEV_PROXY || USE_PLATFORM_PROXY;
 const SHOULD_FORCE_POLLING = USE_PLATFORM_PROXY;
-const SOCKET_TRANSPORTS = USE_PROXY_TUNNEL
-  ? SHOULD_FORCE_POLLING
-    ? (["polling"] as const)
-    : (["polling", "websocket"] as const)
-  : (["polling", "websocket"] as const);
+const SOCKET_TRANSPORTS = SHOULD_FORCE_POLLING
+  ? (["polling"] as const)
+  : (["websocket"] as const);
 const SHOULD_UPGRADE_SOCKET = !SHOULD_FORCE_POLLING;
+const INVALIDATION_DEBOUNCE_MS = 120;
 const isDocumentVisible = () =>
   typeof document === "undefined" || document.visibilityState === "visible";
 
@@ -57,7 +66,7 @@ const getAccessToken = () => {
   }
 };
 
-const extractConversationId = (payload: Record<string, any> | undefined) => {
+const extractConversationId = (payload: SocketEventPayload | undefined) => {
   if (!payload) return undefined;
 
   const directId =
@@ -88,6 +97,10 @@ export const useChatRealtime = ({
   const joinedConversationIdRef = useRef<string | null>(null);
   const roleRef = useRef(role);
   const conversationIdRef = useRef(conversationId);
+  const pendingAdminConversationIdsRef = useRef<Set<string>>(new Set());
+  const shouldInvalidateAllAdminMessagesRef = useRef(false);
+  const pendingUserInvalidationRef = useRef(false);
+  const invalidateTimerRef = useRef<number | null>(null);
 
   roleRef.current = role;
   conversationIdRef.current = conversationId;
@@ -113,6 +126,44 @@ export const useChatRealtime = ({
       return;
     }
 
+    const flushInvalidations = () => {
+      if (roleRef.current === "admin") {
+        queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
+        queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
+
+        if (shouldInvalidateAllAdminMessagesRef.current) {
+          queryClient.invalidateQueries({ queryKey: ["admin-conversation-messages"] });
+        } else {
+          pendingAdminConversationIdsRef.current.forEach((targetConversationId) => {
+            queryClient.invalidateQueries({
+              queryKey: ["admin-conversation-messages", targetConversationId],
+            });
+          });
+        }
+
+        pendingAdminConversationIdsRef.current = new Set();
+        shouldInvalidateAllAdminMessagesRef.current = false;
+        return;
+      }
+
+      if (pendingUserInvalidationRef.current) {
+        queryClient.invalidateQueries({ queryKey: ["user-support-conversation"] });
+        queryClient.invalidateQueries({ queryKey: ["user-support-messages"] });
+        pendingUserInvalidationRef.current = false;
+      }
+    };
+
+    const scheduleInvalidationFlush = () => {
+      if (invalidateTimerRef.current !== null) {
+        window.clearTimeout(invalidateTimerRef.current);
+      }
+
+      invalidateTimerRef.current = window.setTimeout(() => {
+        invalidateTimerRef.current = null;
+        flushInvalidations();
+      }, INVALIDATION_DEBOUNCE_MS);
+    };
+
     const accessToken = getAccessToken();
     const socket = io(getSocketBaseUrl(), {
       path: "/socket.io",
@@ -130,29 +181,24 @@ export const useChatRealtime = ({
     });
     socketRef.current = socket;
 
-    const invalidateAdminConversationData = (targetConversationId?: string) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
-
-      if (targetConversationId) {
-        queryClient.invalidateQueries({
-          queryKey: ["admin-conversation-messages", targetConversationId],
-        });
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["admin-conversation-messages"] });
-      }
-    };
-
-    const invalidateUserConversationData = () => {
-      queryClient.invalidateQueries({ queryKey: ["user-support-conversation"] });
-      queryClient.invalidateQueries({ queryKey: ["user-support-messages"] });
-    };
-
-    const handleEvent = (payload?: Record<string, any>) => {
+    const handleEvent = (payload?: SocketEventPayload) => {
       const targetConversationId = extractConversationId(payload);
 
       if (roleRef.current === "admin") {
-        invalidateAdminConversationData(targetConversationId);
+        if (
+          targetConversationId &&
+          shouldSuppressChatRealtimeInvalidation("admin", targetConversationId)
+        ) {
+          return;
+        }
+
+        if (targetConversationId) {
+          pendingAdminConversationIdsRef.current.add(targetConversationId);
+        } else {
+          shouldInvalidateAllAdminMessagesRef.current = true;
+        }
+
+        scheduleInvalidationFlush();
         return;
       }
 
@@ -162,7 +208,15 @@ export const useChatRealtime = ({
         !activeConversationId ||
         targetConversationId === activeConversationId
       ) {
-        invalidateUserConversationData();
+        if (
+          targetConversationId &&
+          shouldSuppressChatRealtimeInvalidation("user", targetConversationId)
+        ) {
+          return;
+        }
+
+        pendingUserInvalidationRef.current = true;
+        scheduleInvalidationFlush();
       }
     };
 
@@ -195,6 +249,15 @@ export const useChatRealtime = ({
       if (socketRef.current === socket) {
         socketRef.current = null;
       }
+
+      if (invalidateTimerRef.current !== null) {
+        window.clearTimeout(invalidateTimerRef.current);
+        invalidateTimerRef.current = null;
+      }
+
+      pendingAdminConversationIdsRef.current = new Set();
+      shouldInvalidateAllAdminMessagesRef.current = false;
+      pendingUserInvalidationRef.current = false;
     };
   }, [enabled, isPageVisible, queryClient]);
 

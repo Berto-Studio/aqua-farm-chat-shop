@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Navigate, useNavigate, useParams } from "react-router-dom";
 import CustomerServiceChat from "@/components/chat/CustomerServiceChat";
 import {
@@ -15,6 +15,10 @@ import {
   useUserSupportConversation,
   useUserSupportMessages,
 } from "@/hooks/useUserMessages";
+import {
+  toUnreadCount,
+  useAutoMarkConversationRead,
+} from "@/hooks/useAutoMarkConversationRead";
 import { mapAdminMessageToChatMessage } from "@/lib/adminTransformers";
 import { useUserStore } from "@/store/store";
 import { MessageCircle } from "lucide-react";
@@ -24,14 +28,11 @@ export default function Chat() {
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
   const currentUserId = String(user?.id ?? "user-current");
-
-  if (String(user?.user_type || "").toLowerCase() === "admin") {
-    return <Navigate to="/admin/chat" replace />;
-  }
-
+  const isAdminUser = String(user?.user_type || "").toLowerCase() === "admin";
   const [isOpen, setIsOpen] = useState(true);
+  const isUserChatEnabled = !isAdminUser && isOpen;
   const { data: conversation } = useUserSupportConversation({
-    enabled: isOpen,
+    enabled: isUserChatEnabled,
   });
   const {
     data: messagesResponse,
@@ -41,7 +42,7 @@ export default function Chat() {
   } = useUserSupportMessages(
     { per_page: 100 },
     {
-      enabled: isOpen,
+      enabled: isUserChatEnabled,
     }
   );
   const { mutateAsync: sendSupportMessageAsync, isPending: isSendingMessage } =
@@ -49,9 +50,12 @@ export default function Chat() {
   const { mutate: markConversationRead } = useMarkUserSupportConversationRead();
 
   const activeConversationId = conversation?.id ? String(conversation.id) : undefined;
+  const unreadMessageCount = toUnreadCount(
+    conversation?.unread_count ?? conversation?.unreadCount
+  );
 
   useChatRealtime({
-    enabled: isOpen,
+    enabled: isUserChatEnabled,
     role: "user",
     conversationId: activeConversationId,
   });
@@ -64,11 +68,16 @@ export default function Chat() {
     [messagesResponse?.data]
   );
 
-  useEffect(() => {
-    if (isOpen && activeConversationId) {
-      markConversationRead();
-    }
-  }, [isOpen, markConversationRead, activeConversationId]);
+  useAutoMarkConversationRead({
+    enabled: isUserChatEnabled,
+    conversationId: activeConversationId,
+    unreadCount: unreadMessageCount,
+    onMarkRead: () => markConversationRead(),
+  });
+
+  if (isAdminUser) {
+    return <Navigate to="/admin/chat" replace />;
+  }
 
   if (conversationId) {
     return <Navigate to="/chat" replace />;

@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Bell, CheckCheck, Menu, MessageCircle } from "lucide-react";
@@ -9,13 +10,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { useChatRealtime } from "@/hooks/useChatRealtime";
 import { useAdminConversations } from "@/hooks/useAdminMessages";
 import {
   useAdminNotifications,
   useMarkAdminNotificationRead,
   useMarkAllAdminNotificationsRead,
 } from "@/hooks/useAdminNotifications";
+import { useChatRealtime } from "@/hooks/useChatRealtime";
+import { MarkAdminNotificationRead } from "@/services/admin/notifications";
 import {
   NormalizedAdminNotification,
   normalizeAdminNotification,
@@ -55,6 +57,8 @@ export default function AdminHeader({
 }: AdminHeaderProps) {
   const pathname = useLocation().pathname;
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const lastAutoReadKeyRef = useRef<string | null>(null);
   const isAdminChatRoute = pathname.startsWith("/admin/chat");
   const isDirectMessageRoute =
     /^\/admin\/(?:users|customers)\/[^/]+\/message$/.test(pathname);
@@ -90,6 +94,22 @@ export default function AdminHeader({
   }, [conversationsResponse?.data]);
   const unreadMessageCount =
     unreadConversationMessageCount ?? unreadMessageNotificationCount;
+  const autoReadType = isAdminChatRoute || isDirectMessageRoute
+    ? "message"
+    : pathname.startsWith("/admin/orders")
+      ? "order"
+      : null;
+  const autoReadNotificationIds = useMemo(() => {
+    if (!autoReadType) return [];
+
+    return notifications
+      .filter(
+        (notification) =>
+          !notification.read && notification.type === autoReadType,
+      )
+      .map((notification) => notification.id)
+      .sort();
+  }, [autoReadType, notifications]);
 
   const sortedNotifications = useMemo(
     () =>
@@ -101,22 +121,41 @@ export default function AdminHeader({
   );
 
   useEffect(() => {
-    const typeToMark = isAdminChatRoute || isDirectMessageRoute
-      ? "message"
-      : pathname.startsWith("/admin/orders")
-      ? "order"
-      : null;
+    if (!autoReadType || autoReadNotificationIds.length === 0) {
+      lastAutoReadKeyRef.current = null;
+      return;
+    }
 
-    if (!typeToMark) return;
+    const autoReadKey = `${autoReadType}:${autoReadNotificationIds.join(",")}`;
+    if (lastAutoReadKeyRef.current === autoReadKey) {
+      return;
+    }
 
-    const unreadOfType = notifications.filter(
-      (notification) => !notification.read && notification.type === typeToMark,
-    );
+    lastAutoReadKeyRef.current = autoReadKey;
+    let isCancelled = false;
 
-    unreadOfType.forEach((notification) => {
-      markAsRead(notification.id);
-    });
-  }, [isAdminChatRoute, isDirectMessageRoute, markAsRead, notifications, pathname]);
+    void (async () => {
+      const results = await Promise.allSettled(
+        autoReadNotificationIds.map((notificationId) =>
+          MarkAdminNotificationRead(notificationId),
+        ),
+      );
+
+      if (isCancelled) return;
+
+      const hasUpdatedNotification = results.some(
+        (result) => result.status === "fulfilled" && result.value.success,
+      );
+
+      if (hasUpdatedNotification) {
+        queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
+      }
+    })();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [autoReadNotificationIds, autoReadType, queryClient]);
 
   const handleNotificationClick = (notification: NormalizedAdminNotification) => {
     if (!notification.read) {

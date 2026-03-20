@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { io, Socket } from "socket.io-client";
@@ -17,12 +17,18 @@ const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const RAW_SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
-const USE_PLATFORM_PROXY = import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
+const USE_PLATFORM_PROXY =
+  !import.meta.env.DEV && import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
 const USE_PROXY_TUNNEL = USE_DEV_PROXY || USE_PLATFORM_PROXY;
+const SHOULD_FORCE_POLLING = USE_PLATFORM_PROXY;
 const SOCKET_TRANSPORTS = USE_PROXY_TUNNEL
-  ? (["polling"] as const)
+  ? SHOULD_FORCE_POLLING
+    ? (["polling"] as const)
+    : (["polling", "websocket"] as const)
   : (["polling", "websocket"] as const);
-const SHOULD_UPGRADE_SOCKET = !USE_PROXY_TUNNEL;
+const SHOULD_UPGRADE_SOCKET = !SHOULD_FORCE_POLLING;
+const isDocumentVisible = () =>
+  typeof document === "undefined" || document.visibilityState === "visible";
 
 const getSocketBaseUrl = () => {
   // Keep sockets same-origin when a local or deployment proxy is handling requests.
@@ -77,9 +83,35 @@ export const useChatRealtime = ({
   conversationId,
 }: UseChatRealtimeOptions) => {
   const queryClient = useQueryClient();
+  const [isPageVisible, setIsPageVisible] = useState(isDocumentVisible);
+  const socketRef = useRef<Socket | null>(null);
+  const joinedConversationIdRef = useRef<string | null>(null);
+  const roleRef = useRef(role);
+  const conversationIdRef = useRef(conversationId);
+
+  roleRef.current = role;
+  conversationIdRef.current = conversationId;
 
   useEffect(() => {
-    if (!enabled) return;
+    if (typeof document === "undefined") return;
+
+    const handleVisibilityChange = () => {
+      setIsPageVisible(isDocumentVisible());
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!enabled || !isPageVisible) return;
+
+    if (socketRef.current) {
+      return;
+    }
 
     const accessToken = getAccessToken();
     const socket = io(getSocketBaseUrl(), {
@@ -96,6 +128,7 @@ export const useChatRealtime = ({
         : undefined,
       query: accessToken ? { token: accessToken } : undefined,
     });
+    socketRef.current = socket;
 
     const invalidateAdminConversationData = (targetConversationId?: string) => {
       queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
@@ -118,19 +151,27 @@ export const useChatRealtime = ({
     const handleEvent = (payload?: Record<string, any>) => {
       const targetConversationId = extractConversationId(payload);
 
-      if (role === "admin") {
+      if (roleRef.current === "admin") {
         invalidateAdminConversationData(targetConversationId);
         return;
       }
 
-      if (!targetConversationId || !conversationId || targetConversationId === conversationId) {
+      const activeConversationId = conversationIdRef.current;
+      if (
+        !targetConversationId ||
+        !activeConversationId ||
+        targetConversationId === activeConversationId
+      ) {
         invalidateUserConversationData();
       }
     };
 
     socket.on("connect", () => {
-      if (conversationId) {
-        emitJoinConversation(socket, conversationId);
+      const activeConversationId = conversationIdRef.current;
+
+      if (activeConversationId) {
+        emitJoinConversation(socket, activeConversationId);
+        joinedConversationIdRef.current = activeConversationId;
       }
     });
 
@@ -145,11 +186,35 @@ export const useChatRealtime = ({
       socket.off("message:new", handleEvent);
       socket.off("conversation:read", handleEvent);
 
-      if (conversationId) {
-        emitLeaveConversation(socket, conversationId);
+      if (joinedConversationIdRef.current) {
+        emitLeaveConversation(socket, joinedConversationIdRef.current);
+        joinedConversationIdRef.current = null;
       }
 
       socket.disconnect();
+      if (socketRef.current === socket) {
+        socketRef.current = null;
+      }
     };
-  }, [enabled, role, conversationId, queryClient]);
+  }, [enabled, isPageVisible, queryClient]);
+
+  useEffect(() => {
+    if (!enabled || !isPageVisible) return;
+
+    const socket = socketRef.current;
+    if (!socket?.connected) return;
+
+    const previousConversationId = joinedConversationIdRef.current;
+    const nextConversationId = conversationId ?? null;
+
+    if (previousConversationId && previousConversationId !== nextConversationId) {
+      emitLeaveConversation(socket, previousConversationId);
+    }
+
+    if (nextConversationId && previousConversationId !== nextConversationId) {
+      emitJoinConversation(socket, nextConversationId);
+    }
+
+    joinedConversationIdRef.current = nextConversationId;
+  }, [conversationId, enabled, isPageVisible, role]);
 };

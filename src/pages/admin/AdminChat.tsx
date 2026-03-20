@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { Navigate, useParams } from "react-router-dom";
 import ChatInterface from "@/components/chat/ChatInterface";
 import ChatList from "@/components/chat/ChatList";
@@ -8,6 +8,10 @@ import {
   useMarkAdminConversationRead,
   useSendAdminConversationMessage,
 } from "@/hooks/useAdminMessages";
+import {
+  toUnreadCount,
+  useAutoMarkConversationRead,
+} from "@/hooks/useAutoMarkConversationRead";
 import { useChatRealtime } from "@/hooks/useChatRealtime";
 import {
   mapAdminConversationToChatConversation,
@@ -50,6 +54,7 @@ export default function AdminChat() {
   }, [allConversations, conversationId]);
 
   const activeConversationId = activeConversation?.id;
+  const unreadMessageCount = toUnreadCount(activeConversation?.unreadCount);
 
   const { data: messagesResponse, isLoading: isMessagesLoading } =
     useAdminConversationMessages(activeConversationId, { per_page: 100 });
@@ -69,11 +74,15 @@ export default function AdminChat() {
     [activeConversation?.userName, messagesResponse?.data],
   );
 
-  useEffect(() => {
-    if (activeConversationId) {
-      markConversationRead(activeConversationId);
-    }
-  }, [activeConversationId, markConversationRead]);
+  useAutoMarkConversationRead({
+    conversationId: activeConversationId,
+    unreadCount: unreadMessageCount,
+    onMarkRead: () => {
+      if (activeConversationId) {
+        markConversationRead(activeConversationId);
+      }
+    },
+  });
 
   if (conversationId && !isConversationsLoading && !activeConversation) {
     return <Navigate to="/admin/chat" replace />;

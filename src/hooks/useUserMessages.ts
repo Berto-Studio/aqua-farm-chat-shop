@@ -5,9 +5,28 @@ import {
   MarkUserSupportConversationRead,
   SendUserSupportMessage,
 } from "@/services/userMessages";
+import {
+  AdminConversationRecord,
+  AdminMessageRecord,
+  ApiListResponse,
+} from "@/types/admin";
 
 const isMissingConversationError = (message: string) =>
   /not found|no conversation|does not exist|404/i.test(message);
+
+const appendMessageIfMissing = (
+  messages: AdminMessageRecord[],
+  nextMessage?: AdminMessageRecord,
+) => {
+  if (!nextMessage) return messages;
+
+  const nextMessageId = String(nextMessage.id);
+  if (messages.some((message) => String(message.id) === nextMessageId)) {
+    return messages;
+  }
+
+  return [...messages, nextMessage];
+};
 
 export const useUserSupportConversation = (options?: { enabled?: boolean }) => {
   return useQuery({
@@ -72,9 +91,54 @@ export const useSendUserSupportMessage = () => {
       if (!response.success) throw new Error(response.message);
       return response;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-support-conversation"] });
-      queryClient.invalidateQueries({ queryKey: ["user-support-messages"] });
+    onSuccess: (response) => {
+      const nextMessage = response.data;
+
+      queryClient.setQueryData<AdminConversationRecord | undefined>(
+        ["user-support-conversation"],
+        (existingConversation) => {
+          if (!existingConversation) return existingConversation;
+
+          return {
+            ...existingConversation,
+            latest_message: nextMessage?.content ?? existingConversation.latest_message,
+            latestMessage: nextMessage?.content ?? existingConversation.latestMessage,
+            last_message_at:
+              nextMessage?.created_at ?? existingConversation.last_message_at,
+            lastMessageAt:
+              nextMessage?.created_at ?? existingConversation.lastMessageAt,
+            unread_count: 0,
+            unreadCount: 0,
+          };
+        },
+      );
+
+      queryClient.setQueriesData<ApiListResponse<AdminMessageRecord>>(
+        { queryKey: ["user-support-messages"] },
+        (existingResponse) => {
+          if (!existingResponse || !nextMessage) return existingResponse;
+
+          const nextMessages = appendMessageIfMissing(
+            existingResponse.data,
+            nextMessage,
+          );
+
+          if (nextMessages === existingResponse.data) {
+            return existingResponse;
+          }
+
+          return {
+            ...existingResponse,
+            data: nextMessages,
+            meta: existingResponse.meta
+              ? {
+                  ...existingResponse.meta,
+                  total: Math.max(existingResponse.meta.total, nextMessages.length),
+                }
+              : existingResponse.meta,
+          };
+        },
+      );
     },
   });
 };
@@ -89,8 +153,31 @@ export const useMarkUserSupportConversationRead = () => {
       return response;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-support-conversation"] });
-      queryClient.invalidateQueries({ queryKey: ["user-support-messages"] });
+      queryClient.setQueryData<AdminConversationRecord | undefined>(
+        ["user-support-conversation"],
+        (existingConversation) =>
+          existingConversation
+            ? {
+                ...existingConversation,
+                unread_count: 0,
+                unreadCount: 0,
+              }
+            : existingConversation,
+      );
+
+      queryClient.setQueriesData<ApiListResponse<AdminMessageRecord>>(
+        { queryKey: ["user-support-messages"] },
+        (existingResponse) =>
+          existingResponse
+            ? {
+                ...existingResponse,
+                data: existingResponse.data.map((message) => ({
+                  ...message,
+                  is_read: true,
+                })),
+              }
+            : existingResponse,
+      );
     },
   });
 };

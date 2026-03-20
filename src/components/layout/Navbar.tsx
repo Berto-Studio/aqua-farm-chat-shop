@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Bell, ShoppingCart, Menu, MessageCircle, User } from "lucide-react";
@@ -33,6 +33,10 @@ import {
   useUserSupportConversation,
   useUserSupportMessages,
 } from "@/hooks/useUserMessages";
+import {
+  toUnreadCount,
+  useAutoMarkConversationRead,
+} from "@/hooks/useAutoMarkConversationRead";
 import { mapAdminMessageToChatMessage } from "@/lib/adminTransformers";
 import { useUserStore } from "@/store/store";
 import { useCarts } from "@/hooks/useCart";
@@ -70,6 +74,9 @@ export default function Navbar() {
   const activeConversationId = supportConversation?.id
     ? String(supportConversation.id)
     : undefined;
+  const unreadMessages = toUnreadCount(
+    supportConversation?.unread_count ?? supportConversation?.unreadCount
+  );
   const messages = useMemo(
     () =>
       (messagesResponse?.data || [])
@@ -79,15 +86,12 @@ export default function Navbar() {
         .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime()),
     [messagesResponse?.data],
   );
-  const unreadMessages = Number(
-    supportConversation?.unread_count ?? supportConversation?.unreadCount ?? 0,
-  );
-
-  useEffect(() => {
-    if (isLoggedIn && isChatOpen && activeConversationId) {
-      markConversationRead();
-    }
-  }, [isLoggedIn, isChatOpen, markConversationRead, activeConversationId]);
+  useAutoMarkConversationRead({
+    enabled: isConsumerUser && isChatOpen,
+    conversationId: activeConversationId,
+    unreadCount: unreadMessages,
+    onMarkRead: () => markConversationRead(),
+  });
 
   useChatRealtime({
     enabled: isConsumerUser && !isDedicatedChatRoute,

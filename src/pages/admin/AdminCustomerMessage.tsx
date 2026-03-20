@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,10 @@ import {
   useMarkAdminConversationRead,
   useSendAdminConversationMessage,
 } from "@/hooks/useAdminMessages";
+import {
+  toUnreadCount,
+  useAutoMarkConversationRead,
+} from "@/hooks/useAutoMarkConversationRead";
 import { useChatRealtime } from "@/hooks/useChatRealtime";
 import { useAdminUser } from "@/hooks/useAdminUsers";
 import {
@@ -49,13 +53,19 @@ export default function AdminCustomerMessage() {
       (conversation) => String(conversation.user_id) === String(user.id)
     );
   }, [conversationsResponse?.data, user]);
+  const activeConversationId = activeConversation?.id
+    ? String(activeConversation.id)
+    : undefined;
+  const unreadMessageCount = toUnreadCount(
+    activeConversation?.unread_count ?? activeConversation?.unreadCount
+  );
 
   const { data: messagesResponse, isLoading: isMessagesLoading } =
     useAdminConversationMessages(activeConversation?.id, { per_page: 100 });
 
   useChatRealtime({
     role: "admin",
-    conversationId: activeConversation?.id ? String(activeConversation.id) : undefined,
+    conversationId: activeConversationId,
   });
 
   const messages = useMemo(
@@ -68,11 +78,15 @@ export default function AdminCustomerMessage() {
     [messagesResponse?.data, user]
   );
 
-  useEffect(() => {
-    if (activeConversation?.id) {
-      markConversationRead(String(activeConversation.id));
-    }
-  }, [activeConversation?.id, markConversationRead]);
+  useAutoMarkConversationRead({
+    conversationId: activeConversationId,
+    unreadCount: unreadMessageCount,
+    onMarkRead: () => {
+      if (activeConversationId) {
+        markConversationRead(activeConversationId);
+      }
+    },
+  });
 
   if (!resolvedUserId) {
     return (

@@ -7,6 +7,25 @@ import {
   MarkAdminConversationRead,
   SendAdminConversationMessage,
 } from "@/services/admin/messages";
+import {
+  AdminConversationRecord,
+  AdminMessageRecord,
+  ApiListResponse,
+} from "@/types/admin";
+
+const appendMessageIfMissing = (
+  messages: AdminMessageRecord[],
+  nextMessage?: AdminMessageRecord,
+) => {
+  if (!nextMessage) return messages;
+
+  const nextMessageId = String(nextMessage.id);
+  if (messages.some((message) => String(message.id) === nextMessageId)) {
+    return messages;
+  }
+
+  return [...messages, nextMessage];
+};
 
 export const useAdminConversations = () => {
   return useQuery({
@@ -67,11 +86,63 @@ export const useSendAdminConversationMessage = () => {
       if (!response.success) throw new Error(response.message);
       return response;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ["admin-conversation-messages", variables.conversationId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
+    onSuccess: (response, variables) => {
+      const nextMessage = response.data;
+
+      queryClient.setQueriesData<ApiListResponse<AdminMessageRecord>>(
+        { queryKey: ["admin-conversation-messages", variables.conversationId] },
+        (existingResponse) => {
+          if (!existingResponse || !nextMessage) return existingResponse;
+
+          const nextMessages = appendMessageIfMissing(
+            existingResponse.data,
+            nextMessage,
+          );
+
+          if (nextMessages === existingResponse.data) {
+            return existingResponse;
+          }
+
+          return {
+            ...existingResponse,
+            data: nextMessages,
+            meta: existingResponse.meta
+              ? {
+                  ...existingResponse.meta,
+                  total: Math.max(existingResponse.meta.total, nextMessages.length),
+                }
+              : existingResponse.meta,
+          };
+        },
+      );
+
+      queryClient.setQueryData<ApiListResponse<AdminConversationRecord>>(
+        ["admin-conversations"],
+        (existingResponse) => {
+          if (!existingResponse) return existingResponse;
+
+          return {
+            ...existingResponse,
+            data: existingResponse.data.map((conversation) =>
+              String(conversation.id) === variables.conversationId
+                ? {
+                    ...conversation,
+                    latest_message:
+                      nextMessage?.content ?? conversation.latest_message,
+                    latestMessage:
+                      nextMessage?.content ?? conversation.latestMessage,
+                    last_message_at:
+                      nextMessage?.created_at ?? conversation.last_message_at,
+                    lastMessageAt:
+                      nextMessage?.created_at ?? conversation.lastMessageAt,
+                    unread_count: 0,
+                    unreadCount: 0,
+                  }
+                : conversation,
+            ),
+          };
+        },
+      );
     },
   });
 };
@@ -103,11 +174,39 @@ export const useMarkAdminConversationRead = () => {
       return response;
     },
     onSuccess: (_, conversationId) => {
-      queryClient.invalidateQueries({ queryKey: ["admin-conversations"] });
-      queryClient.invalidateQueries({
-        queryKey: ["admin-conversation-messages", conversationId],
-      });
-      queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
+      queryClient.setQueryData<ApiListResponse<AdminConversationRecord>>(
+        ["admin-conversations"],
+        (existingResponse) => {
+          if (!existingResponse) return existingResponse;
+
+          return {
+            ...existingResponse,
+            data: existingResponse.data.map((conversation) =>
+              String(conversation.id) === conversationId
+                ? {
+                    ...conversation,
+                    unread_count: 0,
+                    unreadCount: 0,
+                  }
+                : conversation,
+            ),
+          };
+        },
+      );
+
+      queryClient.setQueriesData<ApiListResponse<AdminMessageRecord>>(
+        { queryKey: ["admin-conversation-messages", conversationId] },
+        (existingResponse) =>
+          existingResponse
+            ? {
+                ...existingResponse,
+                data: existingResponse.data.map((message) => ({
+                  ...message,
+                  is_read: true,
+                })),
+              }
+            : existingResponse,
+      );
     },
   });
 };

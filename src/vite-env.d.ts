@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_APP_API_URL?: string;
   readonly VITE_SOCKET_URL?: string;
+  readonly VITE_ENABLE_CHAT_REALTIME?: string;
   readonly VITE_USE_DEV_PROXY?: string;
   readonly VITE_USE_PLATFORM_PROXY?: string;
   readonly VITE_PAYSTACK_PUBLIC_KEY?: string;

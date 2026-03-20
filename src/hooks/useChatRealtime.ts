@@ -25,6 +25,8 @@ const ACCESS_TOKEN_COOKIE = "access_token";
 const ACCESS_TOKEN_STORAGE_KEY = "access_token";
 const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
 const RAW_SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
+const CHAT_REALTIME_ENABLED =
+  import.meta.env.DEV || import.meta.env.VITE_ENABLE_CHAT_REALTIME === "true";
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
 const USE_PLATFORM_PROXY =
@@ -120,7 +122,7 @@ export const useChatRealtime = ({
   }, []);
 
   useEffect(() => {
-    if (!enabled || !isPageVisible) return;
+    if (!CHAT_REALTIME_ENABLED || !enabled || !isPageVisible) return;
 
     if (socketRef.current) {
       return;
@@ -262,7 +264,7 @@ export const useChatRealtime = ({
   }, [enabled, isPageVisible, queryClient]);
 
   useEffect(() => {
-    if (!enabled || !isPageVisible) return;
+    if (!CHAT_REALTIME_ENABLED || !enabled || !isPageVisible) return;
 
     const socket = socketRef.current;
     if (!socket?.connected) return;

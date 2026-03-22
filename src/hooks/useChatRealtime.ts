@@ -29,23 +29,21 @@ const CHAT_REALTIME_ENABLED =
   import.meta.env.DEV || import.meta.env.VITE_ENABLE_CHAT_REALTIME === "true";
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
-const USE_PLATFORM_PROXY =
-  !import.meta.env.DEV && import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
-const USE_PROXY_TUNNEL = USE_DEV_PROXY || USE_PLATFORM_PROXY;
-const SHOULD_FORCE_POLLING = USE_PLATFORM_PROXY;
+const SHOULD_FORCE_POLLING =
+  import.meta.env.VITE_SOCKET_FORCE_POLLING === "true";
 const SOCKET_TRANSPORTS = SHOULD_FORCE_POLLING
   ? (["polling"] as const)
-  : (["websocket"] as const);
+  : (["websocket", "polling"] as const);
 const SHOULD_UPGRADE_SOCKET = !SHOULD_FORCE_POLLING;
 const INVALIDATION_DEBOUNCE_MS = 120;
 const isDocumentVisible = () =>
   typeof document === "undefined" || document.visibilityState === "visible";
 
 const getSocketBaseUrl = () => {
-  // Keep sockets same-origin when a local or deployment proxy is handling requests.
-  if (USE_PROXY_TUNNEL) return undefined;
-
   if (RAW_SOCKET_URL) return RAW_SOCKET_URL;
+
+  // Keep local development same-origin when the Vite proxy is handling requests.
+  if (USE_DEV_PROXY) return undefined;
 
   if (!RAW_API_BASE_URL) return undefined;
 

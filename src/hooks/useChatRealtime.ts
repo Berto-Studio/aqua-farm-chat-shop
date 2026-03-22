@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Cookies from "js-cookie";
 import { io, Socket } from "socket.io-client";
@@ -33,11 +33,13 @@ const SHOULD_FORCE_POLLING =
   import.meta.env.VITE_SOCKET_FORCE_POLLING === "true";
 const SOCKET_TRANSPORTS = SHOULD_FORCE_POLLING
   ? (["polling"] as const)
-  : (["websocket", "polling"] as const);
-const SHOULD_UPGRADE_SOCKET = !SHOULD_FORCE_POLLING;
+  : (["websocket"] as const);
 const INVALIDATION_DEBOUNCE_MS = 120;
-const isDocumentVisible = () =>
-  typeof document === "undefined" || document.visibilityState === "visible";
+const SHARED_SOCKET_DISCONNECT_DELAY_MS = 1000;
+
+let sharedSocket: Socket | null = null;
+let sharedSocketSubscribers = 0;
+let sharedSocketDisconnectTimer: number | null = null;
 
 const getSocketBaseUrl = () => {
   if (RAW_SOCKET_URL) return RAW_SOCKET_URL;
@@ -86,13 +88,63 @@ const emitLeaveConversation = (socket: Socket, conversationId: string) => {
   socket.emit("conversation:leave", { conversation_id: conversationId });
 };
 
+const clearScheduledSharedSocketDisconnect = () => {
+  if (sharedSocketDisconnectTimer === null || typeof window === "undefined") {
+    return;
+  }
+
+  window.clearTimeout(sharedSocketDisconnectTimer);
+  sharedSocketDisconnectTimer = null;
+};
+
+const scheduleSharedSocketDisconnect = () => {
+  if (typeof window === "undefined") return;
+
+  clearScheduledSharedSocketDisconnect();
+  sharedSocketDisconnectTimer = window.setTimeout(() => {
+    sharedSocketDisconnectTimer = null;
+
+    if (sharedSocketSubscribers > 0 || !sharedSocket) {
+      return;
+    }
+
+    sharedSocket.disconnect();
+    sharedSocket = null;
+  }, SHARED_SOCKET_DISCONNECT_DELAY_MS);
+};
+
+const getSharedSocket = () => {
+  clearScheduledSharedSocketDisconnect();
+
+  if (sharedSocket) {
+    return sharedSocket;
+  }
+
+  const accessToken = getAccessToken();
+  sharedSocket = io(getSocketBaseUrl(), {
+    path: "/socket.io",
+    transports: [...SOCKET_TRANSPORTS],
+    withCredentials: true,
+    rememberUpgrade: true,
+    auth: accessToken
+      ? {
+          token: accessToken,
+          access_token: accessToken,
+          bearer_token: `Bearer ${accessToken}`,
+        }
+      : undefined,
+    query: accessToken ? { token: accessToken } : undefined,
+  });
+
+  return sharedSocket;
+};
+
 export const useChatRealtime = ({
   enabled = true,
   role,
   conversationId,
 }: UseChatRealtimeOptions) => {
   const queryClient = useQueryClient();
-  const [isPageVisible, setIsPageVisible] = useState(isDocumentVisible);
   const socketRef = useRef<Socket | null>(null);
   const joinedConversationIdRef = useRef<string | null>(null);
   const roleRef = useRef(role);
@@ -106,25 +158,7 @@ export const useChatRealtime = ({
   conversationIdRef.current = conversationId;
 
   useEffect(() => {
-    if (typeof document === "undefined") return;
-
-    const handleVisibilityChange = () => {
-      setIsPageVisible(isDocumentVisible());
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!CHAT_REALTIME_ENABLED || !enabled || !isPageVisible) return;
-
-    if (socketRef.current) {
-      return;
-    }
+    if (!CHAT_REALTIME_ENABLED || !enabled) return;
 
     const flushInvalidations = () => {
       if (roleRef.current === "admin") {
@@ -164,22 +198,18 @@ export const useChatRealtime = ({
       }, INVALIDATION_DEBOUNCE_MS);
     };
 
-    const accessToken = getAccessToken();
-    const socket = io(getSocketBaseUrl(), {
-      path: "/socket.io",
-      transports: [...SOCKET_TRANSPORTS],
-      upgrade: SHOULD_UPGRADE_SOCKET,
-      withCredentials: true,
-      auth: accessToken
-        ? {
-            token: accessToken,
-            access_token: accessToken,
-            bearer_token: `Bearer ${accessToken}`,
-          }
-        : undefined,
-      query: accessToken ? { token: accessToken } : undefined,
-    });
+    const socket = getSharedSocket();
+    sharedSocketSubscribers += 1;
     socketRef.current = socket;
+
+    const handleConnect = () => {
+      const activeConversationId = conversationIdRef.current;
+
+      if (activeConversationId) {
+        emitJoinConversation(socket, activeConversationId);
+        joinedConversationIdRef.current = activeConversationId;
+      }
+    };
 
     const handleEvent = (payload?: SocketEventPayload) => {
       const targetConversationId = extractConversationId(payload);
@@ -220,21 +250,19 @@ export const useChatRealtime = ({
       }
     };
 
-    socket.on("connect", () => {
-      const activeConversationId = conversationIdRef.current;
-
-      if (activeConversationId) {
-        emitJoinConversation(socket, activeConversationId);
-        joinedConversationIdRef.current = activeConversationId;
-      }
-    });
-
+    socket.on("connect", handleConnect);
     socket.on("conversation:new", handleEvent);
     socket.on("conversation:updated", handleEvent);
     socket.on("message:new", handleEvent);
     socket.on("conversation:read", handleEvent);
 
+    if (socket.connected && conversationIdRef.current) {
+      emitJoinConversation(socket, conversationIdRef.current);
+      joinedConversationIdRef.current = conversationIdRef.current;
+    }
+
     return () => {
+      socket.off("connect", handleConnect);
       socket.off("conversation:new", handleEvent);
       socket.off("conversation:updated", handleEvent);
       socket.off("message:new", handleEvent);
@@ -245,7 +273,6 @@ export const useChatRealtime = ({
         joinedConversationIdRef.current = null;
       }
 
-      socket.disconnect();
       if (socketRef.current === socket) {
         socketRef.current = null;
       }
@@ -258,14 +285,19 @@ export const useChatRealtime = ({
       pendingAdminConversationIdsRef.current = new Set();
       shouldInvalidateAllAdminMessagesRef.current = false;
       pendingUserInvalidationRef.current = false;
+
+      sharedSocketSubscribers = Math.max(0, sharedSocketSubscribers - 1);
+      if (sharedSocketSubscribers === 0) {
+        scheduleSharedSocketDisconnect();
+      }
     };
-  }, [enabled, isPageVisible, queryClient]);
+  }, [enabled, queryClient]);
 
   useEffect(() => {
-    if (!CHAT_REALTIME_ENABLED || !enabled || !isPageVisible) return;
+    if (!CHAT_REALTIME_ENABLED || !enabled) return;
 
     const socket = socketRef.current;
-    if (!socket?.connected) return;
+    if (!socket) return;
 
     const previousConversationId = joinedConversationIdRef.current;
     const nextConversationId = conversationId ?? null;
@@ -274,10 +306,14 @@ export const useChatRealtime = ({
       emitLeaveConversation(socket, previousConversationId);
     }
 
-    if (nextConversationId && previousConversationId !== nextConversationId) {
+    if (
+      socket.connected &&
+      nextConversationId &&
+      previousConversationId !== nextConversationId
+    ) {
       emitJoinConversation(socket, nextConversationId);
     }
 
-    joinedConversationIdRef.current = nextConversationId;
-  }, [conversationId, enabled, isPageVisible, role]);
+    joinedConversationIdRef.current = socket.connected ? nextConversationId : null;
+  }, [conversationId, enabled]);
 };

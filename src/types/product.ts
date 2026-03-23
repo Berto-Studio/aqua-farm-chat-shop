@@ -33,6 +33,29 @@ export interface Product {
   weightPerUnit?: string; // Alias for weight_per_unit
 }
 
+export interface ProductFeedback {
+  id: number;
+  product_id: number;
+  user_id: number;
+  user_name: string;
+  rating: number;
+  feedback: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface ProductFeedbackSummary {
+  average_rating: number;
+  total_feedback: number;
+}
+
+export interface ProductFeedbackPaginationMeta {
+  page: number;
+  per_page: number;
+  total: number;
+  pages: number;
+}
+
 export interface ProductStatsResponse {
   data: {
     totalProducts: number;

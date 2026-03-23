@@ -66,7 +66,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <Card className="group overflow-hidden border shadow-sm hover:shadow-lg transition-all duration-300 w-[300px] flex flex-col justify-between">
+    <Card className="group flex h-full w-full flex-col justify-between overflow-hidden border shadow-sm transition-all duration-300 hover:shadow-lg">
       <Link to={`/products/${product.id}`} className="block">
         <div className="relative overflow-hidden bg-muted">
           <AspectRatio ratio={4 / 3}>

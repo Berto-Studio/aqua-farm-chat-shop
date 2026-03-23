@@ -1,6 +1,13 @@
 import { apiRequest } from "@/hooks/useClient";
-import { Product, ProductStatsResponse } from "@/types/product";
+import {
+  Product,
+  ProductFeedback,
+  ProductFeedbackPaginationMeta,
+  ProductFeedbackSummary,
+  ProductStatsResponse,
+} from "@/types/product";
 import { deleteImageFromCloudinary } from "./cloudinary";
+import { buildQueryString } from "./admin/common";
 
 interface ProductsResponse {
   data: Product[];
@@ -13,6 +20,45 @@ interface ProductResponse {
   message: string;
   status: number;
 }
+
+interface ProductFeedbackListResponse {
+  data: ProductFeedback[];
+  message: string;
+  status: number;
+  meta?: ProductFeedbackPaginationMeta;
+  summary?: ProductFeedbackSummary;
+}
+
+interface ProductFeedbackSingleResponse {
+  data: ProductFeedback;
+  message: string;
+  status: number;
+  summary?: ProductFeedbackSummary;
+}
+
+const normalizeProductFeedback = (
+  feedback: Partial<ProductFeedback> | null | undefined
+): ProductFeedback | undefined => {
+  if (!feedback) return undefined;
+
+  return {
+    id: Number(feedback.id || 0),
+    product_id: Number(feedback.product_id || 0),
+    user_id: Number(feedback.user_id || 0),
+    user_name: String(feedback.user_name || "Customer"),
+    rating: Number(feedback.rating || 0),
+    feedback: String(feedback.feedback || ""),
+    created_at: String(feedback.created_at || ""),
+    updated_at: feedback.updated_at ? String(feedback.updated_at) : undefined,
+  };
+};
+
+const normalizeProductFeedbackSummary = (
+  summary?: Partial<ProductFeedbackSummary> | null
+): ProductFeedbackSummary => ({
+  average_rating: Number(summary?.average_rating || 0),
+  total_feedback: Number(summary?.total_feedback || 0),
+});
 
 export default async function GetProducts(): Promise<{
   success: boolean;
@@ -397,6 +443,85 @@ export async function GetFarmerStats(): Promise<{
           ? error.message
           : "Failed to fetch product stats",
       status: 500,
+    };
+  }
+}
+
+export async function GetProductFeedback(
+  productId: string | number,
+  params: { page?: number; per_page?: number } = {}
+): Promise<{
+  success: boolean;
+  data: ProductFeedback[];
+  message: string;
+  status: number;
+  meta?: ProductFeedbackPaginationMeta;
+  summary: ProductFeedbackSummary;
+}> {
+  try {
+    const query = buildQueryString(params as Record<string, unknown>);
+    const response = await apiRequest<ProductFeedbackListResponse>(
+      `products/${productId}/feedback${query}`,
+      "GET"
+    );
+
+    return {
+      success: true,
+      data: Array.isArray(response.data)
+        ? response.data
+            .map((feedback) => normalizeProductFeedback(feedback))
+            .filter((feedback): feedback is ProductFeedback => Boolean(feedback))
+        : [],
+      message: response.message || "Feedback fetched successfully",
+      status: response.status || 200,
+      meta: response.meta,
+      summary: normalizeProductFeedbackSummary(response.summary),
+    };
+  } catch (error) {
+    console.error("Error fetching product feedback:", error);
+    return {
+      success: false,
+      data: [],
+      message:
+        error instanceof Error ? error.message : "Failed to fetch product feedback",
+      status: 500,
+      summary: normalizeProductFeedbackSummary(),
+    };
+  }
+}
+
+export async function UpsertProductFeedback(
+  productId: string | number,
+  payload: { rating: number; feedback: string }
+): Promise<{
+  success: boolean;
+  data?: ProductFeedback;
+  message: string;
+  status: number;
+  summary: ProductFeedbackSummary;
+}> {
+  try {
+    const response = await apiRequest<ProductFeedbackSingleResponse>(
+      `products/${productId}/feedback`,
+      "POST",
+      payload
+    );
+
+    return {
+      success: true,
+      data: normalizeProductFeedback(response.data),
+      message: response.message || "Feedback saved successfully",
+      status: response.status || 200,
+      summary: normalizeProductFeedbackSummary(response.summary),
+    };
+  } catch (error) {
+    console.error("Error saving product feedback:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to save product feedback",
+      status: 500,
+      summary: normalizeProductFeedbackSummary(),
     };
   }
 }

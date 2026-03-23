@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { AspectRatio } from "@/components/ui/aspect-ratio";
 import { Star, ShoppingCart } from "lucide-react";
 import { Product } from "@/types/product";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { AddToCart } from "@/services/cart";
 import { useToast } from "@/hooks/use-toast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useUserStore } from "@/store/store";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
 
 interface ProductCardProps {
   product: Product;
@@ -17,8 +17,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const router = useNavigate();
-  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const requireAuthAction = useRequireAuthAction();
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -37,8 +36,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       quantity: 1,
     };
 
-    if (!isLoggedIn) {
-      router("/login");
+    if (
+      !requireAuthAction({
+        title: "Login required",
+        description: "Please login or register to add this product to your cart.",
+      })
+    ) {
       return;
     }
 

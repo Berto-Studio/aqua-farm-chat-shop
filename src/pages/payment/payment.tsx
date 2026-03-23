@@ -34,6 +34,8 @@ import {
   formatPaymentMethodLabel,
   isPhysicalPaymentMethodValue,
 } from "@/lib/paymentUtils";
+import { useUserStore } from "@/store/store";
+import { useAuthPromptStore } from "@/store/authPromptStore";
 
 type Step = "cart" | "checkout" | "payment";
 type MobileProvider = "mtn" | "airteltigo" | "telecel" | "";
@@ -256,6 +258,8 @@ export default function PaymentProccess() {
   const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const openAuthPrompt = useAuthPromptStore((state) => state.openPrompt);
   const [cartItems, setCartItems] = useState<CartProps[]>([]);
   const [couponCode, setCouponCode] = useState("");
   const [step, setStep] = useState<Step>("cart");
@@ -277,8 +281,17 @@ export default function PaymentProccess() {
     null,
   );
 
-  const { cartItems: serverCartItems } = useCarts();
+  const { cartItems: serverCartItems } = useCarts({ enabled: isLoggedIn });
   const paymentReference = searchParams.get("reference")?.trim() || "";
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      openAuthPrompt({
+        title: "Login required",
+        description: "Please login or register to view your cart and continue to checkout.",
+      });
+    }
+  }, [isLoggedIn, openAuthPrompt]);
 
   useEffect(() => {
     setCartItems(serverCartItems);
@@ -943,6 +956,42 @@ export default function PaymentProccess() {
         </CardContent>
       </Card>
     ) : null;
+
+  if (!isLoggedIn) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <Card className="mx-auto max-w-lg text-center">
+          <CardContent className="space-y-4 p-8">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-secondary/50">
+              <ShoppingBag className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold">Login to view your cart</h1>
+              <p className="text-sm text-muted-foreground">
+                Please login or register before reviewing your cart and completing checkout.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <Button
+                onClick={() =>
+                  openAuthPrompt({
+                    title: "Login required",
+                    description:
+                      "Please login or register to view your cart and continue to checkout.",
+                  })
+                }
+              >
+                Login or register
+              </Button>
+              <Button asChild variant="outline">
+                <Link to="/products">Continue shopping</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

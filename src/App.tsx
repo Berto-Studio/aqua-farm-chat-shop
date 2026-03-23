@@ -7,6 +7,7 @@ import { ThemeProvider } from "next-themes";
 import Layout from "./components/layout/Layout";
 import AdminLayout from "./components/admin/AdminLayout";
 import AuthBootstrap from "./components/auth/AuthBootstrap";
+import AuthRequiredDialog from "./components/auth/AuthRequiredDialog";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import ProductDetail from "./pages/products/ProductDetail";
@@ -77,6 +78,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthBootstrap />
+          <AuthRequiredDialog />
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Index />} />
@@ -142,11 +144,20 @@ const App = () => (
             >
               <Route index element={<AdminDashboard />} />
               <Route path="products" element={<AdminProducts />} />
-              <Route path="products/:productId" element={<AdminProductDetails />} />
-              <Route path="products/:productId/edit" element={<AdminProductEdit />} />
+              <Route
+                path="products/:productId"
+                element={<AdminProductDetails />}
+              />
+              <Route
+                path="products/:productId/edit"
+                element={<AdminProductEdit />}
+              />
               <Route path="services" element={<AdminServices />} />
               <Route path="services/new" element={<AdminServiceCreate />} />
-              <Route path="services/:serviceId" element={<AdminServiceDetails />} />
+              <Route
+                path="services/:serviceId"
+                element={<AdminServiceDetails />}
+              />
               <Route
                 path="services/:serviceId/edit"
                 element={<AdminServiceEdit />}
@@ -156,9 +167,15 @@ const App = () => (
               <Route path="payments" element={<AdminPayments />} />
               <Route path="users" element={<AdminCustomers />} />
               <Route path="users/:userId" element={<AdminCustomerDetails />} />
-              <Route path="users/:userId/message" element={<AdminCustomerMessage />} />
+              <Route
+                path="users/:userId/message"
+                element={<AdminCustomerMessage />}
+              />
               <Route path="customers" element={<AdminCustomers />} />
-              <Route path="customers/:customerId" element={<AdminCustomerDetails />} />
+              <Route
+                path="customers/:customerId"
+                element={<AdminCustomerDetails />}
+              />
               <Route
                 path="customers/:customerId/message"
                 element={<AdminCustomerMessage />}

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams, useNavigate } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
 import {
   getProductCareGuideSections,
   getProductDetailsSections,
@@ -76,10 +77,10 @@ const FeedbackStars = ({
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
-  const router = useNavigate();
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
+  const requireAuthAction = useRequireAuthAction();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -247,8 +248,12 @@ export default function ProductDetail() {
       quantity: quantity,
     };
 
-    if (!isLoggedIn) {
-      router("/login");
+    if (
+      !requireAuthAction({
+        title: "Login required",
+        description: "Please login or register to add this product to your cart.",
+      })
+    ) {
       return;
     }
 
@@ -280,12 +285,12 @@ export default function ProductDetail() {
 
     if (!id) return;
 
-    if (!isLoggedIn) {
-      toast({
+    if (
+      !requireAuthAction({
         title: "Login required",
-        description: "Sign in first to leave feedback for this product.",
-        variant: "destructive",
-      });
+        description: "Please login or register to leave feedback for this product.",
+      })
+    ) {
       return;
     }
 
@@ -377,6 +382,23 @@ export default function ProductDetail() {
       : Number(product.rating || 0);
   const reviewCount =
     feedbackSummary.total_feedback > 0 ? feedbackSummary.total_feedback : 0;
+
+  const handleChatClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (isLoggedIn) return;
+
+    event.preventDefault();
+    requireAuthAction({
+      title: "Login required",
+      description: "Please login or register to chat with our specialists.",
+    });
+  };
+
+  const handleFeedbackPrompt = () => {
+    requireAuthAction({
+      title: "Login required",
+      description: "Please login or register to leave feedback for this product.",
+    });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -546,7 +568,11 @@ export default function ProductDetail() {
 
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-primary" />
-            <Link to="/chat" className="text-primary hover:underline">
+            <Link
+              to="/chat"
+              className="text-primary hover:underline"
+              onClick={handleChatClick}
+            >
               Have questions? Chat with our specialists
             </Link>
           </div>
@@ -664,8 +690,8 @@ export default function ProductDetail() {
                       Sign in to leave a rating and written feedback for this
                       product.
                     </p>
-                    <Button asChild variant="outline">
-                      <Link to="/login">Login to leave feedback</Link>
+                    <Button variant="outline" onClick={handleFeedbackPrompt}>
+                      Leave feedback
                     </Button>
                   </div>
                 )}

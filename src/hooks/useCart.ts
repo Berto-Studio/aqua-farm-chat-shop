@@ -1,14 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { GetAllCart } from "@/services/cart";
-import { useNavigate } from "react-router-dom";
 
 type UseCartsOptions = {
   enabled?: boolean;
 };
 
 export const useCarts = (options?: UseCartsOptions) => {
-  const navigate = useNavigate();
-
   const {
     data: cartItems = [],
     isLoading,
@@ -18,7 +15,6 @@ export const useCarts = (options?: UseCartsOptions) => {
     queryFn: async () => {
       const response = await GetAllCart();
       if (!response.success) {
-        navigate("/login"); // redirect if token invalid
         throw new Error(response.message);
       }
       return response.data;

@@ -2,19 +2,19 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff, ArrowRight, User, Check, Mail } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, Check, Mail } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 import { AuthLayout } from "@/components/authentication/AuthLayout";
+import { PolicyDialog } from "@/components/authentication/PolicyDialog";
 import Register from "@/services/auth/register";
 
 const RegisterPage = () => {
   const [activeStage, setActiveStage] = useState<string>("1");
   const [isLoading, setIsLoading] = useState(false);
+  const [isPolicyOpen, setIsPolicyOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -29,14 +29,13 @@ const RegisterPage = () => {
     profilePicture: null as File | null,
     password: "",
     confirmPassword: "",
-    accountType: "personal",
     agreeTerms: false,
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value, type } = e.target;
     if (type === "checkbox") {
@@ -57,13 +56,6 @@ const RegisterPage = () => {
         [name]: value,
       });
     }
-  };
-
-  const handleRadioChange = (value: string) => {
-    setFormData({
-      ...formData,
-      accountType: value,
-    });
   };
 
   const validateFirstStage = () => {
@@ -163,8 +155,9 @@ const RegisterPage = () => {
   const validateFinalStage = () => {
     if (!formData.agreeTerms) {
       toast({
-        title: "Terms Not Accepted",
-        description: "Please agree to the terms and conditions.",
+        title: "Policy Not Accepted",
+        description:
+          "Please accept the Pomegrid Aqua policy before continuing.",
         variant: "destructive",
       });
       return false;
@@ -222,7 +215,7 @@ const RegisterPage = () => {
         password: formData.password,
         full_name: `${formData.firstName} ${formData.lastName}`,
         phone: formData.phone,
-        user_type: formData.accountType === "personal" ? "user" : "worker",
+        user_type: "user",
         address: "", // optional, can be added later
         profile_image_url: profileImageUrl,
         date_of_birth: formData.dateOfBirth,
@@ -295,6 +288,39 @@ const RegisterPage = () => {
     );
   };
 
+  const reviewItems = [
+    {
+      label: "Full Name",
+      value:
+        `${formData.firstName} ${formData.lastName}`.trim() || "Not provided",
+    },
+    {
+      label: "Email Address",
+      value: formData.email || "Not provided",
+    },
+    {
+      label: "Phone Number",
+      value: formData.phone || "Not provided",
+    },
+    {
+      label: "Date of Birth",
+      value: formData.dateOfBirth || "Not provided",
+    },
+    {
+      label: "Gender",
+      value: formData.gender
+        ? formData.gender
+            .split("-")
+            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ")
+        : "Not provided",
+    },
+    {
+      label: "Password",
+      value: formData.password ? "Password created and confirmed" : "Not set",
+    },
+  ];
+
   return (
     <AuthLayout>
       <div className="flex flex-col items-center space-y-2 text-center">
@@ -305,14 +331,14 @@ const RegisterPage = () => {
           Create an account
         </h1>
         <p className="text-sm text-gray-500">
-          Join inSpace and unlock a world of possibilities
+          Join Pomegrid Aqua and create your customer account
         </p>
       </div>
 
       <div className="mt-8">
         {renderProgressIndicator()}
 
-        <Tabs value={activeStage} className="space-y-6">
+        <Tabs value={activeStage} className="space-y-4">
           <TabsContent value="1" className="animate-fadeIn space-y-6 mt-4">
             <h2 className="text-xl font-medium text-theme-black">
               Basic Information
@@ -520,58 +546,69 @@ const RegisterPage = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="4" className="animate-fadeIn space-y-6 mt-4">
+          <TabsContent value="4" className="animate-fadeIn space-y-4">
             <h2 className="text-xl font-medium text-theme-black">
-              Almost there!
+              Review and Finish
             </h2>
+            <p className="text-sm text-gray-500">
+              Confirm your details and accept the Pomegrid Aqua policy to
+              complete registration.
+            </p>
 
-            <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">
-                  Account Type
-                </h3>
-                <RadioGroup
-                  value={formData.accountType}
-                  onValueChange={handleRadioChange}
-                  className="flex flex-col space-y-2"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="personal" id="personal" />
-                    <Label htmlFor="personal" className="cursor-pointer">
-                      Personal
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="business" id="business" />
-                    <Label htmlFor="business" className="cursor-pointer">
-                      Business
-                    </Label>
-                  </div>
-                </RadioGroup>
+            <div className="space-y-4">
+              <div className="">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {reviewItems.map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-lg border border-gray-100 bg-gray-50 p-3"
+                    >
+                      <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                        {item.label}
+                      </p>
+                      <p className="mt-1.5 text-sm font-medium text-theme-black">
+                        {item.value}
+                      </p>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="agreeTerms"
-                  name="agreeTerms"
-                  checked={formData.agreeTerms}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, agreeTerms: checked === true })
-                  }
-                />
-                <label
-                  htmlFor="agreeTerms"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  I agree to the{" "}
-                  <Link to="#" className="text-theme-green hover:underline">
-                    terms of service
-                  </Link>{" "}
-                  and{" "}
-                  <Link to="#" className="text-theme-green hover:underline">
-                    privacy policy
-                  </Link>
-                </label>
+              <div className="">
+                <div className="space-y-1.5">
+                  <h3 className="text-xl font-medium text-theme-black">
+                    Policy Acceptance
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Please read and accept the policy before creating your
+                    account.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setIsPolicyOpen(true)}
+                    className="text-sm font-medium text-theme-green underline underline-offset-4 hover:text-theme-dark-green"
+                  >
+                    Read the Pomegrid Aqua policy
+                  </button>
+                </div>
+
+                <div className="mt-3 flex items-start space-x-3">
+                  <Checkbox
+                    id="agreeTerms"
+                    name="agreeTerms"
+                    checked={formData.agreeTerms}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, agreeTerms: checked === true })
+                    }
+                  />
+                  <label
+                    htmlFor="agreeTerms"
+                    className="text-sm font-medium leading-5 text-gray-700 peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
+                    I have reviewed my details and I accept the Pomegrid Aqua
+                    policy.
+                  </label>
+                </div>
               </div>
             </div>
           </TabsContent>
@@ -618,6 +655,8 @@ const RegisterPage = () => {
           </Link>
         </p>
       </div>
+
+      <PolicyDialog open={isPolicyOpen} onOpenChange={setIsPolicyOpen} />
     </AuthLayout>
   );
 };

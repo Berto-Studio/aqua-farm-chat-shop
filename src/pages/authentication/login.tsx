@@ -56,7 +56,7 @@ const Index = () => {
           <div className="rounded-full bg-theme-green w-8 h-8 animate-pulse"></div>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-theme-black">
-          Welcome to inSpace
+          Welcome to Pomegrid Aqua
         </h1>
         <p className="text-sm text-gray-500">Sign in to access your account</p>
       </div>

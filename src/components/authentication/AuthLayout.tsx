@@ -7,12 +7,12 @@ interface AuthLayoutProps {
 
 export const AuthLayout = ({ children, image }: AuthLayoutProps) => {
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-theme-white">
-      <div className="w-full md:w-1/2 flex flex-col justify-center items-center p-8">
+    <div className="min-h-screen w-full bg-theme-white lg:flex lg:h-screen lg:overflow-hidden">
+      <div className="flex w-full items-start justify-center px-4 py-8 sm:px-6 md:px-8 lg:w-1/2 lg:overflow-y-auto lg:py-10">
         <div className="w-full max-w-md space-y-8">{children}</div>
       </div>
 
-      <div className="hidden md:block md:w-1/2 bg-gradient-to-br from-theme-green to-theme-dark-green relative overflow-hidden">
+      <div className="relative hidden lg:block lg:w-1/2 overflow-hidden bg-gradient-to-br from-theme-green to-theme-dark-green">
         <div className="absolute inset-0 bg-[url('/logi-bg.jpg')] bg-cover bg-center opacity-20"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-green-600/80 to-black/80"></div>
 
@@ -36,11 +36,13 @@ export const AuthLayout = ({ children, image }: AuthLayoutProps) => {
                 </svg>
               </div>
             </div>
-            <h2 className="text-3xl font-bold mb-4">Welcome to inSpace</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              Welcome to Pomegrid Aqua
+            </h2>
             <p className="text-lg text-theme-white/80">
-              Join our community and discover a new world of possibilities.
-              Create, connect, and collaborate in a space designed for
-              innovation.
+              Fresh aquaculture products, trusted service, and simple account
+              access for customers who want a smoother farm-to-table
+              experience.
             </p>
           </div>
         </div>

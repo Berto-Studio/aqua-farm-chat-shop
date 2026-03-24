@@ -45,8 +45,10 @@ import { useChatRealtime } from "@/hooks/useChatRealtime";
 
 export default function Navbar() {
   const isMobile = useIsMobile();
-  const pathname = useLocation().pathname;
+  const location = useLocation();
+  const pathname = location.pathname;
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const returnTo = `${location.pathname}${location.search}${location.hash}` || "/";
 
   // Zustand store for user and login state
   const { user, isLoggedIn, isLoading } = useUserStore();
@@ -297,12 +299,20 @@ export default function Navbar() {
                   ) : (
                     <>
                       <DropdownMenuItem asChild>
-                        <Link to="/login" className="cursor-pointer">
+                        <Link
+                          to="/login"
+                          state={{ returnTo }}
+                          className="cursor-pointer"
+                        >
                           Login
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild>
-                        <Link to="/register" className="cursor-pointer">
+                        <Link
+                          to="/register"
+                          state={{ returnTo }}
+                          className="cursor-pointer"
+                        >
                           Register
                         </Link>
                       </DropdownMenuItem>

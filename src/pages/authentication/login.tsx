@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, LogIn } from "lucide-react";
@@ -14,7 +14,13 @@ const Index = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const user = useUserStore((state) => state.user);
+  const returnTo =
+    typeof location.state?.returnTo === "string"
+      ? location.state.returnTo
+      : "/";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,13 +29,37 @@ const Index = () => {
     try {
       const response = await logIn({ email, password });
       if (response.success) {
+        const loggedInUser = useUserStore.getState().user || user;
+        const isUnverified = loggedInUser?.is_active === false;
+
         toast({
-          title: "Success",
-          description: "You have successfully logged in.",
+          title: isUnverified ? "Verification required" : "Success",
+          description: isUnverified
+            ? "Please verify your email or phone number to continue."
+            : "You have successfully logged in.",
           variant: "success",
         });
+
+        if (isUnverified) {
+          navigate("/verify-otp", {
+            replace: true,
+            state: {
+              verificationType: "email",
+              contactInfo:
+                loggedInUser?.email || loggedInUser?.phone || "",
+              email: loggedInUser?.email || "",
+              phone:
+                loggedInUser?.phone ||
+                loggedInUser?.phone_number?.toString() ||
+                "",
+              returnTo,
+            },
+          });
+          return;
+        }
+
         console.log("Login successful, navigating...");
-        navigate("/");
+        navigate(returnTo, { replace: true });
       } else {
         toast({
           title: "Error",
@@ -140,6 +170,7 @@ const Index = () => {
           Don't have an account?{" "}
           <Link
             to="/register"
+            state={{ returnTo }}
             className="text-theme-green hover:underline font-medium"
           >
             Sign up

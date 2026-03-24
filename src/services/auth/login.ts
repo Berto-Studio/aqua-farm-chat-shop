@@ -71,6 +71,7 @@ export default async function logIn({ email, password }: loginProps): Promise<{
     setUser({
       id: String(userData.id),
       email: userData.email,
+      phone: userData.phone,
       user_type: normalizeUserType(userData.user_type),
       full_name: userData.full_name,
       phone_number: toNumericPhone(userData.phone),

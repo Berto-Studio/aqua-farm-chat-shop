@@ -5,18 +5,53 @@ import { ArrowLeft, Mail, Phone, CheckCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { AuthLayout } from "@/components/authentication/AuthLayout";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useUserStore } from "@/store/store";
 
 const OtpVerification = () => {
-  const [otp, setOtp] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isResending, setIsResending] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-
-  // Get verification type and contact info from navigation state
-  const verificationType = location.state?.verificationType || "email";
-  const contactInfo = location.state?.contactInfo || "";
+  const currentUser = useUserStore((state) => state.user);
+  const setUser = useUserStore((state) => state.setUser);
+  const email =
+    typeof location.state?.email === "string"
+      ? location.state.email
+      : currentUser?.email ||
+        (location.state?.verificationType === "email"
+          ? String(location.state?.contactInfo || "")
+          : "");
+  const phone =
+    typeof location.state?.phone === "string"
+      ? location.state.phone
+      : currentUser?.phone ||
+        (currentUser?.phone_number
+          ? String(currentUser.phone_number)
+          : location.state?.verificationType === "phone"
+            ? String(location.state?.contactInfo || "")
+            : "");
+  const returnTo =
+    typeof location.state?.returnTo === "string"
+      ? location.state.returnTo
+      : "/";
+  const initialVerificationType =
+    location.state?.verificationType === "phone" && phone
+      ? "phone"
+      : email
+        ? "email"
+        : phone
+          ? "phone"
+          : "email";
+  const [otp, setOtp] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [verificationType, setVerificationType] = useState<"email" | "phone">(
+    initialVerificationType,
+  );
+  const canVerifyByEmail = Boolean(email);
+  const canVerifyByPhone = Boolean(phone);
+  const contactInfo = verificationType === "phone" ? phone : email;
+  const verificationLabel =
+    verificationType === "email" ? "Email" : "Phone Number";
 
   const handleVerifyOtp = async () => {
     if (otp.length !== 6) {
@@ -36,13 +71,21 @@ const OtpVerification = () => {
       
       // For demo purposes, accept any 6-digit code
       toast({
-        title: "Email verified successfully!",
-        description: "Your account has been created and verified. You can now sign in.",
+        title: `${verificationLabel} verified successfully!`,
+        description:
+          "Your account has been created and verified. Redirecting you now.",
       });
 
-      // Navigate to login page after successful verification
+      if (currentUser) {
+        setUser({
+          ...currentUser,
+          is_active: true,
+        });
+      }
+
+      // Navigate back to the page the user came from after successful verification
       setTimeout(() => {
-        navigate("/login");
+        navigate(returnTo, { replace: true });
       }, 1500);
     } catch (error) {
       toast({
@@ -90,7 +133,7 @@ const OtpVerification = () => {
         
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Verify Your {verificationType === "email" ? "Email" : "Phone Number"}
+            Verify Your {verificationLabel}
           </h1>
           <p className="text-sm text-muted-foreground max-w-md">
             We've sent a 6-digit verification code to{" "}
@@ -100,6 +143,36 @@ const OtpVerification = () => {
       </div>
 
       <div className="mt-8 space-y-6">
+        {(canVerifyByEmail || canVerifyByPhone) && (
+          <div className="space-y-3">
+            <p className="text-sm font-medium text-center text-foreground">
+              Choose how you want to verify
+            </p>
+            <div className="flex justify-center gap-3">
+              {canVerifyByEmail && (
+                <Button
+                  type="button"
+                  variant={verificationType === "email" ? "default" : "outline"}
+                  onClick={() => setVerificationType("email")}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email
+                </Button>
+              )}
+              {canVerifyByPhone && (
+                <Button
+                  type="button"
+                  variant={verificationType === "phone" ? "default" : "outline"}
+                  onClick={() => setVerificationType("phone")}
+                >
+                  <Phone className="mr-2 h-4 w-4" />
+                  Phone
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           <label className="block text-sm font-medium text-foreground text-center">
             Enter verification code
@@ -156,7 +229,7 @@ const OtpVerification = () => {
 
           <Button
             variant="outline"
-            onClick={() => navigate("/register")}
+            onClick={() => navigate("/register", { state: { returnTo } })}
             className="w-full"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />

@@ -11,12 +11,41 @@ export interface RegisterProps {
   address?: string;
   profile_image_url?: string;
   date_of_birth: string;
+  accept_policy: boolean;
 }
 
-const normalizeRegistrationUserType = (userType: RegisterProps["user_type"]) => {
+interface RegisterResponse {
+  data?: {
+    access_token?: string;
+    csrf_token?: string;
+  } | null;
+  message?: string;
+  status?: number | string;
+}
+
+const normalizeRegistrationUserType = (
+  userType: RegisterProps["user_type"],
+) => {
   if (userType === "consumer") return "user";
   if (userType === "farmer") return "worker";
   return userType;
+};
+
+const normalizeResponseStatus = (status?: number | string) => {
+  if (typeof status === "string") {
+    const parsedStatus = Number(status);
+    return Number.isFinite(parsedStatus) ? parsedStatus : undefined;
+  }
+
+  return status;
+};
+
+const isSuccessfulRegistrationStatus = (status?: number | string) => {
+  const normalizedStatus = normalizeResponseStatus(status);
+  return (
+    normalizedStatus === undefined ||
+    (normalizedStatus >= 200 && normalizedStatus < 300)
+  );
 };
 
 export default async function Register(payload: RegisterProps): Promise<{
@@ -29,14 +58,15 @@ export default async function Register(payload: RegisterProps): Promise<{
   try {
     setLoading(true);
 
-    const response = await apiRequest<any>("auth/register", "POST", {
+    const response = await apiRequest<RegisterResponse>("auth/register", "POST", {
       ...payload,
       user_type: normalizeRegistrationUserType(payload.user_type),
     });
 
-    const { status, message } = response;
+    const status = normalizeResponseStatus(response.status);
+    const { message } = response;
 
-    if (status !== 200) {
+    if (!isSuccessfulRegistrationStatus(status)) {
       return {
         success: false,
         message: message || "Registration failed",

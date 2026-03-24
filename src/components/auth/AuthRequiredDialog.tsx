@@ -9,18 +9,21 @@ import {
 } from "@/components/ui/dialog";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 import { LogIn, UserPlus } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AuthRequiredDialog() {
   const navigate = useNavigate();
+  const location = useLocation();
   const isOpen = useAuthPromptStore((state) => state.isOpen);
   const title = useAuthPromptStore((state) => state.title);
   const description = useAuthPromptStore((state) => state.description);
   const closePrompt = useAuthPromptStore((state) => state.closePrompt);
+  const returnTo =
+    `${location.pathname}${location.search}${location.hash}` || "/";
 
   const handleNavigate = (path: "/login" | "/register") => {
     closePrompt();
-    navigate(path);
+    navigate(path, { state: { returnTo } });
   };
 
   return (

@@ -69,6 +69,7 @@ type User = {
   id: string;
   full_name?: string;
   email?: string;
+  phone?: string;
   role?: string;
   is_active?: boolean;
   username?: string;
@@ -195,9 +196,16 @@ export const useUserStore = create<UserState>()(
                 ...currentUser,
                 id: String(response.data.id),
                 email: response.data.email,
+                phone: response.data.phone || currentUser?.phone,
                 full_name: response.data.full_name,
                 user_type: normalizeUserType(response.data.user_type),
                 is_admin: Boolean(response.data.is_admin),
+                is_active:
+                  typeof response.data.is_active === "boolean"
+                    ? response.data.is_active
+                    : typeof response.data.is_active === "number"
+                      ? Boolean(response.data.is_active)
+                      : currentUser?.is_active,
               },
               isLoggedIn: true,
               lastValidatedAt: Date.now(),

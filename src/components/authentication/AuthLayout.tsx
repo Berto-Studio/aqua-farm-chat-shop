@@ -8,7 +8,7 @@ interface AuthLayoutProps {
 export const AuthLayout = ({ children, image }: AuthLayoutProps) => {
   return (
     <div className="min-h-screen w-full bg-theme-white lg:flex lg:h-screen lg:overflow-hidden">
-      <div className="flex w-full items-start justify-center px-4 py-8 sm:px-6 md:px-8 lg:w-1/2 lg:overflow-y-auto lg:py-10">
+      <div className="flex min-h-screen w-full items-center justify-center px-4 py-8 sm:px-6 md:px-8 lg:min-h-0 lg:w-1/2 lg:overflow-y-auto lg:py-10">
         <div className="w-full max-w-md space-y-8">{children}</div>
       </div>
 

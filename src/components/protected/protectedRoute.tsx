@@ -1,5 +1,5 @@
 import { useUserStore } from "@/store/store";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 
 export default function ProtectedRoute({
   children,
@@ -8,11 +8,14 @@ export default function ProtectedRoute({
   children: JSX.Element;
   requireAdmin?: boolean;
 }) {
+  const location = useLocation();
   const user = useUserStore((state) => state.user);
   const isLoggedIn = useUserStore((state) => state.isLoggedIn);
   const isLoading = useUserStore((state) => state.isLoading);
   const hasHydrated = useUserStore((state) => state.hasHydrated);
   const authInitialized = useUserStore((state) => state.authInitialized);
+  const returnTo =
+    `${location.pathname}${location.search}${location.hash}` || "/";
 
   if (!hasHydrated || !authInitialized || isLoading) {
     return (
@@ -23,7 +26,23 @@ export default function ProtectedRoute({
   }
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ returnTo }} />;
+  }
+
+  if (user?.is_active === false) {
+    return (
+      <Navigate
+        to="/verify-otp"
+        replace
+        state={{
+          verificationType: "email",
+          contactInfo: user.email || user.phone || "",
+          email: user.email || "",
+          phone: user.phone || user.phone_number?.toString() || "",
+          returnTo,
+        }}
+      />
+    );
   }
 
   if (requireAdmin) {
@@ -33,7 +52,7 @@ export default function ProtectedRoute({
       String(user?.role || "").toLowerCase() === "admin";
 
     if (!isAdminUser) {
-      return <Navigate to="/login" replace />;
+      return <Navigate to="/login" replace state={{ returnTo }} />;
     }
   }
 

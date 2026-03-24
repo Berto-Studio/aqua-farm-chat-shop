@@ -4,8 +4,10 @@ export interface AuthMeData {
   id: string | number;
   email: string;
   full_name: string;
+  phone?: string;
   user_type?: string;
   is_admin?: number | boolean;
+  is_active?: number | boolean;
 }
 
 interface AuthMeResponse {

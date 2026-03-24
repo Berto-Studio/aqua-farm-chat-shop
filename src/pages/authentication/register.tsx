@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useLocation, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Eye, EyeOff, ArrowRight, Check, Mail } from "lucide-react";
@@ -16,7 +16,12 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isPolicyOpen, setIsPolicyOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const returnTo =
+    typeof location.state?.returnTo === "string"
+      ? location.state.returnTo
+      : "/";
 
   // Form state
   const [formData, setFormData] = useState({
@@ -162,7 +167,6 @@ const RegisterPage = () => {
       });
       return false;
     }
-
     return true;
   };
 
@@ -219,21 +223,18 @@ const RegisterPage = () => {
         address: "", // optional, can be added later
         profile_image_url: profileImageUrl,
         date_of_birth: formData.dateOfBirth,
+        accept_policy: formData.agreeTerms,
       });
 
       if (response.success) {
         toast({
-          title: "Registration submitted successfully!",
-          description:
-            "Please verify your email to complete your registration.",
+          title: "Registration successful!",
+          description: "Your account has been created. Please sign in to continue.",
         });
 
-        // Navigate to OTP verification
-        navigate("/verify-otp", {
-          state: {
-            verificationType: "email",
-            contactInfo: formData.email,
-          },
+        navigate("/login", {
+          replace: true,
+          state: { returnTo },
         });
       } else {
         toast({
@@ -650,7 +651,11 @@ const RegisterPage = () => {
       <div className="mt-6 text-center">
         <p className="text-sm text-gray-500">
           Already have an account?{" "}
-          <Link to="/" className="text-theme-green hover:underline font-medium">
+          <Link
+            to="/login"
+            state={{ returnTo }}
+            className="text-theme-green hover:underline font-medium"
+          >
             Sign in
           </Link>
         </p>

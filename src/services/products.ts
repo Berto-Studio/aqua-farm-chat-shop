@@ -1,24 +1,46 @@
 import { apiRequest } from "@/hooks/useClient";
 import {
   Product,
+  ProductCategory,
   ProductFeedback,
   ProductFeedbackPaginationMeta,
   ProductFeedbackSummary,
   ProductStatsResponse,
 } from "@/types/product";
+import { PaginationMeta } from "@/types/admin";
 import { deleteImageFromCloudinary } from "./cloudinary";
 import { buildQueryString } from "./admin/common";
 
 interface ProductsResponse {
-  data: Product[];
-  message: string;
-  status: number;
+  data?: ProductApiRecord[];
+  message?: string;
+  status?: number;
 }
 
 interface ProductResponse {
-  data: Product;
-  message: string;
-  status: number;
+  data?: ProductApiRecord;
+  message?: string;
+  status?: number;
+}
+
+interface FeaturedProductsResponse {
+  data?: ProductApiRecord[];
+  items?: ProductApiRecord[];
+  results?: ProductApiRecord[];
+  rows?: ProductApiRecord[];
+  message?: string;
+  status?: number;
+  meta?: Partial<PaginationMeta>;
+  pagination?: Partial<PaginationMeta>;
+  page?: Partial<PaginationMeta>;
+}
+
+interface FeatureProductResponse {
+  data?: ProductApiRecord;
+  item?: ProductApiRecord;
+  result?: ProductApiRecord;
+  message?: string;
+  status?: number;
 }
 
 interface ProductFeedbackListResponse {
@@ -35,6 +57,129 @@ interface ProductFeedbackSingleResponse {
   status: number;
   summary?: ProductFeedbackSummary;
 }
+
+type ProductApiRecord = Partial<Product> & {
+  id?: string | number;
+  title?: string;
+  name?: string;
+  description?: string;
+  price?: number | string;
+  category?: ProductCategory | string;
+  quantity?: number | string;
+  stock?: number | string;
+  weight_per_unit?: string | number;
+  weightPerUnit?: string | number;
+  rating?: number | string;
+  discount_percentage?: number | string;
+  discount?: number | string;
+  isFeatured?: boolean | number | string;
+  is_featured?: boolean | number | string;
+  animal_stage?: number | string;
+  image_url?: string;
+  image_urls?: string[];
+  video_urls?: string[];
+  image?: Blob | File | string;
+  is_alive?: boolean | number | string;
+  is_fresh?: boolean | number | string;
+};
+
+export interface GetFeaturedProductsParams {
+  page?: number;
+  per_page?: number;
+  search?: string;
+  category?: string;
+}
+
+const toOptionalNumber = (value: unknown) => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+};
+
+const toOptionalBoolean = (value: unknown) => {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes"].includes(normalized)) return true;
+    if (["false", "0", "no"].includes(normalized)) return false;
+  }
+
+  return undefined;
+};
+
+const normalizeProduct = (product: ProductApiRecord): Product => {
+  const title = String(product.title || product.name || "");
+  const quantity = toOptionalNumber(product.quantity ?? product.stock) ?? 0;
+  const discountPercentage = toOptionalNumber(
+    product.discount_percentage ?? product.discount
+  );
+  const animalStage = toOptionalNumber(product.animal_stage);
+  const weightPerUnit = product.weight_per_unit ?? product.weightPerUnit ?? "";
+  const isFeatured = toOptionalBoolean(
+    product.isFeatured ?? product.is_featured
+  );
+
+  return {
+    ...product,
+    title,
+    name: title,
+    description: String(product.description || ""),
+    price: toOptionalNumber(product.price) ?? 0,
+    category: String(product.category || "") as ProductCategory,
+    quantity,
+    stock: quantity,
+    weight_per_unit: weightPerUnit,
+    weightPerUnit: String(weightPerUnit ?? ""),
+    rating: toOptionalNumber(product.rating),
+    discount_percentage: discountPercentage,
+    discount: discountPercentage,
+    isFeatured: isFeatured ?? false,
+    animal_stage: animalStage,
+    age:
+      animalStage === 0
+        ? "young"
+        : animalStage === 1
+          ? "mature"
+          : product.age,
+    image_url:
+      typeof product.image_url === "string" && product.image_url.length > 0
+        ? product.image_url
+        : typeof product.image === "string"
+          ? product.image
+          : undefined,
+    image_urls: Array.isArray(product.image_urls) ? product.image_urls : [],
+    video_urls: Array.isArray(product.video_urls) ? product.video_urls : [],
+    is_alive: toOptionalBoolean(product.is_alive),
+    is_fresh: toOptionalBoolean(product.is_fresh),
+  };
+};
+
+const normalizeProducts = (products?: ProductApiRecord[]) =>
+  Array.isArray(products) ? products.map((product) => normalizeProduct(product)) : [];
+
+const extractFeaturedProducts = (response: FeaturedProductsResponse) => {
+  if (Array.isArray(response.data)) return response.data;
+  if (Array.isArray(response.items)) return response.items;
+  if (Array.isArray(response.results)) return response.results;
+  if (Array.isArray(response.rows)) return response.rows;
+  return [];
+};
+
+const extractPaginationMeta = (
+  response: Pick<FeaturedProductsResponse, "meta" | "pagination" | "page">,
+  fallback: Partial<PaginationMeta> = {}
+): PaginationMeta | undefined => {
+  const source = response.meta || response.pagination || response.page;
+  if (!source) return undefined;
+
+  return {
+    page: toOptionalNumber(source.page) ?? fallback.page ?? 1,
+    per_page: toOptionalNumber(source.per_page) ?? fallback.per_page ?? 20,
+    total: toOptionalNumber(source.total) ?? fallback.total ?? 0,
+    pages: toOptionalNumber(source.pages) ?? fallback.pages ?? 0,
+  };
+};
 
 const normalizeProductFeedback = (
   feedback: Partial<ProductFeedback> | null | undefined
@@ -71,7 +216,7 @@ export default async function GetProducts(): Promise<{
 
     return {
       success: true,
-      data: response?.data,
+      data: normalizeProducts(response?.data),
       message: response.message || "Success",
       status: response.status || 200,
     };
@@ -98,7 +243,7 @@ export async function GetProduct(id: string | number): Promise<{
 
     return {
       success: true,
-      data: response.data,
+      data: response.data ? normalizeProduct(response.data) : undefined,
       message: response.message || "Product retrieved successfully",
       status: response.status || 200,
     };
@@ -181,7 +326,7 @@ export async function CreateProduct(product: Product): Promise<{
 
     return {
       success: true,
-      data: response.data,
+      data: response.data ? normalizeProduct(response.data) : undefined,
       message: response.message || "Product created successfully",
       status: response.status || 201,
     };
@@ -258,7 +403,7 @@ export async function UpdateProduct(
 
     return {
       success: true,
-      data: response.data,
+      data: response.data ? normalizeProduct(response.data) : undefined,
       message: response.message || "Product updated successfully",
       status: response.status || 200,
     };
@@ -385,6 +530,89 @@ export async function DeleteAllProducts(): Promise<{
         error instanceof Error
           ? error.message
           : "Failed to delete all products",
+      status: 500,
+    };
+  }
+}
+
+export async function GetFeaturedProducts(
+  params: GetFeaturedProductsParams = {}
+): Promise<{
+  success: boolean;
+  data: Product[];
+  message: string;
+  status: number;
+  meta?: PaginationMeta;
+}> {
+  try {
+    const query = buildQueryString(params as Record<string, unknown>);
+    const response = await apiRequest<FeaturedProductsResponse>(
+      `products/featured${query}`,
+      "GET"
+    );
+    const products = extractFeaturedProducts(response);
+
+    return {
+      success: true,
+      data: normalizeProducts(products),
+      message: response.message || "Featured products fetched successfully",
+      status: response.status || 200,
+      meta: extractPaginationMeta(response, {
+        page: params.page ?? 1,
+        per_page: params.per_page ?? (products.length || 10),
+        total: products.length,
+        pages: products.length > 0 ? 1 : 0,
+      }),
+    };
+  } catch (error) {
+    console.error("Error fetching featured products:", error);
+    return {
+      success: false,
+      data: [],
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch featured products",
+      status: 500,
+      meta: {
+        page: params.page ?? 1,
+        per_page: params.per_page ?? 10,
+        total: 0,
+        pages: 0,
+      },
+    };
+  }
+}
+
+export async function AddProductToFeatured(
+  productId: string | number
+): Promise<{
+  success: boolean;
+  data?: Product;
+  message: string;
+  status: number;
+}> {
+  try {
+    const response = await apiRequest<FeatureProductResponse>(
+      `admin/products/${productId}/featured`,
+      "POST"
+    );
+    const product = response.data || response.item || response.result;
+
+    return {
+      success: true,
+      data: product ? normalizeProduct(product) : undefined,
+      message: response.message || "Product added to featured products",
+      status: response.status || 200,
+    };
+  } catch (error) {
+    console.error("Error adding product to featured products:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error
+          ? error.message
+          : "Failed to add product to featured products",
       status: 500,
     };
   }

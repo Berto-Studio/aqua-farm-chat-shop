@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
@@ -12,6 +13,7 @@ import {
   Plus,
   Search,
   SlidersHorizontal,
+  Star,
   Trash,
   X,
 } from "lucide-react";
@@ -27,12 +29,13 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { normalizeCategoryName } from "@/constants/categories";
-import { DeleteProduct } from "@/services/products";
+import { AddProductToFeatured, DeleteProduct } from "@/services/products";
 import { useToast } from "@/hooks/use-toast";
 import { getProductPrimaryImageUrl } from "@/lib/productMedia";
 import type { Product } from "@/types/product";
 
 type StockFilter = "all" | "in-stock" | "low-stock" | "out-of-stock";
+type FeaturedFilter = "all" | "featured" | "not-featured";
 type SortOption =
   | "name-asc"
   | "name-desc"
@@ -66,12 +69,15 @@ const PRODUCTS_PER_PAGE = 10;
 
 export default function AdminProducts() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | number | null>(null);
+  const [featuringId, setFeaturingId] = useState<string | number | null>(null);
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [stockFilter, setStockFilter] = useState<StockFilter>("all");
+  const [featuredFilter, setFeaturedFilter] = useState<FeaturedFilter>("all");
   const [sortOption, setSortOption] = useState<SortOption>("name-asc");
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [currentPage, setCurrentPage] = useState(1);
@@ -100,10 +106,15 @@ export default function AdminProducts() {
       const matchesCategory =
         categoryFilter === "all" || category === categoryFilter;
       const matchesStock = stockFilter === "all" || stockState === stockFilter;
+      const matchesFeatured =
+        featuredFilter === "all" ||
+        (featuredFilter === "featured"
+          ? Boolean(product.isFeatured)
+          : !product.isFeatured);
 
-      return matchesSearch && matchesCategory && matchesStock;
+      return matchesSearch && matchesCategory && matchesStock && matchesFeatured;
     });
-  }, [products, searchTerm, categoryFilter, stockFilter]);
+  }, [products, searchTerm, categoryFilter, stockFilter, featuredFilter]);
 
   const displayedProducts = useMemo(() => {
     const sorted = [...filteredProducts];
@@ -145,18 +156,20 @@ export default function AdminProducts() {
   const hasActiveFilters =
     searchTerm.trim().length > 0 ||
     categoryFilter !== "all" ||
-    stockFilter !== "all";
+    stockFilter !== "all" ||
+    featuredFilter !== "all";
 
   const clearFilters = () => {
     setSearchTerm("");
     setCategoryFilter("all");
     setStockFilter("all");
+    setFeaturedFilter("all");
     setSortOption("name-asc");
   };
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, categoryFilter, stockFilter, sortOption]);
+  }, [searchTerm, categoryFilter, stockFilter, featuredFilter, sortOption]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -181,7 +194,10 @@ export default function AdminProducts() {
         title: "Product Deleted",
         description: "The product was removed successfully.",
       });
-      await refetch();
+      await Promise.all([
+        refetch(),
+        queryClient.invalidateQueries({ queryKey: ["featured-products"] }),
+      ]);
     } catch (err) {
       toast({
         title: "Delete Failed",
@@ -190,6 +206,43 @@ export default function AdminProducts() {
       });
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleFeatureProduct = async (product: Product) => {
+    if (!product.id) return;
+
+    try {
+      setFeaturingId(product.id);
+      const response = await AddProductToFeatured(product.id);
+      if (!response.success) {
+        throw new Error(
+          response.message || "Failed to add product to featured products.",
+        );
+      }
+
+      toast({
+        title: product.isFeatured ? "Already Featured" : "Added to Featured",
+        description:
+          response.message ||
+          "The product is now available in the featured products list.",
+      });
+
+      await Promise.all([
+        refetch(),
+        queryClient.invalidateQueries({ queryKey: ["featured-products"] }),
+      ]);
+    } catch (err) {
+      toast({
+        title: "Feature Update Failed",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Unable to mark this product as featured.",
+        variant: "destructive",
+      });
+    } finally {
+      setFeaturingId(null);
     }
   };
 
@@ -215,13 +268,18 @@ export default function AdminProducts() {
       id: "name",
       header: "Name",
       cell: (product) => (
-        <button
-          type="button"
-          className="text-left font-medium hover:text-primary hover:underline"
-          onClick={() => navigate(`/admin/products/${product.id}`)}
-        >
-          {product.title}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="text-left font-medium hover:text-primary hover:underline"
+            onClick={() => navigate(`/admin/products/${product.id}`)}
+          >
+            {product.title}
+          </button>
+          {product.isFeatured ? (
+            <Star className="h-4 w-4 fill-current text-amber-500" />
+          ) : null}
+        </div>
       ),
     },
     {
@@ -282,6 +340,22 @@ export default function AdminProducts() {
           <Button
             size="sm"
             variant="ghost"
+            title={product.isFeatured ? "Featured product" : "Mark as featured"}
+            onClick={() => handleFeatureProduct(product)}
+            disabled={featuringId === product.id}
+            className={
+              product.isFeatured
+                ? "text-amber-500 hover:text-amber-600"
+                : "text-muted-foreground hover:text-amber-500"
+            }
+          >
+            <Star
+              className={`h-4 w-4 ${product.isFeatured ? "fill-current" : ""}`}
+            />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
             onClick={() => navigate(`/admin/products/${product.id}`)}
           >
             <Eye className="h-4 w-4" />
@@ -333,7 +407,7 @@ export default function AdminProducts() {
 
       <Card className="border shadow-sm">
         <CardContent className="space-y-4 p-4 sm:p-5">
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px_220px_220px]">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_220px_220px_220px_220px]">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -370,6 +444,22 @@ export default function AdminProducts() {
                 <SelectItem value="in-stock">In Stock</SelectItem>
                 <SelectItem value="low-stock">Low Stock</SelectItem>
                 <SelectItem value="out-of-stock">Out of Stock</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={featuredFilter}
+              onValueChange={(value) =>
+                setFeaturedFilter(value as FeaturedFilter)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Featured status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Products</SelectItem>
+                <SelectItem value="featured">Featured Only</SelectItem>
+                <SelectItem value="not-featured">Not Featured</SelectItem>
               </SelectContent>
             </Select>
 
@@ -512,9 +602,16 @@ export default function AdminProducts() {
                         >
                           {product.title}
                         </button>
-                        <Badge variant="outline" className="capitalize">
-                          {normalizeCategoryName(product.category)}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          {product.isFeatured ? (
+                            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                              Featured
+                            </Badge>
+                          ) : null}
+                          <Badge variant="outline" className="capitalize">
+                            {normalizeCategoryName(product.category)}
+                          </Badge>
+                        </div>
                       </div>
 
                       <p className="text-sm text-muted-foreground line-clamp-2">
@@ -536,6 +633,24 @@ export default function AdminProducts() {
                     </div>
 
                     <div className="flex items-center justify-end gap-2 pt-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleFeatureProduct(product)}
+                        disabled={featuringId === product.id}
+                        className={
+                          product.isFeatured
+                            ? "text-amber-600 border-amber-200"
+                            : undefined
+                        }
+                      >
+                        <Star
+                          className={`mr-2 h-4 w-4 ${
+                            product.isFeatured ? "fill-current" : ""
+                          }`}
+                        />
+                        {product.isFeatured ? "Featured" : "Feature"}
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"

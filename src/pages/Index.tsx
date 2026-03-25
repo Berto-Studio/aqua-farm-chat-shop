@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -10,8 +10,9 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import FeaturedProductsSlider from "@/components/product/FeaturedProductsSlider";
-import { useProducts } from "@/hooks/useProducts";
+import { useFeaturedProducts } from "@/hooks/useFeaturedProducts";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Product } from "@/types/product";
 
 const HeroCarouselItems = [
   {
@@ -31,14 +32,29 @@ const HeroCarouselItems = [
   },
 ];
 
+const shuffleProducts = (products: Product[]) => {
+  const shuffled = [...products];
+
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[swapIndex]] = [
+      shuffled[swapIndex],
+      shuffled[index],
+    ];
+  }
+
+  return shuffled;
+};
+
 export default function Index() {
   const [expanded, setExpanded] = useState<string | null>(null);
-  const { data: allProducts = [], isLoading } = useProducts();
-
-  // Get featured products (top rated products with rating 4.8+)
-  const featuredProducts = allProducts
-    .filter((product) => product.rating >= 4.8 || product.isFeatured)
-    .slice(0, 8);
+  const { data: featuredProductsData = [], isLoading } = useFeaturedProducts({
+    per_page: 10,
+  });
+  const featuredProducts = useMemo(
+    () => shuffleProducts(featuredProductsData).slice(0, 3),
+    [featuredProductsData],
+  );
 
   return (
     <div>
@@ -161,17 +177,15 @@ export default function Index() {
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-700/80 to-amber-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
-                src="/placeholder.svg"
+                src="/waterpump.webp"
                 alt="Farm equipment"
                 className="w-full h-full object-cover"
               />
               <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">
+                <h3 className="text-2xl md:text-3xl font-bold text-center mb-2">
                   Farm Equipment
                 </h3>
-                <p className="text-lg text-center">
-                  Pumps, tanks, aerators, and farm tools
-                </p>
+                <p className="text-lg text-center">Farm tools</p>
                 <Button variant="secondary" className="mt-4">
                   View Products
                 </Button>
@@ -188,8 +202,8 @@ export default function Index() {
             Featured Products
           </h2>
           {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {Array.from({ length: 4 }).map((_, index) => (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {Array.from({ length: 3 }).map((_, index) => (
                 <div key={index} className="space-y-4">
                   <Skeleton className="h-48 w-full" />
                   <Skeleton className="h-4 w-3/4" />
@@ -454,7 +468,7 @@ export default function Index() {
                   <button
                     onClick={() =>
                       setExpanded(
-                        expanded === `faq-${index}` ? null : `faq-${index}`
+                        expanded === `faq-${index}` ? null : `faq-${index}`,
                       )
                     }
                     className="flex justify-between items-center w-full text-left font-medium"

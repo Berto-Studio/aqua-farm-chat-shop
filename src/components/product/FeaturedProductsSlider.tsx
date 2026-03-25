@@ -8,7 +8,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import { Badge } from "@/components/ui/badge";
 
 interface FeaturedProductsSliderProps {
   products: Product[];
@@ -19,11 +18,6 @@ export default function FeaturedProductsSlider({
 }: FeaturedProductsSliderProps) {
   return (
     <div className="relative">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-2xl md:text-3xl font-bold">Top Rated Products</h2>
-        <Badge variant="secondary">Rating 4.8+</Badge>
-      </div>
-
       <Carousel
         className="w-full"
         opts={{

@@ -27,7 +27,11 @@ export default function ServiceCardsGrid({
         const IconComponent = serviceIconMap[service.icon];
 
         return (
-          <Card key={String(service.id ?? service.title)} className="relative">
+          <Card
+            key={String(service.id ?? service.title)}
+            className="relative"
+            id={service.id.toString()}
+          >
             <CardHeader>
               <div className="flex justify-between items-center mb-4">
                 <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">

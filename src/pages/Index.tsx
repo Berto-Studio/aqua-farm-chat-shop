@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { ArrowRight, PlayCircle, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Carousel,
@@ -9,10 +11,15 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-import FeaturedProductsSlider from "@/components/product/FeaturedProductsSlider";
 import { useFeaturedProducts } from "@/hooks/useFeaturedProducts";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  serviceIconMap,
+  serviceTierKeys,
+  type FarmService,
+} from "@/lib/services";
 import type { Product } from "@/types/product";
+import { useFarmServices } from "@/hooks/useServices";
 
 const HeroCarouselItems = [
   {
@@ -46,15 +53,56 @@ const shuffleProducts = (products: Product[]) => {
   return shuffled;
 };
 
+const getStartingPrice = (service: FarmService) =>
+  Math.min(...serviceTierKeys.map((tier) => service.pricing[tier].price));
+
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(value);
+
+const getProductImageSource = (product: Product) =>
+  product.image_url ||
+  (typeof product.image === "string" ? product.image : "") ||
+  "/placeholder.svg";
+
+const getProductHref = (product: Product) =>
+  product.id !== undefined && product.id !== null
+    ? `/products/${product.id}`
+    : "/products";
+
+const getDiscountedPrice = (product: Product) =>
+  product.discount_percentage
+    ? product.price * (1 - product.discount_percentage / 100)
+    : product.price;
+
+const tankSetupProductsRoute = "/products?category=Farm%20Equipment";
+const youtubeChannelUrl = "https://www.youtube.com/";
+
 export default function Index() {
   const [expanded, setExpanded] = useState<string | null>(null);
   const { data: featuredProductsData = [], isLoading } = useFeaturedProducts({
     per_page: 10,
   });
+  const {
+    data: services = [],
+    isLoading: isLoadingServices,
+    error,
+  } = useFarmServices();
+  const servicesError =
+    error instanceof Error
+      ? error.message
+      : error
+        ? "Unable to load services"
+        : null;
   const featuredProducts = useMemo(
     () => shuffleProducts(featuredProductsData).slice(0, 3),
     [featuredProductsData],
   );
+  const showcasedServices = services.slice(0, 3);
+  const spotlightProduct = featuredProducts[0];
+  const supportingProducts = featuredProducts.slice(1);
 
   return (
     <div>
@@ -94,7 +142,7 @@ export default function Index() {
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
           Shop by Category
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Link to="/products?category=Fish" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary opacity-80 group-hover:opacity-90 transition-opacity"></div>
@@ -135,7 +183,7 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products?category=Vegetables" className="group">
+          {/* <Link to="/products?category=Vegetables" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-gray-500/80 to-gray-500/80 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -155,8 +203,8 @@ export default function Index() {
                 </Button>
               </CardContent>
             </Card>
-          </Link>
-          <Link to="/products?category=Fruits" className="group">
+          </Link> */}
+          {/* <Link to="/products?category=Fruits" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-shopBlack/80 to-shopBlack opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -172,7 +220,7 @@ export default function Index() {
                 </Button>
               </CardContent>
             </Card>
-          </Link>
+          </Link> */}
           <Link to="/products?category=Farm%20Equipment" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-700/80 to-amber-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
@@ -196,34 +244,200 @@ export default function Index() {
       </section>
 
       {/* Featured Products */}
-      <section className="py-12 bg-secondary md:px-10">
+      <section className="bg-black py-16 md:px-6">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
-            Featured Products
-          </h2>
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="space-y-4">
-                  <Skeleton className="h-48 w-full" />
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-4 w-1/2" />
+          <div className="relative overflow-hidden py-8 text-white md:px-10 md:py-10">
+            <div className="relative">
+              <div className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div className="max-w-2xl">
+                  <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+                    Farm-fresh picks built to move fast.
+                  </h2>
+                  <p className="mt-4 max-w-xl text-sm leading-7 text-white/70 md:text-base">
+                    A sharper spotlight on the products customers keep reaching
+                    for, from healthy stock to practical farm essentials.
+                  </p>
                 </div>
-              ))}
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="secondary"
+                    className="rounded-full px-6"
+                  >
+                    <Link to="/products">View All Products</Link>
+                  </Button>
+                </div>
+              </div>
+
+              {isLoading ? (
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_0.9fr]">
+                  <Skeleton className="h-[420px] rounded-[28px] bg-white/10" />
+                  <div className="grid gap-6">
+                    {Array.from({ length: 2 }).map((_, index) => (
+                      <Skeleton
+                        key={index}
+                        className="h-[198px] rounded-[28px] bg-white/10"
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : featuredProducts.length > 0 ? (
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1.4fr_0.9fr]">
+                  {spotlightProduct ? (
+                    <Link
+                      to={getProductHref(spotlightProduct)}
+                      className="group relative isolate overflow-hidden rounded-[28px] border border-white/10"
+                    >
+                      <img
+                        src={getProductImageSource(spotlightProduct)}
+                        alt={spotlightProduct.title}
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-br from-black/20 via-black/50 to-black/95" />
+                      <div className="relative flex h-full min-h-[420px] flex-col justify-between p-6 md:p-8">
+                        <div className="flex flex-wrap gap-3">
+                          <Badge className="border-0 bg-white text-black hover:bg-white">
+                            Spotlight Product
+                          </Badge>
+                          <Badge
+                            variant="outline"
+                            className="border-white/20 bg-white/10 text-white"
+                          >
+                            {spotlightProduct.category}
+                          </Badge>
+                          {spotlightProduct.discount_percentage ? (
+                            <Badge className="border-0 bg-amber-400 text-black hover:bg-amber-400">
+                              Save {spotlightProduct.discount_percentage}%
+                            </Badge>
+                          ) : null}
+                        </div>
+
+                        <div className="max-w-xl">
+                          <h3 className="text-2xl font-semibold leading-tight md:text-4xl">
+                            {spotlightProduct.title}
+                          </h3>
+                          <p className="mt-4 max-w-lg text-sm leading-7 text-white/75 md:text-base">
+                            {spotlightProduct.description}
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col gap-5 border-t border-white/10 pt-5 md:flex-row md:items-end md:justify-between">
+                          <div className="flex flex-wrap gap-3 text-sm text-white/75">
+                            <span className="rounded-full bg-white/10 px-3 py-1.5">
+                              Qty: {spotlightProduct.quantity}
+                            </span>
+                            <span className="rounded-full bg-white/10 px-3 py-1.5">
+                              Unit: {spotlightProduct.weight_per_unit}
+                            </span>
+                            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1.5">
+                              <Star className="mr-1.5 h-4 w-4 fill-current text-amber-300" />
+                              {spotlightProduct.rating?.toFixed(1) || "4.0"}
+                            </span>
+                          </div>
+
+                          <div className="flex items-end justify-between gap-4 md:block">
+                            <div>
+                              {spotlightProduct.discount_percentage ? (
+                                <p className="text-sm text-white/50 line-through">
+                                  {formatCurrency(spotlightProduct.price)}
+                                </p>
+                              ) : null}
+                              <p className="text-2xl font-semibold">
+                                {formatCurrency(
+                                  getDiscountedPrice(spotlightProduct),
+                                )}
+                              </p>
+                            </div>
+                            <span className="inline-flex items-center gap-2 text-sm font-medium text-white">
+                              Explore product
+                              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </Link>
+                  ) : null}
+
+                  <div className="grid gap-6">
+                    {supportingProducts.map((product, index) => (
+                      <Link
+                        key={String(product.id ?? product.title)}
+                        to={getProductHref(product)}
+                        className="group grid overflow-hidden rounded-[28px] border border-white/10 bg-white/95 text-black shadow-[0_20px_50px_-30px_rgba(0,0,0,0.65)] transition-transform duration-300 hover:-translate-y-1 md:grid-cols-[300px_1fr] xl:grid-cols-[200px_1fr]"
+                      >
+                        <div className="relative min-h-[180px] overflow-hidden">
+                          <img
+                            src={getProductImageSource(product)}
+                            alt={product.title}
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute left-4 top-4">
+                            <Badge className="border-0 bg-black text-white hover:bg-black">
+                              #{index + 2}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        <div className="flex flex-col justify-between p-5">
+                          <div>
+                            <div className="mb-3 flex flex-wrap gap-2">
+                              <Badge
+                                variant="outline"
+                                className="border-black/15 bg-black/5"
+                              >
+                                {product.category}
+                              </Badge>
+                              {product.discount_percentage ? (
+                                <Badge className="border-0 bg-amber-100 text-amber-900 hover:bg-amber-100">
+                                  -{product.discount_percentage}% off
+                                </Badge>
+                              ) : null}
+                            </div>
+                            <h3 className="text-xl font-semibold">
+                              {product.title}
+                            </h3>
+                            <p className="mt-2 line-clamp-3 text-sm leading-6 text-black/70">
+                              {product.description}
+                            </p>
+                          </div>
+
+                          <div className="mt-5 flex items-end justify-between gap-4">
+                            <div>
+                              {product.discount_percentage ? (
+                                <p className="text-sm text-black/40 line-through">
+                                  {formatCurrency(product.price)}
+                                </p>
+                              ) : null}
+                              <p className="text-xl font-semibold">
+                                {formatCurrency(getDiscountedPrice(product))}
+                              </p>
+                            </div>
+
+                            <div className="text-right">
+                              <p className="inline-flex items-center text-sm font-medium text-black/75">
+                                <Star className="mr-1.5 h-4 w-4 fill-current text-amber-500" />
+                                {product.rating?.toFixed(1) || "4.0"}
+                              </p>
+                              <p className="mt-1 text-sm font-medium text-black">
+                                View details
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-[28px] border border-white/10 bg-white/5 px-6 py-12 text-center">
+                  <p className="text-white/80">
+                    No featured products available
+                  </p>
+                </div>
+              )}
             </div>
-          ) : featuredProducts.length > 0 ? (
-            <FeaturedProductsSlider products={featuredProducts} />
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground">
-                No featured products available
-              </p>
-            </div>
-          )}
-          <div className="mt-8 text-center">
-            <Button asChild size="lg">
-              <Link to="/products">View All Products</Link>
-            </Button>
           </div>
         </div>
       </section>
@@ -233,108 +447,57 @@ export default function Index() {
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
           Professional Services
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 mx-auto">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="h-6 w-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Farm Consultation</h3>
-              <p className="text-muted-foreground mb-4">
-                Expert guidance for setting up and optimizing your fish farm
-                operations with professional assessment and ongoing support.
-              </p>
-              <p className="font-bold text-primary">Starting at $299</p>
-            </CardContent>
-          </Card>
+        {isLoadingServices ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <Card key={index}>
+                <CardContent className="space-y-4 pt-6">
+                  <Skeleton className="h-12 w-12 rounded-full mx-auto" />
+                  <Skeleton className="h-6 w-1/2 mx-auto" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-5/6 mx-auto" />
+                  <Skeleton className="h-5 w-1/3 mx-auto" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : servicesError ? (
+          <div className="mb-8 rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center text-sm text-destructive">
+            {servicesError}
+          </div>
+        ) : showcasedServices.length === 0 ? (
+          <div className="mb-8 rounded-lg border bg-card p-10 text-center text-muted-foreground">
+            No services are available right now.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {showcasedServices.map((service) => {
+              const IconComponent = serviceIconMap[service.icon];
 
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 mx-auto">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="h-6 w-6"
+              return (
+                <Card
+                  key={String(service.id ?? service.title)}
+                  className="text-center"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">
-                Hatchery Operations
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Complete hatchery setup and management services for sustainable
-                fish production with equipment and training.
-              </p>
-              <p className="font-bold text-primary">Starting at $1,999</p>
-            </CardContent>
-          </Card>
-
-          <Card className="text-center">
-            <CardContent className="pt-6">
-              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 mx-auto">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  className="h-6 w-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 14l9-5-9-5-9 5 9 5z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"
-                  />
-                </svg>
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Training Programs</h3>
-              <p className="text-muted-foreground mb-4">
-                Hands-on training programs to master catfish fingerling
-                production with certification and ongoing support.
-              </p>
-              <p className="font-bold text-primary">Starting at $599</p>
-            </CardContent>
-          </Card>
-        </div>
+                  <CardContent className="flex h-full flex-col pt-6">
+                    <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center text-primary mb-4 mx-auto">
+                      <IconComponent className="h-6 w-6" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">
+                      {service.title}
+                    </h3>
+                    <p className="text-muted-foreground mb-4 flex-1">
+                      {service.description}
+                    </p>
+                    <Button asChild variant="outline" className="mx-auto mt-4">
+                      <Link to="/services">View Details</Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
 
         <div className="text-center">
           <Button asChild size="lg">
@@ -342,6 +505,140 @@ export default function Index() {
           </Button>
         </div>
       </section>
+
+      {/* Tank Setup Section */}
+      <section className="py-6 md:py-10">
+        <div className="grid overflow-hidden bg-[#eef7f2]  lg:min-h-[700px] lg:max-h-[700px] lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="relative min-h-[260px] sm:min-h-[320px] lg:min-h-full">
+            <img
+              src="/waterpump.webp"
+              alt="Tank setup equipment and water flow system"
+              className="h-full w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-tr from-[#052724]/80 via-[#052724]/30 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 rounded-2xl border border-white/20 bg-white/10 p-4 text-white backdrop-blur-sm sm:bottom-6 sm:left-6 sm:right-6 sm:rounded-3xl sm:p-5">
+              <p className="text-xs uppercase tracking-[0.22em] text-white/75">
+                Tank Setup Essentials
+              </p>
+              <p className="mt-2 text-lg font-semibold leading-snug sm:text-xl md:text-2xl">
+                Start with reliable pumps, flow support, and farm equipment.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-center p-5 sm:p-8 md:p-10 lg:p-12">
+            <Badge className="w-fit border-0 bg-[#0d5c54] text-white hover:bg-[#0d5c54]">
+              Tank Setup
+            </Badge>
+            <h2 className="mt-4 text-2xl font-semibold tracking-tight text-[#062b28] sm:text-3xl md:text-4xl">
+              Build a cleaner, smarter tank setup.
+            </h2>
+            <p className="mt-4 text-sm leading-6 text-[#062b28]/75 sm:text-base sm:leading-7">
+              Browse our farm equipment collection for the gear that supports
+              tank installation, water movement, and everyday aquaculture
+              maintenance.
+            </p>
+
+            <div className="mt-6 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl bg-white px-4 py-4 shadow-sm">
+                <p className="text-sm font-semibold text-[#062b28]">
+                  Water flow support
+                </p>
+                <p className="mt-1 text-sm text-[#062b28]/65">
+                  Equipment for circulation, pumping, and daily upkeep.
+                </p>
+              </div>
+              <div className="rounded-2xl bg-white px-4 py-4 shadow-sm">
+                <p className="text-sm font-semibold text-[#062b28]">
+                  Tank-ready essentials
+                </p>
+                <p className="mt-1 text-sm text-[#062b28]/65">
+                  Explore the tools used around practical fish tank setups.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <Button
+                asChild
+                size="lg"
+                className="w-full rounded-full bg-[#062b28] px-6 text-white hover:bg-[#041f1d] sm:w-auto"
+              >
+                <Link to={tankSetupProductsRoute}>
+                  View Tank Setup Products
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="w-full rounded-full border-[#062b28]/20 bg-white text-[#062b28] hover:bg-white sm:w-auto"
+              >
+                <Link to="/products?category=Farm%20Equipment">
+                  Browse Farm Equipment
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* YouTube Section */}
+      {/* <section className="container pb-12 pt-2">
+        <div className="relative overflow-hidden rounded-[32px] bg-[#111111] px-8 py-10 text-white shadow-[0_24px_70px_-40px_rgba(0,0,0,0.75)] md:px-10 md:py-12">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,_rgba(239,68,68,0.28),_transparent_26%),radial-gradient(circle_at_bottom_left,_rgba(250,204,21,0.14),_transparent_22%)]" />
+          <div className="relative grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div className="max-w-2xl">
+              <Badge className="border-0 bg-red-600 text-white hover:bg-red-600">
+                YouTube Community
+              </Badge>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight md:text-4xl">
+                Join our YouTube channel for fish farming tips and updates.
+              </h2>
+              <p className="mt-4 text-base leading-7 text-white/70">
+                Watch setup ideas, farm progress, practical aquaculture advice,
+                and product highlights that help new and growing farmers learn
+                faster.
+              </p>
+
+              <div className="mt-6 flex flex-wrap gap-3 text-sm text-white/70">
+                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                  Tank setup guidance
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                  Product walkthroughs
+                </span>
+                <span className="rounded-full border border-white/10 bg-white/5 px-4 py-2">
+                  Weekly farm updates
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-4 lg:items-end">
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-5 text-left backdrop-blur-sm">
+                <p className="text-sm uppercase tracking-[0.22em] text-white/50">
+                  Stay Connected
+                </p>
+                <p className="mt-2 max-w-xs text-sm leading-6 text-white/75">
+                  Subscribe to keep up with new lessons, practical demos, and
+                  equipment-focused content from the farm.
+                </p>
+              </div>
+
+              <Button
+                asChild
+                size="lg"
+                className="rounded-full bg-red-600 px-6 text-white hover:bg-red-700"
+              >
+                <a href={youtubeChannelUrl} target="_blank" rel="noreferrer">
+                  <PlayCircle className="mr-2 h-5 w-5" />
+                  Join Our YouTube Channel
+                </a>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section> */}
 
       {/* Benefits Section */}
       <section className="py-12 container">

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import AdminSidebar from "./AdminSidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -6,6 +6,7 @@ import AdminHeader from "./AdminHeader";
 
 export default function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const isMobile = useIsMobile();
   const pathname = useLocation().pathname;
 
@@ -14,6 +15,10 @@ export default function AdminLayout() {
       setSidebarOpen(false);
     }
   }, [pathname, isMobile]);
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -44,7 +49,7 @@ export default function AdminLayout() {
           showMenuButton={isMobile}
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
         />
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div ref={contentRef} className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </div>
       </div>

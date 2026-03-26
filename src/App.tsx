@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "next-themes";
 import Layout from "./components/layout/Layout";
+import ScrollToTop from "./components/layout/ScrollToTop";
 import AdminLayout from "./components/admin/AdminLayout";
 import AuthBootstrap from "./components/auth/AuthBootstrap";
 import AuthRequiredDialog from "./components/auth/AuthRequiredDialog";
@@ -77,6 +78,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <ScrollToTop />
           <AuthBootstrap />
           <AuthRequiredDialog />
           <Routes>

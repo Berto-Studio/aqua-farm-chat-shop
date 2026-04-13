@@ -6,6 +6,7 @@ import ProfileSection from "@/components/settings/ProfileSection";
 import NotificationsSection from "@/components/settings/NotificationsSection";
 import PaymentsSection from "@/components/settings/PaymentsSection";
 import { Settings as SettingsIcon } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 const sectionComponents: Record<SettingsSection, React.FC> = {
   profile: ProfileSection,
@@ -22,6 +23,7 @@ const sectionTitles: Record<SettingsSection, string> = {
 const Settings = () => {
   const [active, setActive] = useState<SettingsSection>("profile");
   const ActiveComponent = sectionComponents[active];
+  const location = useLocation();
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,9 +43,13 @@ const Settings = () => {
 
         {/* Layout */}
         <div className="flex flex-col gap-8 lg:flex-row">
-          <aside className="w-full lg:w-56 shrink-0">
-            <SettingsSidebar active={active} onChange={setActive} />
-          </aside>
+          {location.pathname === "/admin/settings" ? (
+            ""
+          ) : (
+            <aside className="w-full lg:w-56 shrink-0">
+              <SettingsSidebar active={active} onChange={setActive} />
+            </aside>
+          )}
           <main className="flex-1 min-w-0">
             <h2 className="text-lg font-display font-semibold text-foreground mb-5">
               {sectionTitles[active]}

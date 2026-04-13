@@ -15,7 +15,6 @@ import ProductDetail from "./pages/products/ProductDetail";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Services from "./pages/Services";
-import Settings from "./pages/Settings";
 import Cart from "./pages/payment/payment";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -44,6 +43,7 @@ import FarmerRegister from "./pages/farmers/FarmerRegister";
 import FarmerDashboard from "./pages/farmers/FarmerDashboard";
 import OtpVerification from "./pages/authentication/OtpVerification";
 import PaymentProccess from "./pages/payment/payment";
+import Settings from "./pages/settings/settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {

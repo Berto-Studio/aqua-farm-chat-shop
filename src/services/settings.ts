@@ -1,4 +1,5 @@
 import { apiRequest } from "@/hooks/useClient";
+import { uploadProfileImageToCloudinary } from "@/services/cloudinary";
 import type {
   AddPaymentMethodPayload,
   BillingAddress,
@@ -188,14 +189,15 @@ export const UploadSettingsAvatar = async (
   file: File,
 ): Promise<ServiceResponse<SettingsProfile>> => {
   try {
-    const formData = new FormData();
-    formData.append("avatar", file);
+    const uploadedImageUrl = await uploadProfileImageToCloudinary(file);
 
     const response = await apiRequest<ApiEnvelope<AvatarUploadResponse>>(
       "settings/profile/avatar",
       "POST",
-      formData,
-      true,
+      {
+        avatarUrl: uploadedImageUrl,
+        image_url: uploadedImageUrl,
+      },
     );
 
     return {

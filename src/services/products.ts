@@ -8,7 +8,7 @@ import {
   ProductStatsResponse,
 } from "@/types/product";
 import { PaginationMeta } from "@/types/admin";
-import { deleteImageFromCloudinary } from "./cloudinary";
+import { deleteImageFromCloudinary, deleteVideoFromCloudinary } from "./cloudinary";
 import { buildQueryString } from "./admin/common";
 
 interface ProductsResponse {
@@ -427,6 +427,7 @@ export async function DeleteProduct(id: string | number): Promise<{
     // First, get the product to retrieve image URLs
     const productResponse = await GetProduct(id);
     let imageUrls: string[] = [];
+    let videoUrls: string[] = [];
 
     if (productResponse.success && productResponse.data) {
       const product = productResponse.data;
@@ -434,6 +435,7 @@ export async function DeleteProduct(id: string | number): Promise<{
         ...(product.image_urls || []),
         ...(product.image_url ? [product.image_url] : []),
       ].filter((url, index, arr) => Boolean(url) && arr.indexOf(url) === index);
+      videoUrls = [...new Set((product.video_urls || []).filter(Boolean))];
     }
 
     // Delete the product from the backend
@@ -443,12 +445,15 @@ export async function DeleteProduct(id: string | number): Promise<{
     );
 
     // If product deletion was successful and there are images, delete them from Cloudinary
-    if (imageUrls.length > 0) {
+    if (imageUrls.length > 0 || videoUrls.length > 0) {
       console.log(
-        `Attempting to delete ${imageUrls.length} product image(s) from Cloudinary`
+        `Attempting to delete ${imageUrls.length} product image(s) and ${videoUrls.length} video(s) from Cloudinary`
       );
       await Promise.allSettled(
-        imageUrls.map((imageUrl) => deleteImageFromCloudinary(imageUrl))
+        [
+          ...imageUrls.map((imageUrl) => deleteImageFromCloudinary(imageUrl)),
+          ...videoUrls.map((videoUrl) => deleteVideoFromCloudinary(videoUrl)),
+        ]
       );
     }
 
@@ -477,6 +482,7 @@ export async function DeleteAllProducts(): Promise<{
     // First, get all products to retrieve their image URLs
     const productsResponse = await GetProducts();
     const imageUrls: string[] = [];
+    const videoUrls: string[] = [];
 
     if (productsResponse.success && productsResponse.data) {
       productsResponse.data.forEach((product) => {
@@ -485,6 +491,9 @@ export async function DeleteAllProducts(): Promise<{
         }
         if (product.image_url) {
           imageUrls.push(product.image_url);
+        }
+        if (product.video_urls?.length) {
+          videoUrls.push(...product.video_urls);
         }
       });
     }
@@ -497,15 +506,17 @@ export async function DeleteAllProducts(): Promise<{
 
     // If products deletion was successful, delete all images from Cloudinary
     const uniqueImageUrls = [...new Set(imageUrls.filter(Boolean))];
+    const uniqueVideoUrls = [...new Set(videoUrls.filter(Boolean))];
 
-    if (uniqueImageUrls.length > 0) {
+    if (uniqueImageUrls.length > 0 || uniqueVideoUrls.length > 0) {
       console.log(
-        `Attempting to delete ${uniqueImageUrls.length} images from Cloudinary`
+        `Attempting to delete ${uniqueImageUrls.length} images and ${uniqueVideoUrls.length} videos from Cloudinary`
       );
 
-      const deletePromises = uniqueImageUrls.map((imageUrl) =>
-        deleteImageFromCloudinary(imageUrl)
-      );
+      const deletePromises = [
+        ...uniqueImageUrls.map((imageUrl) => deleteImageFromCloudinary(imageUrl)),
+        ...uniqueVideoUrls.map((videoUrl) => deleteVideoFromCloudinary(videoUrl)),
+      ];
 
       const results = await Promise.allSettled(deletePromises);
       const successCount = results.filter(
@@ -513,7 +524,7 @@ export async function DeleteAllProducts(): Promise<{
       ).length;
 
       console.log(
-        `Successfully deleted ${successCount}/${uniqueImageUrls.length} images from Cloudinary`
+        `Successfully deleted ${successCount}/${deletePromises.length} media items from Cloudinary`
       );
     }
 

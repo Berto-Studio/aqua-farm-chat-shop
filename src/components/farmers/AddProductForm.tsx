@@ -8,8 +8,8 @@ import { CreateProduct } from "@/services/products";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   cleanupCloudinaryMediaInBackground,
-  uploadImageToCloudinary,
-  uploadVideoToCloudinary,
+  uploadProductImageToCloudinary,
+  uploadProductVideoToCloudinary,
 } from "@/services/cloudinary";
 import ProductBasicInfo from "./ProductBasicInfo";
 import ProductPricingInfo from "./ProductPricingInfo";
@@ -100,7 +100,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
     pendingItems.forEach((pendingItem, index) => {
       const file = imageFiles[index];
-      void uploadImageToCloudinary(file)
+      void uploadProductImageToCloudinary(file)
         .then((uploadedUrl) => {
           setImageItems((prev) =>
             prev.map((imageItem) =>
@@ -167,7 +167,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
     pendingItems.forEach((pendingItem, index) => {
       const file = mediaFiles[index];
-      void uploadVideoToCloudinary(file)
+      void uploadProductVideoToCloudinary(file)
         .then((uploadedUrl) => {
           setVideoItems((prev) =>
             prev.map((videoItem) =>

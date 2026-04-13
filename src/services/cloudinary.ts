@@ -11,16 +11,24 @@ interface CloudinaryDeleteResponse {
 }
 
 type CloudinaryResourceType = "image" | "video";
+type CloudinaryUploadFolder =
+  | "profile/images"
+  | "products/images"
+  | "product/videos";
 
 const CLOUDINARY_CLOUD_NAME = "dquhjbcvq";
 const CLOUDINARY_UPLOAD_PRESET = "ml_default";
 const IMAGE_MAX_DIMENSION = 1600;
 const IMAGE_OUTPUT_QUALITY = 0.82;
 const MIN_IMAGE_SIZE_TO_OPTIMIZE = 250 * 1024; // 250KB
+const PROFILE_IMAGES_FOLDER: CloudinaryUploadFolder = "profile/images";
+const PRODUCT_IMAGES_FOLDER: CloudinaryUploadFolder = "products/images";
+const PRODUCT_VIDEOS_FOLDER: CloudinaryUploadFolder = "product/videos";
 
 const uploadToCloudinary = async (
   file: File,
-  resourceType: CloudinaryResourceType
+  resourceType: CloudinaryResourceType,
+  folder: CloudinaryUploadFolder
 ): Promise<string> => {
   const fileToUpload =
     resourceType === "image" ? await optimizeImageForUpload(file) : file;
@@ -28,6 +36,7 @@ const uploadToCloudinary = async (
   const formData = new FormData();
   formData.append("file", fileToUpload);
   formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+  formData.append("folder", folder);
 
   const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`;
 
@@ -39,6 +48,7 @@ const uploadToCloudinary = async (
       uploadName: fileToUpload.name,
       uploadSize: fileToUpload.size,
       type: fileToUpload.type,
+      folder,
       optimized: fileToUpload.size < file.size,
     });
     console.log("Upload URL:", uploadUrl);
@@ -75,12 +85,30 @@ const uploadToCloudinary = async (
   }
 };
 
+export const uploadProfileImageToCloudinary = async (
+  file: File
+): Promise<string> => {
+  return uploadToCloudinary(file, "image", PROFILE_IMAGES_FOLDER);
+};
+
+export const uploadProductImageToCloudinary = async (
+  file: File
+): Promise<string> => {
+  return uploadToCloudinary(file, "image", PRODUCT_IMAGES_FOLDER);
+};
+
+export const uploadProductVideoToCloudinary = async (
+  file: File
+): Promise<string> => {
+  return uploadToCloudinary(file, "video", PRODUCT_VIDEOS_FOLDER);
+};
+
 export const uploadImageToCloudinary = async (file: File): Promise<string> => {
-  return uploadToCloudinary(file, "image");
+  return uploadProductImageToCloudinary(file);
 };
 
 export const uploadVideoToCloudinary = async (file: File): Promise<string> => {
-  return uploadToCloudinary(file, "video");
+  return uploadProductVideoToCloudinary(file);
 };
 
 const deleteFromCloudinary = async (

@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -24,9 +23,8 @@ import * as z from "zod";
 import { User, ShoppingBag, Map, Clock } from "lucide-react";
 import { useUserStore } from "@/store/store";
 import { GetUserOrders } from "@/services/orders";
-import { get } from "http";
 import OrderDetailsModal from "@/components/orders/OrderDetailsModal";
-import { set } from "date-fns";
+import { Link } from "react-router-dom";
 
 const profileFormSchema = z.object({
   name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -85,7 +83,7 @@ export default function Profile() {
                 <User className="h-12 w-12 text-primary" />
               </div>
               <CardTitle>{user.full_name}</CardTitle>
-              <CardDescription>Customer since May 2025</CardDescription>
+              {/* <CardDescription>Customer since May 2025</CardDescription> */}
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center">
@@ -138,7 +136,7 @@ export default function Profile() {
                           <FormItem>
                             <FormLabel>Full Name</FormLabel>
                             <FormControl>
-                              <Input {...field} />
+                              <Input {...field} disabled />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -151,26 +149,30 @@ export default function Profile() {
                           <FormItem>
                             <FormLabel>Email</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" />
+                              <Input {...field} type="email" disabled />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <Button type="submit">Save Changes</Button>
+                      <div className="flex flex-col gap-4">
+                        <FormField
+                          control={form.control}
+                          name="phone"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Phone Number</FormLabel>
+                              <FormControl>
+                                <Input {...field} disabled />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <Link to={"/settings"} className="">
+                          <Button>Go to Settings</Button>
+                        </Link>
+                      </div>
                     </form>
                   </Form>
                 </CardContent>

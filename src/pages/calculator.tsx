@@ -34,6 +34,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { TankSizePreview3D } from "@/components/calculator/tankpreview";
+import CTA from "@/components/global/cta";
 
 type SetupType = "earthen-pond" | "concrete-pond" | "tank";
 type FishType = "catfish" | "tilapia";
@@ -605,36 +606,42 @@ export default function AppCalculator() {
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7fbf7_0%,#eff8f0_34%,#ffffff_100%)]">
-      <section className="overflow-hidden bg-[#052f29] text-white">
-        <div className="container grid gap-10 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <section
+        className="overflow-hidden bg-[#052f29] text-white bg-no-repeat bg-cover bg-center relative"
+        style={{ backgroundImage: `url("/catfishbg.webp")` }}
+      >
+        <div className="bg-black/60 absolute top-0 w-full h-full" />
+        <div className="container grid gap-10 py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center relative">
           <div>
-            <Badge className="border-0 bg-white/10 text-white hover:bg-white/10">
-              Aquaculture Planning Tools
-            </Badge>
-            <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight md:text-5xl">
-              Plan feed, stock density, and pond size for catfish and tilapia.
-            </h1>
-            <p className="mt-4 max-w-2xl text-base leading-7 text-white/75 md:text-lg">
-              Start with the calculator selector, then enter your pond or tank
-              details. The form opens different sections for feed planning,
-              stock density, and pond size estimation.
-            </p>
+            <div className="border-b border-white/30 pb-8">
+              <Badge className="border-0 bg-white/10 text-white hover:bg-white/10">
+                Aquaculture Planning Tools
+              </Badge>
+              <h1 className="mt-5 max-w-3xl text-4xl font-bold tracking-tight md:text-5xl">
+                Plan feed, stock density, and pond size for catfish and tilapia.
+              </h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-white/75 md:text-lg">
+                Start with the calculator selector, then enter your pond or tank
+                details. The form opens different sections for feed planning,
+                stock density, and pond size estimation.
+              </p>
+            </div>
 
             <div className="mt-8 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="">
                 <p className="text-sm font-semibold">Feed Planner</p>
                 <p className="mt-1 text-sm text-white/70">
                   Estimate feed size and quantity from young fish to mature
                   fish.
                 </p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="">
                 <p className="text-sm font-semibold">Stock Density</p>
                 <p className="mt-1 text-sm text-white/70">
                   Estimate the optimal number of fingerlings to stock.
                 </p>
               </div>
-              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="">
                 <p className="text-sm font-semibold">Pond Size</p>
                 <p className="mt-1 text-sm text-white/70">
                   Estimate the pond or tank size needed for your planned stock.
@@ -642,82 +649,69 @@ export default function AppCalculator() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
 
-          <Card className="border-white/10 bg-white/10 text-white shadow-2xl backdrop-blur-md">
-            <CardHeader>
-              <CardTitle className="text-white">Choose a calculator</CardTitle>
-              <CardDescription className="text-white/70">
-                Tap the option that matches the farmer's next planning
-                decision.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              {calculatorOptions.map((option) => {
-                const Icon = getCalculatorIcon(option.value);
-                const isActive = option.value === calculatorMode;
+      <section className="container pt-12">
+        <div className="space-y-3">
+          <h1 className="text-2xl font-bold">What do you want to calculate?</h1>
+          <div className="grid gap-3 md:grid-cols-3">
+            {calculatorOptions.map((option) => {
+              const Icon = getCalculatorIcon(option.value);
+              const isActive = option.value === calculatorMode;
 
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    onClick={() =>
-                      handleCalculatorModeChange(option.value, {
-                        scrollToWorkspace: true,
-                      })
-                    }
-                    aria-pressed={isActive}
-                    className={`rounded-2xl border p-4 text-left ${
-                      isActive
-                        ? "border-white/40 bg-white text-[#052f29] shadow-lg shadow-black/20"
-                        : "border-white/10 bg-black/15 text-white transition-colors hover:border-white/25 hover:bg-white/10"
-                    }`}
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div
-                        className={`rounded-2xl p-3 ${
-                          isActive
-                            ? "bg-[#dff4e4] text-[#0d5c54]"
-                            : "bg-white/10 text-white"
-                        }`}
-                      >
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <span
-                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                          isActive
-                            ? "bg-[#dff4e4] text-[#0d5c54]"
-                            : "bg-white/10 text-white/80"
-                        }`}
-                      >
-                        {isActive ? "Selected" : "Tap to open"}
-                      </span>
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleCalculatorModeChange(option.value)}
+                  aria-pressed={isActive}
+                  className={`rounded-3xl border p-4 text-left transition-all ${
+                    isActive
+                      ? "border-white bg-green-800"
+                      : "border-[#d7e7d5] bg-white hover:border-[#9fc7b2] hover:bg-[#f8fcf9]"
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className={`rounded-2xl p-3 ${
+                        isActive
+                          ? "bg-[#dff4e4] text-[#0d5c54]"
+                          : "bg-[#eff7f1] text-[#0d5c54]"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
                     </div>
-                    <p className="mt-4 text-sm font-semibold">{option.label}</p>
-                    <p
-                      className={`mt-1 text-sm ${
-                        isActive ? "text-[#052f29]/75" : "text-white/70"
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+                        isActive
+                          ? "bg-white text-black"
+                          : "bg-[#eff7f1] text-[#0d5c54]"
                       }`}
                     >
-                      {option.description}
-                    </p>
-                    <p
-                      className={`mt-3 text-sm font-medium ${
-                        isActive ? "text-[#0d5c54]" : "text-white/80"
-                      }`}
-                    >
-                      {option.bestFor}
-                    </p>
-                  </button>
-                );
-              })}
-            </CardContent>
-          </Card>
+                      {isActive ? "Selected" : "Choose"}
+                    </span>
+                  </div>
+                  <p
+                    className={`mt-4 text-lg font-semibold ${isActive ? "text-white" : "text-[#062b28]"}`}
+                  >
+                    {option.label}
+                  </p>
+                  <p
+                    className={`mt-2 text-sm leading-6 ${isActive ? "text-white/70" : "text-muted-foreground"}`}
+                  >
+                    {option.description}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       <section id="calculator-workspace" className="container py-12">
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
-          <Card className="border-[#d7e7d5] shadow-[0_20px_60px_-40px_rgba(6,43,40,0.55)]">
+          <Card className="border-[#d7e7d5] shadow-none h-fit">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[#062b28]">
                 <SelectedCalculatorIcon className="h-5 w-5" />
@@ -728,84 +722,14 @@ export default function AppCalculator() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label>Choose what you want to calculate</Label>
-                <div className="grid gap-3 md:grid-cols-3">
-                  {calculatorOptions.map((option) => {
-                    const Icon = getCalculatorIcon(option.value);
-                    const isActive = option.value === calculatorMode;
-
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        onClick={() => handleCalculatorModeChange(option.value)}
-                        aria-pressed={isActive}
-                        className={`rounded-3xl border p-4 text-left transition-all ${
-                          isActive
-                            ? "border-[#0d5c54] bg-[linear-gradient(180deg,#f6fcf7_0%,#eaf7ee_100%)] shadow-[0_16px_40px_-28px_rgba(13,92,84,0.55)]"
-                            : "border-[#d7e7d5] bg-white hover:border-[#9fc7b2] hover:bg-[#f8fcf9]"
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div
-                            className={`rounded-2xl p-3 ${
-                              isActive
-                                ? "bg-[#dff4e4] text-[#0d5c54]"
-                                : "bg-[#eff7f1] text-[#0d5c54]"
-                            }`}
-                          >
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
-                              isActive
-                                ? "bg-[#0d5c54] text-white"
-                                : "bg-[#eff7f1] text-[#0d5c54]"
-                            }`}
-                          >
-                            {isActive ? "Selected" : "Choose"}
-                          </span>
-                        </div>
-                        <p className="mt-4 text-base font-semibold text-[#062b28]">
-                          {option.label}
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                          {option.description}
-                        </p>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div className="rounded-3xl border border-[#d7e7d5] bg-[linear-gradient(180deg,#fbfdfb_0%,#f2faf4_100%)] p-5">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-2xl bg-[#dff4e4] p-3 text-[#0d5c54]">
-                    <SelectedCalculatorIcon className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0d5c54]/70">
-                      Current calculator
-                    </p>
-                    <p className="mt-2 text-lg font-semibold text-[#062b28]">
-                      {selectedCalculator.label}
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {selectedCalculator.description}
-                    </p>
-                    <p className="mt-3 text-sm font-medium text-[#0d5c54]">
-                      {selectedCalculator.bestFor}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
               {calculatorMode === "feed-planner" ? (
                 <div className="space-y-2">
                   <div className="space-y-2">
                     <Label htmlFor="fish-type">Type of fish</Label>
-                    <Select value={fishType} onValueChange={handleFishTypeChange}>
+                    <Select
+                      value={fishType}
+                      onValueChange={handleFishTypeChange}
+                    >
                       <SelectTrigger id="fish-type">
                         <SelectValue placeholder="Select fish type" />
                       </SelectTrigger>
@@ -825,7 +749,9 @@ export default function AppCalculator() {
                     <Label htmlFor="setup-type">Pond or tank type</Label>
                     <Select
                       value={setupType}
-                      onValueChange={(value) => setSetupType(value as SetupType)}
+                      onValueChange={(value) =>
+                        setSetupType(value as SetupType)
+                      }
                     >
                       <SelectTrigger id="setup-type">
                         <SelectValue placeholder="Select setup type" />
@@ -842,7 +768,10 @@ export default function AppCalculator() {
 
                   <div className="space-y-2">
                     <Label htmlFor="fish-type">Type of fish</Label>
-                    <Select value={fishType} onValueChange={handleFishTypeChange}>
+                    <Select
+                      value={fishType}
+                      onValueChange={handleFishTypeChange}
+                    >
                       <SelectTrigger id="fish-type">
                         <SelectValue placeholder="Select fish type" />
                       </SelectTrigger>
@@ -873,8 +802,8 @@ export default function AppCalculator() {
                   </div>
 
                   <p className="text-sm text-muted-foreground">
-                    Feed is estimated from standard growth stages for{" "}
-                    {fishType} and the total number of fish entered above.
+                    Feed is estimated from standard growth stages for {fishType}{" "}
+                    and the total number of fish entered above.
                   </p>
                 </>
               ) : null}
@@ -1009,7 +938,9 @@ export default function AppCalculator() {
                   {geometry.stockingGuide.notes} Base density for {fishType} in
                   this setup is{" "}
                   <span className="font-semibold text-foreground">
-                    {formatNumber(geometry.stockingGuide.densityByFish[fishType])}{" "}
+                    {formatNumber(
+                      geometry.stockingGuide.densityByFish[fishType],
+                    )}{" "}
                     {geometry.stockingGuide.densityLabel}
                   </span>
                   .
@@ -1029,33 +960,6 @@ export default function AppCalculator() {
 
           {calculatorMode === "feed-planner" ? (
             <div className="space-y-6">
-              <div className="grid gap-4 sm:grid-cols-2">
-                <StatCard
-                  icon={<Fish className="h-5 w-5" />}
-                  title="Planned stock count"
-                  value={`${formatInteger(geometry.fishCount)} fish`}
-                  detail="Used across all feed cycle estimates."
-                />
-                <StatCard
-                  icon={<Calculator className="h-5 w-5" />}
-                  title="Total feed needed"
-                  value={`${formatNumber(feedPlanner.totalProgramFeedKg)} kg`}
-                  detail={`Peak daily feed: ${formatNumber(feedPlanner.peakDailyFeedKg)} kg`}
-                />
-                <StatCard
-                  icon={<Scale className="h-5 w-5" />}
-                  title="Estimated feed bags"
-                  value={`${formatInteger(feedPlanner.bagsToBuy)} bags`}
-                  detail={`Rounded up from ${formatNumber(feedPlanner.estimatedFeedBags)} bags at ${formatNumber(feedPlanner.bagSizeKg)} kg each.`}
-                />
-                <StatCard
-                  icon={<Droplets className="h-5 w-5" />}
-                  title="Standard bag size"
-                  value={`${formatNumber(feedPlanner.bagSizeKg)} kg`}
-                  detail="Bag estimates use this fixed standard bag size."
-                />
-              </div>
-
               <Card className={`border ${feedPlannerState.className}`}>
                 <CardContent className="flex items-start gap-4 p-6">
                   <div className="rounded-2xl bg-black/5 p-3 dark:bg-white/10">
@@ -1283,18 +1187,18 @@ export default function AppCalculator() {
       {calculatorMode === "feed-planner" ? (
         <section className="container pb-16">
           <Card className="overflow-hidden border-[#d7e7d5] shadow-[0_20px_60px_-40px_rgba(6,43,40,0.55)]">
-              <CardHeader className="bg-[#f5fbf5]">
-                <CardTitle className="text-[#062b28]">
-                  Feed Schedule by Growth Cycle
-                </CardTitle>
-                <CardDescription>
-                  Estimated feed quantities and bag equivalents for {fishType}{" "}
-                  from young stage to mature harvest size.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
+            <CardHeader className="bg-[#f5fbf5]">
+              <CardTitle className="text-[#062b28]">
+                Feed Schedule by Growth Cycle
+              </CardTitle>
+              <CardDescription>
+                Estimated feed quantities and bag equivalents for {fishType}{" "}
+                from young stage to mature harvest size.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
                   <TableRow>
                     <TableHead>Cycle</TableHead>
                     <TableHead>Fish size</TableHead>
@@ -1338,6 +1242,16 @@ export default function AppCalculator() {
           </Card>
         </section>
       ) : null}
+
+      <CTA
+        title="Need help planning your farm?"
+        description="Our team can help you use these tools to design a farm plan that meets your goals and resources. Contact us for personalized support."
+        primaryText="Contact us"
+        primaryLink="/contact"
+        secondaryText="Learn about our services"
+        secondaryLink="/services"
+        className="mt-12"
+      />
     </div>
   );
 }

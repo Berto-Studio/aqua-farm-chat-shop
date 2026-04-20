@@ -20,6 +20,7 @@ import {
 } from "@/lib/services";
 import type { Product } from "@/types/product";
 import { useFarmServices } from "@/hooks/useServices";
+import CTA from "@/components/global/cta";
 
 const HeroCarouselItems = [
   {
@@ -800,31 +801,14 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Call to Action */}
-      <section className="py-16 bg-primary text-white text-center">
-        <div className="container">
-          <h2 className="text-2xl md:text-4xl font-bold mb-4">
-            Ready to Start Your Fish Farm?
-          </h2>
-          <p className="text-lg mb-8 max-w-2xl mx-auto">
-            Get premium quality catfish and tilapia for your farming needs. We
-            provide expert advice and ongoing support.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button asChild size="lg" variant="secondary">
-              <Link to="/products">Shop Now</Link>
-            </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="bg-transparent"
-            >
-              <Link to="/contact">Contact Us</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <CTA
+        title="Ready to Start Your Fish Farm?"
+        description="Get premium quality catfish and tilapia for your farming needs."
+        primaryText="Shop Now"
+        primaryLink="/products"
+        secondaryText="Contact Us"
+        secondaryLink="/contact"
+      />
     </div>
   );
 }

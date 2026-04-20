@@ -48,7 +48,8 @@ export default function Navbar() {
   const location = useLocation();
   const pathname = location.pathname;
   const [isChatOpen, setIsChatOpen] = useState(false);
-  const returnTo = `${location.pathname}${location.search}${location.hash}` || "/";
+  const returnTo =
+    `${location.pathname}${location.search}${location.hash}` || "/";
 
   // Zustand store for user and login state
   const { user, isLoggedIn, isLoading } = useUserStore();
@@ -77,7 +78,7 @@ export default function Navbar() {
     ? String(supportConversation.id)
     : undefined;
   const unreadMessages = toUnreadCount(
-    supportConversation?.unread_count ?? supportConversation?.unreadCount
+    supportConversation?.unread_count ?? supportConversation?.unreadCount,
   );
   const messages = useMemo(
     () =>
@@ -126,10 +127,10 @@ export default function Navbar() {
         Services
       </Link>
       <Link
-        to="/feed-calculator"
+        to="/calculator"
         className="font-medium hover:text-primary transition-colors"
       >
-        Feed Calculator
+        Calculator
       </Link>
       <Link
         to="/about"
@@ -180,11 +181,8 @@ export default function Navbar() {
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>
-                        <Link
-                          to="/feed-calculator"
-                          className="font-medium text-lg"
-                        >
-                          Feed Calculator
+                        <Link to="/calculator" className="font-medium text-lg">
+                          Calculator
                         </Link>
                       </SheetClose>
                       <SheetClose asChild>

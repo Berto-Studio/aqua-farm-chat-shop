@@ -33,6 +33,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { TankSizePreview3D } from "@/components/calculator/tankpreview";
 
 type SetupType = "earthen-pond" | "concrete-pond" | "tank";
 type FishType = "catfish" | "tilapia";
@@ -323,7 +324,7 @@ const StatCard = ({
   </Card>
 );
 
-export default function FeedCalculator() {
+export default function AppCalculator() {
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>(
     defaultForm.calculatorMode,
   );
@@ -353,7 +354,9 @@ export default function FeedCalculator() {
     const measurementBase =
       stockingGuide.unit === "m2" ? surfaceArea : waterVolume;
     const measurementLabel =
-      stockingGuide.unit === "m2" ? "Usable surface area" : "Usable water volume";
+      stockingGuide.unit === "m2"
+        ? "Usable surface area"
+        : "Usable water volume";
     const measurementUnit = stockingGuide.unit;
 
     return {
@@ -413,7 +416,8 @@ export default function FeedCalculator() {
       fishType,
       geometry.targetWeightKg,
     );
-    const recommendedFingerlings = geometry.measurementBase * density.adjustedDensity;
+    const recommendedFingerlings =
+      geometry.measurementBase * density.adjustedDensity;
     const projectedHarvestBiomassKg =
       recommendedFingerlings * geometry.targetWeightKg;
 
@@ -468,24 +472,28 @@ export default function FeedCalculator() {
   const feedPlannerState =
     feedPlanner.recommendedCapacity <= 0
       ? {
-          label: "Enter a valid pond or tank size to calculate stocking and feed.",
+          label:
+            "Enter a valid pond or tank size to calculate stocking and feed.",
           className:
             "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
         }
       : feedPlanner.stockingRatio > 1
         ? {
-            label: "This stock count is above the recommended capacity for the entered pond or tank size.",
+            label:
+              "This stock count is above the recommended capacity for the entered pond or tank size.",
             className:
               "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
           }
         : feedPlanner.stockingRatio > 0.8
           ? {
-              label: "This stock count is within the recommended density range.",
+              label:
+                "This stock count is within the recommended density range.",
               className:
                 "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
             }
           : {
-              label: "This stock count is below the recommended limit, so you still have room to stock more fish.",
+              label:
+                "This stock count is below the recommended limit, so you still have room to stock more fish.",
               className:
                 "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200",
             };
@@ -493,30 +501,35 @@ export default function FeedCalculator() {
   const stockDensityState =
     geometry.measurementBase <= 0
       ? {
-          label: "Enter valid pond or tank dimensions to estimate how many fingerlings you can stock.",
+          label:
+            "Enter valid pond or tank dimensions to estimate how many fingerlings you can stock.",
           className:
             "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
         }
       : geometry.targetWeightKg <= 0
         ? {
-            label: "Enter a valid target harvest weight to adjust the stocking recommendation.",
+            label:
+              "Enter a valid target harvest weight to adjust the stocking recommendation.",
             className:
               "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
           }
         : stockDensity.adjustmentFactor < 0.95
           ? {
-              label: "Because you want to grow the fish to a heavier market weight, the recommended stocking density is reduced.",
+              label:
+                "Because you want to grow the fish to a heavier market weight, the recommended stocking density is reduced.",
               className:
                 "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200",
             }
           : stockDensity.adjustmentFactor > 1.05
             ? {
-                label: "Because the target harvest weight is lighter, the system allows a higher stocking density than the base guide.",
+                label:
+                  "Because the target harvest weight is lighter, the system allows a higher stocking density than the base guide.",
                 className:
                   "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
               }
             : {
-                label: "This target harvest weight is close to the standard density guide.",
+                label:
+                  "This target harvest weight is close to the standard density guide.",
                 className:
                   "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/40 dark:text-sky-200",
               };
@@ -524,24 +537,28 @@ export default function FeedCalculator() {
   const pondSizeState =
     geometry.fishCount <= 0
       ? {
-          label: "Enter the number of fish you want to rear to estimate the pond or tank size you need.",
+          label:
+            "Enter the number of fish you want to rear to estimate the pond or tank size you need.",
           className:
             "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
         }
       : geometry.targetWeightKg <= 0
         ? {
-            label: "Enter a valid target harvest weight so the required size can be adjusted correctly.",
+            label:
+              "Enter a valid target harvest weight so the required size can be adjusted correctly.",
             className:
               "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
           }
         : geometry.stockingGuide.unit === "m3" && geometry.depthValue <= 0
           ? {
-              label: "Enter a preferred water depth to calculate the footprint needed for the pond or tank.",
+              label:
+                "Enter a preferred water depth to calculate the footprint needed for the pond or tank.",
               className:
                 "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
             }
           : {
-              label: "The recommended size below is designed to hold your planned stock count at the selected harvest weight.",
+              label:
+                "The recommended size below is designed to hold your planned stock count at the selected harvest weight.",
               className:
                 "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
             };
@@ -585,7 +602,8 @@ export default function FeedCalculator() {
               <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
                 <p className="text-sm font-semibold">Feed Planner</p>
                 <p className="mt-1 text-sm text-white/70">
-                  Estimate feed size and quantity from young fish to mature fish.
+                  Estimate feed size and quantity from young fish to mature
+                  fish.
                 </p>
               </div>
               <div className="rounded-3xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm">
@@ -642,7 +660,9 @@ export default function FeedCalculator() {
                 <Calculator className="h-5 w-5" />
                 {selectedCalculator.label}
               </CardTitle>
-              <CardDescription>{selectedCalculator.description}</CardDescription>
+              <CardDescription>
+                {selectedCalculator.description}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
@@ -862,9 +882,7 @@ export default function FeedCalculator() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="depth">
-                        Preferred water depth (m)
-                      </Label>
+                      <Label htmlFor="depth">Preferred water depth (m)</Label>
                       <Input
                         id="depth"
                         type="number"
@@ -1096,7 +1114,9 @@ export default function FeedCalculator() {
                   </div>
                   <div>
                     <p className="font-semibold">Pond size guidance</p>
-                    <p className="mt-2 text-sm leading-6">{pondSizeState.label}</p>
+                    <p className="mt-2 text-sm leading-6">
+                      {pondSizeState.label}
+                    </p>
                     {geometry.fishCount > 0 && pondSize.adjustedDensity > 0 ? (
                       <p className="mt-2 text-sm">
                         Planned density:{" "}
@@ -1146,6 +1166,15 @@ export default function FeedCalculator() {
         </div>
       </section>
 
+      {calculatorMode === "pond-size" ? (
+        <TankSizePreview3D
+          setupType={setupType}
+          length={pondSize.suggestedLength}
+          width={pondSize.suggestedWidth}
+          depth={geometry.depthValue}
+        />
+      ) : null}
+
       {calculatorMode === "feed-planner" ? (
         <section className="container pb-16">
           <Card className="overflow-hidden border-[#d7e7d5] shadow-[0_20px_60px_-40px_rgba(6,43,40,0.55)]">
@@ -1174,17 +1203,24 @@ export default function FeedCalculator() {
                 <TableBody>
                   {feedPlanner.feedRows.map((cycle) => (
                     <TableRow key={cycle.stage}>
-                      <TableCell className="font-medium">{cycle.stage}</TableCell>
+                      <TableCell className="font-medium">
+                        {cycle.stage}
+                      </TableCell>
                       <TableCell>
-                        {cycle.weightRangeGrams[0]}g - {cycle.weightRangeGrams[1]}g
+                        {cycle.weightRangeGrams[0]}g -{" "}
+                        {cycle.weightRangeGrams[1]}g
                       </TableCell>
                       <TableCell>{cycle.feedSize}</TableCell>
                       <TableCell>{cycle.durationWeeks} weeks</TableCell>
-                      <TableCell>{formatNumber(cycle.feedRate * 100)}%</TableCell>
+                      <TableCell>
+                        {formatNumber(cycle.feedRate * 100)}%
+                      </TableCell>
                       <TableCell>
                         {formatNumber(cycle.dailyFeedKg)} kg/day
                       </TableCell>
-                      <TableCell>{formatNumber(cycle.cycleFeedKg)} kg</TableCell>
+                      <TableCell>
+                        {formatNumber(cycle.cycleFeedKg)} kg
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -15,8 +15,6 @@ import ProductDetail from "./pages/products/ProductDetail";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Services from "./pages/Services";
-import FeedCalculator from "./pages/FeedCalculator";
-import Cart from "./pages/payment/payment";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
@@ -45,6 +43,7 @@ import FarmerDashboard from "./pages/farmers/FarmerDashboard";
 import OtpVerification from "./pages/authentication/OtpVerification";
 import PaymentProccess from "./pages/payment/payment";
 import Settings from "./pages/settings/settings";
+import AppCalculator from "./pages/calculator";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -88,7 +87,7 @@ const App = () => (
               <Route path="products" element={<Products />} />
               <Route path="products/:id" element={<ProductDetail />} />
               <Route path="services" element={<Services />} />
-              <Route path="feed-calculator" element={<FeedCalculator />} />
+              <Route path="calculator" element={<AppCalculator />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="contact" element={<ContactUs />} />
               <Route path="cart" element={<PaymentProccess />} />

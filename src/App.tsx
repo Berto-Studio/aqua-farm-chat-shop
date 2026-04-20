@@ -15,6 +15,7 @@ import ProductDetail from "./pages/products/ProductDetail";
 import AboutUs from "./pages/AboutUs";
 import ContactUs from "./pages/ContactUs";
 import Services from "./pages/Services";
+import FeedCalculator from "./pages/FeedCalculator";
 import Cart from "./pages/payment/payment";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminProducts from "./pages/admin/AdminProducts";
@@ -87,6 +88,7 @@ const App = () => (
               <Route path="products" element={<Products />} />
               <Route path="products/:id" element={<ProductDetail />} />
               <Route path="services" element={<Services />} />
+              <Route path="feed-calculator" element={<FeedCalculator />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="contact" element={<ContactUs />} />
               <Route path="cart" element={<PaymentProccess />} />

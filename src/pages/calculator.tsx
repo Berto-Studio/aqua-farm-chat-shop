@@ -62,24 +62,31 @@ const calculatorOptions: Array<{
   value: CalculatorMode;
   label: string;
   description: string;
+  bestFor: string;
 }> = [
   {
     value: "feed-planner",
     label: "Feed Planner",
     description:
-      "Calculate feed size and feed quantity for catfish or tilapia from young stage to mature stage.",
+      "Estimate feed quantity, feeding stages, and feed bag needs for catfish or tilapia.",
+    bestFor:
+      "Best for farmers who already know the number of fish they want to rear.",
   },
   {
     value: "stock-density",
     label: "Stock Density Calculator",
     description:
       "Estimate how many catfish or tilapia fingerlings you can stock for optimal performance using pond dimensions and target harvest weight.",
+    bestFor:
+      "Best for ponds you already built and want to stock at the right level.",
   },
   {
     value: "pond-size",
     label: "Pond Size Calculator",
     description:
       "Estimate the pond or tank size needed to house the number of fish you want to rear at your chosen harvest weight.",
+    bestFor:
+      "Best for planning a new pond or tank before you start stocking fish.",
   },
 ];
 
@@ -252,6 +259,18 @@ const clamp = (value: number, min: number, max: number) =>
 const formatNumber = (value: number) => numberFormatter.format(value);
 
 const formatInteger = (value: number) => integerFormatter.format(value);
+const standardFeedBagSizeKg = 15;
+
+const getCalculatorIcon = (calculatorMode: CalculatorMode) => {
+  switch (calculatorMode) {
+    case "stock-density":
+      return Fish;
+    case "pond-size":
+      return Ruler;
+    default:
+      return Calculator;
+  }
+};
 
 const getSuggestedFootprint = (surfaceArea: number) => {
   if (surfaceArea <= 0) {
@@ -341,6 +360,7 @@ export default function AppCalculator() {
   const selectedCalculator =
     calculatorOptions.find((option) => option.value === calculatorMode) ??
     calculatorOptions[0];
+  const SelectedCalculatorIcon = getCalculatorIcon(selectedCalculator.value);
 
   const geometry = useMemo(() => {
     const fishCount = parseNumber(numberOfFish);
@@ -375,20 +395,19 @@ export default function AppCalculator() {
   }, [depth, numberOfFish, setupType, targetWeightGrams, width, length]);
 
   const feedPlanner = useMemo(() => {
-    const density = geometry.stockingGuide.densityByFish[fishType];
-    const recommendedCapacity = geometry.measurementBase * density;
-    const stockingRatio =
-      recommendedCapacity > 0 ? geometry.fishCount / recommendedCapacity : 0;
+    const bagSizeKg = standardFeedBagSizeKg;
     const feedRows = feedPrograms[fishType].map((cycle) => {
       const averageWeightKg =
         (cycle.weightRangeGrams[0] + cycle.weightRangeGrams[1]) / 2 / 1000;
       const dailyFeedKg = geometry.fishCount * averageWeightKg * cycle.feedRate;
       const cycleFeedKg = dailyFeedKg * cycle.durationWeeks * 7;
+      const cycleFeedBags = bagSizeKg > 0 ? cycleFeedKg / bagSizeKg : 0;
 
       return {
         ...cycle,
         dailyFeedKg,
         cycleFeedKg,
+        cycleFeedBags,
       };
     });
     const totalProgramFeedKg = feedRows.reduce(
@@ -399,16 +418,19 @@ export default function AppCalculator() {
       ...feedRows.map((cycle) => cycle.dailyFeedKg),
       0,
     );
+    const estimatedFeedBags =
+      bagSizeKg > 0 ? totalProgramFeedKg / bagSizeKg : 0;
+    const bagsToBuy = estimatedFeedBags > 0 ? Math.ceil(estimatedFeedBags) : 0;
 
     return {
-      density,
-      recommendedCapacity,
-      stockingRatio,
+      bagSizeKg,
       feedRows,
       totalProgramFeedKg,
       peakDailyFeedKg,
+      estimatedFeedBags,
+      bagsToBuy,
     };
-  }, [fishType, geometry]);
+  }, [fishType, geometry.fishCount]);
 
   const stockDensity = useMemo(() => {
     const density = getAdjustedDensity(
@@ -470,33 +492,19 @@ export default function AppCalculator() {
   ]);
 
   const feedPlannerState =
-    feedPlanner.recommendedCapacity <= 0
+    geometry.fishCount <= 0
       ? {
           label:
-            "Enter a valid pond or tank size to calculate stocking and feed.",
+            "Enter the number of fish you want to rear to estimate total feed and feed bags.",
           className:
             "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
         }
-      : feedPlanner.stockingRatio > 1
-        ? {
-            label:
-              "This stock count is above the recommended capacity for the entered pond or tank size.",
-            className:
-              "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-200",
-          }
-        : feedPlanner.stockingRatio > 0.8
-          ? {
-              label:
-                "This stock count is within the recommended density range.",
-              className:
-                "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
-            }
-          : {
-              label:
-                "This stock count is below the recommended limit, so you still have room to stock more fish.",
-              className:
-                "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200",
-            };
+      : {
+          label:
+            "This estimate shows the total feed needed from starter to mature stage for the fish count you entered.",
+          className:
+            "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
+        };
 
   const stockDensityState =
     geometry.measurementBase <= 0
@@ -570,6 +578,20 @@ export default function AppCalculator() {
     setTargetWeightGrams(fishProfiles[nextFishType].defaultTargetWeightGrams);
   };
 
+  const handleCalculatorModeChange = (
+    value: CalculatorMode,
+    options?: { scrollToWorkspace?: boolean },
+  ) => {
+    setCalculatorMode(value);
+
+    if (options?.scrollToWorkspace) {
+      document.getElementById("calculator-workspace")?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  };
+
   const handleReset = () => {
     setCalculatorMode(defaultForm.calculatorMode);
     setSetupType(defaultForm.setupType);
@@ -623,41 +645,82 @@ export default function AppCalculator() {
 
           <Card className="border-white/10 bg-white/10 text-white shadow-2xl backdrop-blur-md">
             <CardHeader>
-              <CardTitle className="text-white">Available sections</CardTitle>
+              <CardTitle className="text-white">Choose a calculator</CardTitle>
               <CardDescription className="text-white/70">
-                Choose the section that matches the planning decision you want
-                to make first.
+                Tap the option that matches the farmer's next planning
+                decision.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
-              {calculatorOptions.map((option) => (
-                <div
-                  key={option.value}
-                  className={`rounded-2xl border p-4 ${
-                    option.value === calculatorMode
-                      ? "border-white/25 bg-white/15"
-                      : "border-white/10 bg-black/15"
-                  }`}
-                >
-                  <p className="text-sm font-semibold text-white">
-                    {option.label}
-                  </p>
-                  <p className="mt-1 text-sm text-white/70">
-                    {option.description}
-                  </p>
-                </div>
-              ))}
+              {calculatorOptions.map((option) => {
+                const Icon = getCalculatorIcon(option.value);
+                const isActive = option.value === calculatorMode;
+
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() =>
+                      handleCalculatorModeChange(option.value, {
+                        scrollToWorkspace: true,
+                      })
+                    }
+                    aria-pressed={isActive}
+                    className={`rounded-2xl border p-4 text-left ${
+                      isActive
+                        ? "border-white/40 bg-white text-[#052f29] shadow-lg shadow-black/20"
+                        : "border-white/10 bg-black/15 text-white transition-colors hover:border-white/25 hover:bg-white/10"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div
+                        className={`rounded-2xl p-3 ${
+                          isActive
+                            ? "bg-[#dff4e4] text-[#0d5c54]"
+                            : "bg-white/10 text-white"
+                        }`}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span
+                        className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+                          isActive
+                            ? "bg-[#dff4e4] text-[#0d5c54]"
+                            : "bg-white/10 text-white/80"
+                        }`}
+                      >
+                        {isActive ? "Selected" : "Tap to open"}
+                      </span>
+                    </div>
+                    <p className="mt-4 text-sm font-semibold">{option.label}</p>
+                    <p
+                      className={`mt-1 text-sm ${
+                        isActive ? "text-[#052f29]/75" : "text-white/70"
+                      }`}
+                    >
+                      {option.description}
+                    </p>
+                    <p
+                      className={`mt-3 text-sm font-medium ${
+                        isActive ? "text-[#0d5c54]" : "text-white/80"
+                      }`}
+                    >
+                      {option.bestFor}
+                    </p>
+                  </button>
+                );
+              })}
             </CardContent>
           </Card>
         </div>
       </section>
 
-      <section className="container py-12">
+      <section id="calculator-workspace" className="container py-12">
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <Card className="border-[#d7e7d5] shadow-[0_20px_60px_-40px_rgba(6,43,40,0.55)]">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[#062b28]">
-                <Calculator className="h-5 w-5" />
+                <SelectedCalculatorIcon className="h-5 w-5" />
                 {selectedCalculator.label}
               </CardTitle>
               <CardDescription>
@@ -665,67 +728,135 @@ export default function AppCalculator() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="calculator-mode">Calculator section</Label>
-                <Select
-                  value={calculatorMode}
-                  onValueChange={(value) =>
-                    setCalculatorMode(value as CalculatorMode)
-                  }
-                >
-                  <SelectTrigger id="calculator-mode">
-                    <SelectValue placeholder="Select calculator section" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {calculatorOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="space-y-3">
+                <Label>Choose what you want to calculate</Label>
+                <div className="grid gap-3 md:grid-cols-3">
+                  {calculatorOptions.map((option) => {
+                    const Icon = getCalculatorIcon(option.value);
+                    const isActive = option.value === calculatorMode;
 
-              <div className="rounded-2xl border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
-                {selectedCalculator.description}
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div className="space-y-2">
-                  <Label htmlFor="setup-type">Pond or tank type</Label>
-                  <Select
-                    value={setupType}
-                    onValueChange={(value) => setSetupType(value as SetupType)}
-                  >
-                    <SelectTrigger id="setup-type">
-                      <SelectValue placeholder="Select setup type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {setupOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => handleCalculatorModeChange(option.value)}
+                        aria-pressed={isActive}
+                        className={`rounded-3xl border p-4 text-left transition-all ${
+                          isActive
+                            ? "border-[#0d5c54] bg-[linear-gradient(180deg,#f6fcf7_0%,#eaf7ee_100%)] shadow-[0_16px_40px_-28px_rgba(13,92,84,0.55)]"
+                            : "border-[#d7e7d5] bg-white hover:border-[#9fc7b2] hover:bg-[#f8fcf9]"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div
+                            className={`rounded-2xl p-3 ${
+                              isActive
+                                ? "bg-[#dff4e4] text-[#0d5c54]"
+                                : "bg-[#eff7f1] text-[#0d5c54]"
+                            }`}
+                          >
+                            <Icon className="h-5 w-5" />
+                          </div>
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] ${
+                              isActive
+                                ? "bg-[#0d5c54] text-white"
+                                : "bg-[#eff7f1] text-[#0d5c54]"
+                            }`}
+                          >
+                            {isActive ? "Selected" : "Choose"}
+                          </span>
+                        </div>
+                        <p className="mt-4 text-base font-semibold text-[#062b28]">
                           {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="fish-type">Type of fish</Label>
-                  <Select value={fishType} onValueChange={handleFishTypeChange}>
-                    <SelectTrigger id="fish-type">
-                      <SelectValue placeholder="Select fish type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {fishOptions.map((option) => (
-                        <SelectItem key={option.value} value={option.value}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                          {option.description}
+                        </p>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              <div className="rounded-3xl border border-[#d7e7d5] bg-[linear-gradient(180deg,#fbfdfb_0%,#f2faf4_100%)] p-5">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-2xl bg-[#dff4e4] p-3 text-[#0d5c54]">
+                    <SelectedCalculatorIcon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#0d5c54]/70">
+                      Current calculator
+                    </p>
+                    <p className="mt-2 text-lg font-semibold text-[#062b28]">
+                      {selectedCalculator.label}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {selectedCalculator.description}
+                    </p>
+                    <p className="mt-3 text-sm font-medium text-[#0d5c54]">
+                      {selectedCalculator.bestFor}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {calculatorMode === "feed-planner" ? (
+                <div className="space-y-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="fish-type">Type of fish</Label>
+                    <Select value={fishType} onValueChange={handleFishTypeChange}>
+                      <SelectTrigger id="fish-type">
+                        <SelectValue placeholder="Select fish type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fishOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="setup-type">Pond or tank type</Label>
+                    <Select
+                      value={setupType}
+                      onValueChange={(value) => setSetupType(value as SetupType)}
+                    >
+                      <SelectTrigger id="setup-type">
+                        <SelectValue placeholder="Select setup type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {setupOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="fish-type">Type of fish</Label>
+                    <Select value={fishType} onValueChange={handleFishTypeChange}>
+                      <SelectTrigger id="fish-type">
+                        <SelectValue placeholder="Select fish type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {fishOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
 
               {calculatorMode === "feed-planner" ? (
                 <>
@@ -741,46 +872,10 @@ export default function AppCalculator() {
                     />
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="length">Length (m)</Label>
-                      <Input
-                        id="length"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={length}
-                        onChange={(event) => setLength(event.target.value)}
-                        placeholder="Length"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="width">Width (m)</Label>
-                      <Input
-                        id="width"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={width}
-                        onChange={(event) => setWidth(event.target.value)}
-                        placeholder="Width"
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="depth">Depth (m)</Label>
-                      <Input
-                        id="depth"
-                        type="number"
-                        min="0"
-                        step="0.1"
-                        value={depth}
-                        onChange={(event) => setDepth(event.target.value)}
-                        placeholder="Depth"
-                      />
-                    </div>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Feed is estimated from standard growth stages for{" "}
+                    {fishType} and the total number of fish entered above.
+                  </p>
                 </>
               ) : null}
 
@@ -901,15 +996,25 @@ export default function AppCalculator() {
                 </>
               ) : null}
 
-              <div className="rounded-2xl border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
-                {geometry.stockingGuide.notes} Base density for {fishType} in
-                this setup is{" "}
-                <span className="font-semibold text-foreground">
-                  {formatNumber(geometry.stockingGuide.densityByFish[fishType])}{" "}
-                  {geometry.stockingGuide.densityLabel}
-                </span>
-                .
-              </div>
+              {calculatorMode === "feed-planner" ? (
+                <div className="rounded-2xl border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
+                  Feed bag estimates are based on{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatNumber(feedPlanner.bagSizeKg)} kg per standard bag
+                  </span>
+                  .
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
+                  {geometry.stockingGuide.notes} Base density for {fishType} in
+                  this setup is{" "}
+                  <span className="font-semibold text-foreground">
+                    {formatNumber(geometry.stockingGuide.densityByFish[fishType])}{" "}
+                    {geometry.stockingGuide.densityLabel}
+                  </span>
+                  .
+                </div>
+              )}
 
               <Button
                 type="button"
@@ -926,28 +1031,28 @@ export default function AppCalculator() {
             <div className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <StatCard
-                  icon={<Scale className="h-5 w-5" />}
-                  title="Recommended capacity"
-                  value={`${formatInteger(feedPlanner.recommendedCapacity)} fish`}
-                  detail="Based on the pond or tank size you entered."
-                />
-                <StatCard
                   icon={<Fish className="h-5 w-5" />}
                   title="Planned stock count"
                   value={`${formatInteger(geometry.fishCount)} fish`}
                   detail="Used across all feed cycle estimates."
                 />
                 <StatCard
-                  icon={<Droplets className="h-5 w-5" />}
-                  title="Water volume"
-                  value={`${formatNumber(geometry.waterVolume)} m3`}
-                  detail={`Surface area: ${formatNumber(geometry.surfaceArea)} m2`}
-                />
-                <StatCard
                   icon={<Calculator className="h-5 w-5" />}
-                  title="Total feed estimate"
+                  title="Total feed needed"
                   value={`${formatNumber(feedPlanner.totalProgramFeedKg)} kg`}
                   detail={`Peak daily feed: ${formatNumber(feedPlanner.peakDailyFeedKg)} kg`}
+                />
+                <StatCard
+                  icon={<Scale className="h-5 w-5" />}
+                  title="Estimated feed bags"
+                  value={`${formatInteger(feedPlanner.bagsToBuy)} bags`}
+                  detail={`Rounded up from ${formatNumber(feedPlanner.estimatedFeedBags)} bags at ${formatNumber(feedPlanner.bagSizeKg)} kg each.`}
+                />
+                <StatCard
+                  icon={<Droplets className="h-5 w-5" />}
+                  title="Standard bag size"
+                  value={`${formatNumber(feedPlanner.bagSizeKg)} kg`}
+                  detail="Bag estimates use this fixed standard bag size."
                 />
               </div>
 
@@ -957,17 +1062,17 @@ export default function AppCalculator() {
                     <AlertTriangle className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="font-semibold">Stocking guidance</p>
+                    <p className="font-semibold">Feed planning guidance</p>
                     <p className="mt-2 text-sm leading-6">
                       {feedPlannerState.label}
                     </p>
-                    {feedPlanner.recommendedCapacity > 0 ? (
+                    {geometry.fishCount > 0 ? (
                       <p className="mt-2 text-sm">
-                        You are using about{" "}
+                        Recommended purchase: about{" "}
                         <span className="font-semibold">
-                          {formatNumber(feedPlanner.stockingRatio * 100)}%
+                          {formatInteger(feedPlanner.bagsToBuy)} bags
                         </span>{" "}
-                        of the recommended capacity.
+                        of {formatNumber(feedPlanner.bagSizeKg)} kg feed.
                       </p>
                     ) : null}
                   </div>
@@ -990,8 +1095,8 @@ export default function AppCalculator() {
                     survival rate, and how aggressively the fish are feeding.
                   </p>
                   <p>
-                    This section works best when you already know the pond size
-                    and the number of fish you want to rear.
+                    This section works best when you know the number of fish you
+                    want to rear and need to estimate the feed purchase volume.
                   </p>
                 </CardContent>
               </Card>
@@ -1178,18 +1283,18 @@ export default function AppCalculator() {
       {calculatorMode === "feed-planner" ? (
         <section className="container pb-16">
           <Card className="overflow-hidden border-[#d7e7d5] shadow-[0_20px_60px_-40px_rgba(6,43,40,0.55)]">
-            <CardHeader className="bg-[#f5fbf5]">
-              <CardTitle className="text-[#062b28]">
-                Feed Schedule by Growth Cycle
-              </CardTitle>
-              <CardDescription>
-                Estimated feed quantities for {fishType} from young stage to
-                mature harvest size.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
+              <CardHeader className="bg-[#f5fbf5]">
+                <CardTitle className="text-[#062b28]">
+                  Feed Schedule by Growth Cycle
+                </CardTitle>
+                <CardDescription>
+                  Estimated feed quantities and bag equivalents for {fishType}{" "}
+                  from young stage to mature harvest size.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="p-0">
+                <Table>
+                  <TableHeader>
                   <TableRow>
                     <TableHead>Cycle</TableHead>
                     <TableHead>Fish size</TableHead>
@@ -1198,6 +1303,7 @@ export default function AppCalculator() {
                     <TableHead>Feed rate</TableHead>
                     <TableHead>Daily feed</TableHead>
                     <TableHead>Cycle total</TableHead>
+                    <TableHead>Bag equivalent</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1220,6 +1326,9 @@ export default function AppCalculator() {
                       </TableCell>
                       <TableCell>
                         {formatNumber(cycle.cycleFeedKg)} kg
+                      </TableCell>
+                      <TableCell>
+                        {formatNumber(cycle.cycleFeedBags)} bags
                       </TableCell>
                     </TableRow>
                   ))}

@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { useNavigate } from "react-router-dom";
 import { Search, X } from "lucide-react";
 import { useProducts } from "@/hooks/useProducts";
@@ -15,6 +15,8 @@ export default function SearchDropdown() {
   
   // Use the backend products data
   const { data: products = [], isLoading } = useProducts();
+  const normalizedQuery = query.trim().toLowerCase();
+  const hasSearchQuery = normalizedQuery.length > 0;
 
   // Handle click outside to close dropdown
   useEffect(() => {
@@ -30,12 +32,12 @@ export default function SearchDropdown() {
     };
   }, [ref]);
 
-  const filteredProducts = query === "" 
-    ? [] 
+  const filteredProducts = !hasSearchQuery
+    ? []
     : products.filter((product) =>
-        product.title.toLowerCase().includes(query.toLowerCase()) ||
-        product.category.toLowerCase().includes(query.toLowerCase()) ||
-        product.description.toLowerCase().includes(query.toLowerCase())
+        product.title.toLowerCase().includes(normalizedQuery) ||
+        product.category.toLowerCase().includes(normalizedQuery) ||
+        product.description.toLowerCase().includes(normalizedQuery)
       );
 
   const handleSelect = (productId: string) => {
@@ -78,11 +80,14 @@ export default function SearchDropdown() {
 
       {open && (
         <div className="absolute z-50 w-full mt-1 bg-white border rounded-md shadow-lg">
-          <Command>
+          <Command shouldFilter={false}>
             <CommandList>
-              <CommandInput placeholder="Search products..." value={query} onValueChange={setQuery} />
               {isLoading ? (
                 <div className="py-6 text-center text-sm">Loading products...</div>
+              ) : !hasSearchQuery ? (
+                <div className="py-6 text-center text-sm text-muted-foreground">
+                  Start typing to search products.
+                </div>
               ) : (
                 <>
                   <CommandEmpty>No products found.</CommandEmpty>

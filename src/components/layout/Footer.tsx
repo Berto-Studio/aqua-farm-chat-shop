@@ -22,20 +22,19 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="border-t border-zinc-200 bg-zinc-50 text-zinc-700">
+    <footer className="border-t border-zinc-200 bg-white text-zinc-800">
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="mb-8 flex flex-col gap-4 border-b border-zinc-200 pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8 flex flex-col gap-4 pb-6 sm:flex-row sm:items-center sm:justify-between">
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-xl font-bold text-zinc-900"
+            className="inline-flex items-center gap-2 text-3xl font-bold text-zinc-900"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-md bg-sky-100 text-sky-700">
-              FF
-            </span>
-            FishFarm
+            <img src="/logo/logo1.png" alt="" className="w-28 h-16" />
           </Link>
-          <p className="text-sm text-zinc-500">
-            Premium catfish and tilapia for your farm, delivered fresh.
+          <p className="text-sm text-zinc-500 max-w-md text-right">
+            Pomegrid is a marketplace for farmers to buy and sell fish, produce,
+            livestock, and farm equipment. We connect local farmers with
+            customers looking for fresh, sustainable products.
           </p>
         </div>
 
@@ -65,7 +64,7 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  to="/products/catfish"
+                  to="/products?category=Fish"
                   className="transition-colors hover:text-zinc-900"
                 >
                   Catfish
@@ -73,7 +72,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/products/tilapia"
+                  to="/products?category=Fish"
                   className="transition-colors hover:text-zinc-900"
                 >
                   Tilapia
@@ -81,18 +80,10 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/products/fingerlings"
+                  to="/products?category=Farm+Equipment"
                   className="transition-colors hover:text-zinc-900"
                 >
-                  Fingerlings
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/products/mature-fish"
-                  className="transition-colors hover:text-zinc-900"
-                >
-                  Mature Fish
+                  Farm Equipment
                 </Link>
               </li>
             </ul>
@@ -129,14 +120,14 @@ export default function Footer() {
           </div>
 
           <div className="md:col-span-3 md:justify-self-end">
-            <button
+            {/* <button
               type="button"
               className="mb-4 inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700"
             >
               <Globe className="h-4 w-4" />
               English
               <ChevronDown className="h-4 w-4" />
-            </button>
+            </button> */}
             <div className="flex items-center gap-2">
               {[
                 { icon: Linkedin, label: "LinkedIn", href: "#" },
@@ -158,7 +149,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-6 flex flex-col gap-4 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>&copy; {currentYear} FishFarm. All rights reserved.</p>
+          <p>&copy; {currentYear} Pomegrid. All rights reserved.</p>
           <div className="flex items-center gap-5">
             <Link to="#" className="transition-colors hover:text-zinc-800">
               Terms & Conditions

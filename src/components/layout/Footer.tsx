@@ -151,14 +151,17 @@ export default function Footer() {
         <div className="mt-6 flex flex-col gap-4 text-xs text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
           <p>&copy; {currentYear} Pomegrid. All rights reserved.</p>
           <div className="flex items-center gap-5">
-            <Link to="#" className="transition-colors hover:text-zinc-800">
+            <Link
+              to="/terms-and-conditions"
+              className="transition-colors hover:text-zinc-800"
+            >
               Terms & Conditions
             </Link>
-            <Link to="#" className="transition-colors hover:text-zinc-800">
+            <Link
+              to="/privacy-policy"
+              className="transition-colors hover:text-zinc-800"
+            >
               Privacy Policy
-            </Link>
-            <Link to="#" className="transition-colors hover:text-zinc-800">
-              Cookies
             </Link>
           </div>
         </div>

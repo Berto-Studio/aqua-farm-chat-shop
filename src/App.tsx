@@ -9,6 +9,7 @@ import ScrollToTop from "./components/layout/ScrollToTop";
 import AdminLayout from "./components/admin/AdminLayout";
 import AuthBootstrap from "./components/auth/AuthBootstrap";
 import AuthRequiredDialog from "./components/auth/AuthRequiredDialog";
+import CookieConsentPopup from "./components/legal/CookieConsentPopup";
 import Index from "./pages/Index";
 import Chat from "./pages/Chat";
 import ProductDetail from "./pages/products/ProductDetail";
@@ -44,6 +45,9 @@ import OtpVerification from "./pages/authentication/OtpVerification";
 import PaymentProccess from "./pages/payment/payment";
 import Settings from "./pages/settings/settings";
 import AppCalculator from "./pages/calculator";
+import TermsAndConditions from "./pages/legal/TermsAndConditions";
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
+import CookiePolicy from "./pages/legal/CookiePolicy";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -81,6 +85,7 @@ const App = () => (
           <ScrollToTop />
           <AuthBootstrap />
           <AuthRequiredDialog />
+          <CookieConsentPopup />
           <Routes>
             <Route path="/" element={<Layout />}>
               <Route index element={<Index />} />
@@ -90,6 +95,12 @@ const App = () => (
               <Route path="calculator" element={<AppCalculator />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="contact" element={<ContactUs />} />
+              <Route
+                path="terms-and-conditions"
+                element={<TermsAndConditions />}
+              />
+              <Route path="privacy-policy" element={<PrivacyPolicy />} />
+              <Route path="cookie-policy" element={<CookiePolicy />} />
               <Route path="cart" element={<PaymentProccess />} />
 
               <Route

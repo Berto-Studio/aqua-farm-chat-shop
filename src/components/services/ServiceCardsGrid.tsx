@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Check } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -14,23 +15,31 @@ interface ServiceCardsGridProps {
   services: FarmService[];
   className?: string;
   renderActions?: (service: FarmService) => ReactNode;
+  onServiceSelect?: (service: FarmService) => void;
 }
 
 export default function ServiceCardsGrid({
   services,
   className,
   renderActions,
+  onServiceSelect,
 }: ServiceCardsGridProps) {
   return (
     <div className={cn("grid grid-cols-1 lg:grid-cols-3 gap-8", className)}>
       {services.map((service) => {
         const IconComponent = serviceIconMap[service.icon];
+        const isClickable = Boolean(onServiceSelect);
 
         return (
           <Card
             key={String(service.id ?? service.title)}
-            className="relative"
-            id={service.id.toString()}
+            className={cn(
+              "relative",
+              isClickable &&
+                "cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg",
+            )}
+            id={service.id !== undefined && service.id !== null ? String(service.id) : undefined}
+            onClick={isClickable ? () => onServiceSelect?.(service) : undefined}
           >
             <CardHeader>
               <div className="flex justify-between items-center mb-4">
@@ -85,6 +94,19 @@ export default function ServiceCardsGrid({
                     );
                   })}
                 </div>
+
+                {isClickable ? (
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onServiceSelect?.(service);
+                    }}
+                  >
+                    Request This Service
+                  </Button>
+                ) : null}
               </div>
             </CardContent>
           </Card>

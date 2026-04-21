@@ -319,7 +319,7 @@ export default function Index() {
                           <h3 className="text-2xl font-semibold leading-tight md:text-4xl">
                             {spotlightProduct.title}
                           </h3>
-                          <p className="mt-4 max-w-lg text-sm leading-7 text-white/75 md:text-base">
+                          <p className="mt-4 max-w-lg text-sm leading-7 text-white/75 md:text-base line-clamp-3">
                             {spotlightProduct.description}
                           </p>
                         </div>

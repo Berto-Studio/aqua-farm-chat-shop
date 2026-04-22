@@ -180,7 +180,7 @@ const safeParseJson = async <T>(response: Response): Promise<T | null> => {
 
 const extractErrorMessage = (
   payload: Record<string, any> | null,
-  fallback: string = "Something went wrong"
+  fallback: string = "Something went wrong",
 ) => {
   if (!payload) return fallback;
 
@@ -189,7 +189,7 @@ const extractErrorMessage = (
 
 const shouldAttemptRefresh = (
   statusCode: number,
-  payload: Record<string, any> | null
+  payload: Record<string, any> | null,
 ) => {
   if (statusCode !== 401 && statusCode !== 403 && statusCode !== 422) {
     return false;
@@ -208,9 +208,9 @@ const shouldAttemptRefresh = (
 
   const hasSessionContext = Boolean(
     getAccessToken() ||
-      getRefreshCsrfToken() ||
-      getRefreshToken() ||
-      useUserStore.getState().isLoggedIn
+    getRefreshCsrfToken() ||
+    getRefreshToken() ||
+    useUserStore.getState().isLoggedIn,
   );
 
   if (!hasSessionContext) return false;
@@ -226,7 +226,7 @@ const shouldAttemptRefresh = (
 const buildHeaders = (
   endpoint: string,
   isFormData: boolean,
-  options: ApiRequestOptions
+  options: ApiRequestOptions,
 ) => {
   const headers = new Headers(options.headers);
   const normalizedEndpoint = normalizeEndpoint(endpoint);
@@ -268,7 +268,7 @@ const performRequest = async (
   method: HttpMethod,
   body: unknown,
   isFormData: boolean,
-  options: ApiRequestOptions
+  options: ApiRequestOptions,
 ) => {
   const requestUrl = buildApiUrl(endpoint);
 
@@ -286,7 +286,7 @@ const performRequest = async (
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        `Failed to reach API (${requestUrl}). Check backend availability and CORS/proxy config.`
+        `Failed to reach API (${requestUrl}). Check backend availability and CORS/proxy config.`,
       );
     }
 
@@ -327,8 +327,15 @@ const extractRefreshPayload = (payload: Record<string, any> | null) => {
     refreshToken: nestedData?.refresh_token as string | undefined,
     csrfToken: nestedData?.csrf_token as string | undefined,
     requiresRetry: Boolean(
-      nestedData?.requires_retry ?? payload?.requires_retry
+      nestedData?.requires_retry ?? payload?.requires_retry,
     ),
+  };
+};
+
+const getRefreshRequestOptions = (): ApiRequestOptions => {
+  return {
+    skipAuth: true,
+    skipRefresh: true,
   };
 };
 
@@ -340,16 +347,19 @@ const refreshAccessToken = async (): Promise<boolean> => {
   activeRefreshRequest = (async () => {
     try {
       const refreshToken = getRefreshToken();
-      const refreshBody = refreshToken ? { refresh_token: refreshToken } : undefined;
+      const refreshBody = refreshToken
+        ? { refresh_token: refreshToken }
+        : undefined;
       const refreshResponse = await performRequest(
         REFRESH_ENDPOINT,
         "POST",
         refreshBody,
         false,
-        { skipAuth: true, skipRefresh: true }
+        getRefreshRequestOptions(),
       );
 
-      const refreshPayload = await safeParseJson<Record<string, any>>(refreshResponse);
+      const refreshPayload =
+        await safeParseJson<Record<string, any>>(refreshResponse);
       const refreshData = extractRefreshPayload(refreshPayload);
 
       if (!refreshResponse.ok || !refreshData.accessToken) {
@@ -361,7 +371,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
       setAuthSession(
         refreshData.accessToken,
         refreshData.csrfToken,
-        refreshData.refreshToken
+        refreshData.refreshToken,
       );
 
       if (refreshData.requiresRetry) {
@@ -374,10 +384,11 @@ const refreshAccessToken = async (): Promise<boolean> => {
           "POST",
           retryBody,
           false,
-          { skipAuth: true, skipRefresh: true }
+          getRefreshRequestOptions(),
         );
 
-        const retryPayload = await safeParseJson<Record<string, any>>(retryResponse);
+        const retryPayload =
+          await safeParseJson<Record<string, any>>(retryResponse);
         const retryData = extractRefreshPayload(retryPayload);
 
         if (!retryResponse.ok || !retryData.accessToken) {
@@ -389,7 +400,7 @@ const refreshAccessToken = async (): Promise<boolean> => {
         setAuthSession(
           retryData.accessToken,
           retryData.csrfToken,
-          retryData.refreshToken
+          retryData.refreshToken,
         );
       }
 
@@ -418,7 +429,7 @@ export const setAccessToken = (token: string) => {
 export const setAuthSession = (
   accessToken: string,
   csrfToken?: string,
-  refreshToken?: string
+  refreshToken?: string,
 ) => {
   refreshFailed = false;
   setAccessToken(accessToken);
@@ -435,11 +446,11 @@ export const apiRequest = async <T>(
   method: HttpMethod = "GET",
   body?: unknown,
   isFormData: boolean = false,
-  options: ApiRequestOptions = {}
+  options: ApiRequestOptions = {},
 ): Promise<T> => {
   if (!options.skipRefresh && refreshFailed) {
     const stillHasSession = Boolean(
-      getAccessToken() || getRefreshToken() || getRefreshCsrfToken()
+      getAccessToken() || getRefreshToken() || getRefreshCsrfToken(),
     );
     if (stillHasSession) {
       throw new Error("Session expired. Please log in again.");
@@ -450,7 +461,13 @@ export const apiRequest = async <T>(
   const normalizedEndpoint = normalizeEndpoint(endpoint);
   const isRefreshEndpoint = normalizedEndpoint === REFRESH_ENDPOINT;
 
-  let response = await performRequest(endpoint, method, body, isFormData, options);
+  let response = await performRequest(
+    endpoint,
+    method,
+    body,
+    isFormData,
+    options,
+  );
 
   if (!response.ok) {
     const errorPayload = await safeParseJson<Record<string, any>>(response);
@@ -463,13 +480,20 @@ export const apiRequest = async <T>(
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
-        response = await performRequest(endpoint, method, body, isFormData, options);
+        response = await performRequest(
+          endpoint,
+          method,
+          body,
+          isFormData,
+          options,
+        );
 
         if (response.ok) {
           return parseResponse<T>(response);
         }
 
-        const retryErrorPayload = await safeParseJson<Record<string, any>>(response);
+        const retryErrorPayload =
+          await safeParseJson<Record<string, any>>(response);
         throw new Error(extractErrorMessage(retryErrorPayload));
       }
 
@@ -479,20 +503,20 @@ export const apiRequest = async <T>(
     }
 
     const lowerMessage = extractErrorMessage(errorPayload, "").toLowerCase();
-    if (
-      (response.status === 401 ||
-        response.status === 403 ||
-        response.status === 422) &&
-      (lowerMessage.includes("token") ||
-        lowerMessage.includes("authorization") ||
-        lowerMessage.includes("jwt") ||
-        lowerMessage.includes("subject must be a string") ||
-        lowerMessage.includes("invalid subject"))
-    ) {
-      refreshFailed = true;
-      clearAuthState();
-      throw new Error("Session expired. Please log in again.");
-    }
+    // if (
+    //   (response.status === 401 ||
+    //     response.status === 403 ||
+    //     response.status === 422) &&
+    //   (lowerMessage.includes("token") ||
+    //     lowerMessage.includes("authorization") ||
+    //     lowerMessage.includes("jwt") ||
+    //     lowerMessage.includes("subject must be a string") ||
+    //     lowerMessage.includes("invalid subject"))
+    // ) {
+    //   refreshFailed = true;
+    //   clearAuthState();
+    //   throw new Error("Session expired. Please log in again.");
+    // }
 
     throw new Error(extractErrorMessage(errorPayload));
   }

@@ -1,8 +1,4 @@
 import { apiRequest, setAuthSession } from "@/hooks/useClient";
-import Cookies from "js-cookie";
-
-const REFRESH_TOKEN_COOKIE = "refresh_token";
-const CSRF_TOKEN_COOKIE = "csrf_token";
 
 interface RefreshResponse {
   data?: {
@@ -42,18 +38,14 @@ export async function refreshAuthSession(): Promise<{
   status: number;
 }> {
   try {
-    const refreshToken = Cookies.get(REFRESH_TOKEN_COOKIE);
-    const csrfToken = Cookies.get(CSRF_TOKEN_COOKIE);
-
     let response = await apiRequest<RefreshResponse>(
       "auth/refresh",
       "POST",
-      refreshToken ? { refresh_token: refreshToken } : undefined,
+      undefined,
       false,
       {
         skipAuth: true,
         skipRefresh: true,
-        headers: csrfToken ? { "X-CSRF-TOKEN": csrfToken } : undefined,
       }
     );
     let parsed = parseRefreshResponse(response);
@@ -69,16 +61,14 @@ export async function refreshAuthSession(): Promise<{
     setAuthSession(parsed.accessToken, parsed.csrfToken, parsed.refreshToken);
 
     if (parsed.requiresRetry) {
-      const retryRefreshToken = parsed.refreshToken || Cookies.get(REFRESH_TOKEN_COOKIE);
       response = await apiRequest<RefreshResponse>(
         "auth/refresh",
         "POST",
-        retryRefreshToken ? { refresh_token: retryRefreshToken } : undefined,
+        undefined,
         false,
         {
           skipAuth: true,
           skipRefresh: true,
-          headers: csrfToken ? { "X-CSRF-TOKEN": csrfToken } : undefined,
         }
       );
       parsed = parseRefreshResponse(response);

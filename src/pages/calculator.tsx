@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   AlertTriangle,
   Calculator,
@@ -39,6 +39,15 @@ import CTA from "@/components/global/cta";
 type SetupType = "earthen-pond" | "concrete-pond" | "tank";
 type FishType = "catfish" | "tilapia";
 type CalculatorMode = "feed-planner" | "stock-density" | "pond-size";
+type CalculatorInputs = {
+  setupType: SetupType;
+  fishType: FishType;
+  numberOfFish: string;
+  targetWeightGrams: string;
+  length: string;
+  width: string;
+  depth: string;
+};
 
 type FeedCycle = {
   stage: string;
@@ -229,8 +238,9 @@ const fishProfiles: Record<
   },
 };
 
-const defaultForm = {
-  calculatorMode: "feed-planner" as CalculatorMode,
+const defaultCalculatorMode: CalculatorMode = "feed-planner";
+
+const defaultCalculatorInputs: CalculatorInputs = {
   setupType: "earthen-pond" as SetupType,
   fishType: "catfish" as FishType,
   numberOfFish: "250",
@@ -238,6 +248,28 @@ const defaultForm = {
   length: "10",
   width: "5",
   depth: "1.2",
+};
+
+const calculatorFieldsByMode: Record<
+  CalculatorMode,
+  Array<keyof CalculatorInputs>
+> = {
+  "feed-planner": ["fishType", "numberOfFish"],
+  "stock-density": [
+    "setupType",
+    "fishType",
+    "length",
+    "width",
+    "depth",
+    "targetWeightGrams",
+  ],
+  "pond-size": [
+    "setupType",
+    "fishType",
+    "numberOfFish",
+    "targetWeightGrams",
+    "depth",
+  ],
 };
 
 const numberFormatter = new Intl.NumberFormat("en-US", {
@@ -346,17 +378,24 @@ const StatCard = ({
 
 export default function AppCalculator() {
   const [calculatorMode, setCalculatorMode] = useState<CalculatorMode>(
-    defaultForm.calculatorMode,
+    defaultCalculatorMode,
   );
-  const [setupType, setSetupType] = useState<SetupType>(defaultForm.setupType);
-  const [fishType, setFishType] = useState<FishType>(defaultForm.fishType);
-  const [numberOfFish, setNumberOfFish] = useState(defaultForm.numberOfFish);
-  const [targetWeightGrams, setTargetWeightGrams] = useState(
-    defaultForm.targetWeightGrams,
+  const [calculationCount, setCalculationCount] = useState(0);
+  const [formValues, setFormValues] = useState<CalculatorInputs>({
+    ...defaultCalculatorInputs,
+  });
+  const [calculatedValues, setCalculatedValues] = useState<CalculatorInputs>({
+    ...defaultCalculatorInputs,
+  });
+  const { setupType, fishType, numberOfFish, targetWeightGrams, length, width, depth } =
+    formValues;
+  const calculatedSetupType = calculatedValues.setupType;
+  const calculatedFishType = calculatedValues.fishType;
+  const currentStockingGuide = stockingGuides[setupType];
+  const hasCalculated = calculationCount > 0;
+  const hasPendingChanges = calculatorFieldsByMode[calculatorMode].some(
+    (field) => formValues[field] !== calculatedValues[field],
   );
-  const [length, setLength] = useState(defaultForm.length);
-  const [width, setWidth] = useState(defaultForm.width);
-  const [depth, setDepth] = useState(defaultForm.depth);
 
   const selectedCalculator =
     calculatorOptions.find((option) => option.value === calculatorMode) ??
@@ -364,14 +403,14 @@ export default function AppCalculator() {
   const SelectedCalculatorIcon = getCalculatorIcon(selectedCalculator.value);
 
   const geometry = useMemo(() => {
-    const fishCount = parseNumber(numberOfFish);
-    const targetWeightKg = parseNumber(targetWeightGrams) / 1000;
-    const lengthValue = parseNumber(length);
-    const widthValue = parseNumber(width);
-    const depthValue = parseNumber(depth);
+    const fishCount = parseNumber(calculatedValues.numberOfFish);
+    const targetWeightKg = parseNumber(calculatedValues.targetWeightGrams) / 1000;
+    const lengthValue = parseNumber(calculatedValues.length);
+    const widthValue = parseNumber(calculatedValues.width);
+    const depthValue = parseNumber(calculatedValues.depth);
     const surfaceArea = lengthValue * widthValue;
     const waterVolume = surfaceArea * depthValue;
-    const stockingGuide = stockingGuides[setupType];
+    const stockingGuide = stockingGuides[calculatedSetupType];
     const measurementBase =
       stockingGuide.unit === "m2" ? surfaceArea : waterVolume;
     const measurementLabel =
@@ -393,11 +432,11 @@ export default function AppCalculator() {
       measurementLabel,
       measurementUnit,
     };
-  }, [depth, numberOfFish, setupType, targetWeightGrams, width, length]);
+  }, [calculatedSetupType, calculatedValues]);
 
   const feedPlanner = useMemo(() => {
     const bagSizeKg = standardFeedBagSizeKg;
-    const feedRows = feedPrograms[fishType].map((cycle) => {
+    const feedRows = feedPrograms[calculatedFishType].map((cycle) => {
       const averageWeightKg =
         (cycle.weightRangeGrams[0] + cycle.weightRangeGrams[1]) / 2 / 1000;
       const dailyFeedKg = geometry.fishCount * averageWeightKg * cycle.feedRate;
@@ -431,12 +470,12 @@ export default function AppCalculator() {
       estimatedFeedBags,
       bagsToBuy,
     };
-  }, [fishType, geometry.fishCount]);
+  }, [calculatedFishType, geometry.fishCount]);
 
   const stockDensity = useMemo(() => {
     const density = getAdjustedDensity(
-      setupType,
-      fishType,
+      calculatedSetupType,
+      calculatedFishType,
       geometry.targetWeightKg,
     );
     const recommendedFingerlings =
@@ -449,12 +488,17 @@ export default function AppCalculator() {
       recommendedFingerlings,
       projectedHarvestBiomassKg,
     };
-  }, [fishType, geometry.measurementBase, geometry.targetWeightKg, setupType]);
+  }, [
+    calculatedFishType,
+    calculatedSetupType,
+    geometry.measurementBase,
+    geometry.targetWeightKg,
+  ]);
 
   const pondSize = useMemo(() => {
     const density = getAdjustedDensity(
-      setupType,
-      fishType,
+      calculatedSetupType,
+      calculatedFishType,
       geometry.targetWeightKg,
     );
     const requiredMeasurementBase =
@@ -484,12 +528,12 @@ export default function AppCalculator() {
       ...footprint,
     };
   }, [
-    fishType,
+    calculatedFishType,
+    calculatedSetupType,
     geometry.depthValue,
     geometry.fishCount,
     geometry.stockingGuide.unit,
     geometry.targetWeightKg,
-    setupType,
   ]);
 
   const feedPlannerState =
@@ -572,11 +616,37 @@ export default function AppCalculator() {
                 "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200",
             };
 
+  const calculationStatus = hasPendingChanges
+    ? {
+        label:
+          "You have changed the form. Click Calculate to refresh the results below.",
+        className:
+          "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200",
+      }
+    : {
+        label: "Results below match the latest values you calculated.",
+        className:
+          "border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-200",
+      };
+
+  function updateFormValue<Key extends keyof CalculatorInputs>(
+    field: Key,
+    value: CalculatorInputs[Key],
+  ) {
+    setFormValues((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
   const handleFishTypeChange = (value: string) => {
     const nextFishType = value as FishType;
 
-    setFishType(nextFishType);
-    setTargetWeightGrams(fishProfiles[nextFishType].defaultTargetWeightGrams);
+    setFormValues((current) => ({
+      ...current,
+      fishType: nextFishType,
+      targetWeightGrams: fishProfiles[nextFishType].defaultTargetWeightGrams,
+    }));
   };
 
   const handleCalculatorModeChange = (
@@ -584,6 +654,7 @@ export default function AppCalculator() {
     options?: { scrollToWorkspace?: boolean },
   ) => {
     setCalculatorMode(value);
+    setCalculationCount(0);
 
     if (options?.scrollToWorkspace) {
       document.getElementById("calculator-workspace")?.scrollIntoView({
@@ -593,16 +664,34 @@ export default function AppCalculator() {
     }
   };
 
-  const handleReset = () => {
-    setCalculatorMode(defaultForm.calculatorMode);
-    setSetupType(defaultForm.setupType);
-    setFishType(defaultForm.fishType);
-    setNumberOfFish(defaultForm.numberOfFish);
-    setTargetWeightGrams(defaultForm.targetWeightGrams);
-    setLength(defaultForm.length);
-    setWidth(defaultForm.width);
-    setDepth(defaultForm.depth);
+  const handleCalculate = () => {
+    setCalculatedValues({
+      ...formValues,
+    });
+    setCalculationCount((current) => current + 1);
   };
+
+  const handleReset = () => {
+    setCalculatorMode(defaultCalculatorMode);
+    setCalculationCount(0);
+    setFormValues({
+      ...defaultCalculatorInputs,
+    });
+    setCalculatedValues({
+      ...defaultCalculatorInputs,
+    });
+  };
+
+  useEffect(() => {
+    if (!hasCalculated) {
+      return;
+    }
+
+    document.getElementById("calculator-results")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
+  }, [calculationCount, hasCalculated]);
 
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#f7fbf7_0%,#eff8f0_34%,#ffffff_100%)]">
@@ -742,7 +831,9 @@ export default function AppCalculator() {
         id="calculator-workspace"
         className="container scroll-mt-44 py-12 md:scroll-mt-24"
       >
-        <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <div
+          className={`grid gap-6 ${hasCalculated ? "xl:grid-cols-[0.95fr_1.05fr]" : ""}`}
+        >
           <Card className="border-[#d7e7d5] shadow-none h-fit">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[#062b28]">
@@ -782,7 +873,7 @@ export default function AppCalculator() {
                     <Select
                       value={setupType}
                       onValueChange={(value) =>
-                        setSetupType(value as SetupType)
+                        updateFormValue("setupType", value as SetupType)
                       }
                     >
                       <SelectTrigger id="setup-type">
@@ -828,7 +919,9 @@ export default function AppCalculator() {
                       type="number"
                       min="0"
                       value={numberOfFish}
-                      onChange={(event) => setNumberOfFish(event.target.value)}
+                      onChange={(event) =>
+                        updateFormValue("numberOfFish", event.target.value)
+                      }
                       placeholder="e.g. 250"
                     />
                   </div>
@@ -851,7 +944,9 @@ export default function AppCalculator() {
                         min="0"
                         step="0.1"
                         value={length}
-                        onChange={(event) => setLength(event.target.value)}
+                        onChange={(event) =>
+                          updateFormValue("length", event.target.value)
+                        }
                         placeholder="Length"
                       />
                     </div>
@@ -864,7 +959,9 @@ export default function AppCalculator() {
                         min="0"
                         step="0.1"
                         value={width}
-                        onChange={(event) => setWidth(event.target.value)}
+                        onChange={(event) =>
+                          updateFormValue("width", event.target.value)
+                        }
                         placeholder="Width"
                       />
                     </div>
@@ -877,7 +974,9 @@ export default function AppCalculator() {
                         min="0"
                         step="0.1"
                         value={depth}
-                        onChange={(event) => setDepth(event.target.value)}
+                        onChange={(event) =>
+                          updateFormValue("depth", event.target.value)
+                        }
                         placeholder="Depth"
                       />
                     </div>
@@ -894,7 +993,7 @@ export default function AppCalculator() {
                       step="10"
                       value={targetWeightGrams}
                       onChange={(event) =>
-                        setTargetWeightGrams(event.target.value)
+                        updateFormValue("targetWeightGrams", event.target.value)
                       }
                       placeholder="e.g. 900"
                     />
@@ -914,7 +1013,9 @@ export default function AppCalculator() {
                       type="number"
                       min="0"
                       value={numberOfFish}
-                      onChange={(event) => setNumberOfFish(event.target.value)}
+                      onChange={(event) =>
+                        updateFormValue("numberOfFish", event.target.value)
+                      }
                       placeholder="e.g. 250"
                     />
                   </div>
@@ -931,7 +1032,10 @@ export default function AppCalculator() {
                         step="10"
                         value={targetWeightGrams}
                         onChange={(event) =>
-                          setTargetWeightGrams(event.target.value)
+                          updateFormValue(
+                            "targetWeightGrams",
+                            event.target.value,
+                          )
                         }
                         placeholder="e.g. 900"
                       />
@@ -945,7 +1049,9 @@ export default function AppCalculator() {
                         min="0"
                         step="0.1"
                         value={depth}
-                        onChange={(event) => setDepth(event.target.value)}
+                        onChange={(event) =>
+                          updateFormValue("depth", event.target.value)
+                        }
                         placeholder="e.g. 1.2"
                       />
                     </div>
@@ -967,31 +1073,42 @@ export default function AppCalculator() {
                 </div>
               ) : (
                 <div className="rounded-2xl border border-border bg-secondary/50 p-4 text-sm text-muted-foreground">
-                  {geometry.stockingGuide.notes} Base density for {fishType} in
+                  {currentStockingGuide.notes} Base density for {fishType} in
                   this setup is{" "}
                   <span className="font-semibold text-foreground">
-                    {formatNumber(
-                      geometry.stockingGuide.densityByFish[fishType],
-                    )}{" "}
-                    {geometry.stockingGuide.densityLabel}
+                    {formatNumber(currentStockingGuide.densityByFish[fishType])}{" "}
+                    {currentStockingGuide.densityLabel}
                   </span>
                   .
                 </div>
               )}
 
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleReset}
-                className="w-full md:w-auto"
-              >
-                Reset calculator
-              </Button>
+              {hasCalculated ? (
+                <div
+                  className={`rounded-2xl border p-4 text-sm ${calculationStatus.className}`}
+                >
+                  {calculationStatus.label}
+                </div>
+              ) : null}
+
+              <div className="flex flex-col gap-3 md:flex-row">
+                <Button type="button" onClick={handleCalculate} className="w-full md:w-auto">
+                  Calculate
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleReset}
+                  className="w-full md:w-auto"
+                >
+                  Reset calculator
+                </Button>
+              </div>
             </CardContent>
           </Card>
 
-          {calculatorMode === "feed-planner" ? (
-            <div className="space-y-6">
+          {hasCalculated && calculatorMode === "feed-planner" ? (
+            <div id="calculator-results" className="space-y-6">
               <Card className={`border ${feedPlannerState.className}`}>
                 <CardContent className="flex items-start gap-4 p-6">
                   <div className="rounded-2xl bg-black/5 p-3 dark:bg-white/10">
@@ -1039,8 +1156,8 @@ export default function AppCalculator() {
             </div>
           ) : null}
 
-          {calculatorMode === "stock-density" ? (
-            <div className="space-y-6">
+          {hasCalculated && calculatorMode === "stock-density" ? (
+            <div id="calculator-results" className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <StatCard
                   icon={<Fish className="h-5 w-5" />}
@@ -1115,8 +1232,8 @@ export default function AppCalculator() {
             </div>
           ) : null}
 
-          {calculatorMode === "pond-size" ? (
-            <div className="space-y-6">
+          {hasCalculated && calculatorMode === "pond-size" ? (
+            <div id="calculator-results" className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">
                 <StatCard
                   icon={<Ruler className="h-5 w-5" />}
@@ -1207,16 +1324,16 @@ export default function AppCalculator() {
         </div>
       </section>
 
-      {calculatorMode === "pond-size" ? (
+      {hasCalculated && calculatorMode === "pond-size" ? (
         <TankSizePreview3D
-          setupType={setupType}
+          setupType={calculatedSetupType}
           length={pondSize.suggestedLength}
           width={pondSize.suggestedWidth}
           depth={geometry.depthValue}
         />
       ) : null}
 
-      {calculatorMode === "feed-planner" ? (
+      {hasCalculated && calculatorMode === "feed-planner" ? (
         <section className="container pb-16">
           <Card className="overflow-hidden border-[#d7e7d5] shadow-[0_20px_60px_-40px_rgba(6,43,40,0.55)]">
             <CardHeader className="bg-[#f5fbf5]">
@@ -1224,8 +1341,8 @@ export default function AppCalculator() {
                 Feed Schedule by Growth Cycle
               </CardTitle>
               <CardDescription>
-                Estimated feed quantities and bag equivalents for {fishType}{" "}
-                from young stage to mature harvest size.
+                Estimated feed quantities and bag equivalents for{" "}
+                {calculatedFishType} from young stage to mature harvest size.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">

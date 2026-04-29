@@ -2,7 +2,10 @@ import { useUserStore } from "@/store/store";
 import Cookies from "js-cookie";
 
 // src/api/client.ts
-const RAW_API_BASE_URL = import.meta.env.VITE_APP_API_URL;
+const RAW_API_BASE_URL =
+  import.meta.env.VITE_APP_API_URL ||
+  import.meta.env.CLOUD_HOSTED_URL ||
+  "/api/v1/";
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
 const USE_PLATFORM_PROXY = import.meta.env.VITE_USE_PLATFORM_PROXY === "true";

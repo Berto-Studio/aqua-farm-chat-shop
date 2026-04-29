@@ -260,7 +260,7 @@ const clamp = (value: number, min: number, max: number) =>
 const formatNumber = (value: number) => numberFormatter.format(value);
 
 const formatInteger = (value: number) => integerFormatter.format(value);
-const standardFeedBagSizeKg = 15;
+const standardFeedBagSizeKg = 20;
 
 const getCalculatorIcon = (calculatorMode: CalculatorMode) => {
   switch (calculatorMode) {
@@ -652,7 +652,36 @@ export default function AppCalculator() {
         </div>
       </section>
 
-      <section className="container pt-12">
+      <section className="sticky top-[7.7rem] z-30 border-y border-[#d7e7d5] bg-white backdrop-blur md:hidden">
+        <div className="container py-2">
+          <div className="">
+            <Select
+              value={calculatorMode}
+              onValueChange={(value) =>
+                handleCalculatorModeChange(value as CalculatorMode, {
+                  scrollToWorkspace: true,
+                })
+              }
+            >
+              <SelectTrigger
+                id="calculator-mode-mobile"
+                className="h-auto min-h-12 w-full border-[#9fc7b2] bg-white text-left"
+              >
+                <SelectValue placeholder="Select a calculator" />
+              </SelectTrigger>
+              <SelectContent>
+                {calculatorOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </section>
+
+      <section className="container hidden pt-12 md:block">
         <div className="space-y-3">
           <h1 className="text-2xl font-bold">What do you want to calculate?</h1>
           <div className="grid gap-3 md:grid-cols-3">
@@ -709,7 +738,10 @@ export default function AppCalculator() {
         </div>
       </section>
 
-      <section id="calculator-workspace" className="container py-12">
+      <section
+        id="calculator-workspace"
+        className="container scroll-mt-44 py-12 md:scroll-mt-24"
+      >
         <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
           <Card className="border-[#d7e7d5] shadow-none h-fit">
             <CardHeader>

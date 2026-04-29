@@ -393,6 +393,8 @@ export default function AppCalculator() {
   const calculatedFishType = calculatedValues.fishType;
   const currentStockingGuide = stockingGuides[setupType];
   const hasCalculated = calculationCount > 0;
+  const useSplitResultsLayout =
+    hasCalculated && calculatorMode !== "stock-density";
   const hasPendingChanges = calculatorFieldsByMode[calculatorMode].some(
     (field) => formValues[field] !== calculatedValues[field],
   );
@@ -832,7 +834,7 @@ export default function AppCalculator() {
         className="container scroll-mt-44 py-12 md:scroll-mt-24"
       >
         <div
-          className={`grid gap-6 ${hasCalculated ? "xl:grid-cols-[0.95fr_1.05fr]" : ""}`}
+          className={`grid gap-6 ${useSplitResultsLayout ? "xl:grid-cols-[0.95fr_1.05fr]" : ""}`}
         >
           <Card className="border-[#d7e7d5] shadow-none h-fit">
             <CardHeader>

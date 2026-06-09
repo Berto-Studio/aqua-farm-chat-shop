@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Product } from "@/types/product";
 import ProductCard from "./ProductCard";
 import {
@@ -13,7 +12,7 @@ interface FeaturedProductsSliderProps {
   products: Product[];
 }
 
-export default function FeaturedProductsSlider({
+export default function ProductsSlider({
   products,
 }: FeaturedProductsSliderProps) {
   return (

@@ -19,14 +19,16 @@ export default function AdminProductDetails() {
 
   const product = useMemo(
     () => products.find((item) => String(item.id) === String(productId)),
-    [products, productId]
+    [products, productId],
   );
 
   if (isLoading) {
     return (
       <div className="p-6">
         <Card>
-          <CardContent className="p-6 text-muted-foreground">Loading product details...</CardContent>
+          <CardContent className="p-6 text-muted-foreground">
+            Loading product details...
+          </CardContent>
         </Card>
       </div>
     );
@@ -56,7 +58,7 @@ export default function AdminProductDetails() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-3">
+        <div className="flex items-start flex-col gap-3">
           <Button variant="outline" onClick={() => navigate("/admin/products")}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
@@ -98,11 +100,16 @@ export default function AdminProductDetails() {
           {imageUrls.length > 1 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Images ({imageUrls.length})</CardTitle>
+                <CardTitle className="text-base">
+                  Images ({imageUrls.length})
+                </CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-3 gap-2">
                 {imageUrls.map((url, index) => (
-                  <div key={`${url}-${index}`} className="aspect-square overflow-hidden rounded-md border">
+                  <div
+                    key={`${url}-${index}`}
+                    className="aspect-square overflow-hidden rounded-md border"
+                  >
                     <img
                       src={url}
                       alt={`${product.title} media ${index + 1}`}
@@ -117,7 +124,9 @@ export default function AdminProductDetails() {
           {videoUrls.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Videos ({videoUrls.length})</CardTitle>
+                <CardTitle className="text-base">
+                  Videos ({videoUrls.length})
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 {videoUrls.map((url, index) => (
@@ -172,7 +181,9 @@ export default function AdminProductDetails() {
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
                   Weight Per Unit
                 </p>
-                <p className="mt-1 text-xl font-bold">{product.weight_per_unit}</p>
+                <p className="mt-1 text-xl font-bold">
+                  {product.weight_per_unit}
+                </p>
               </div>
               <div className="rounded-lg border p-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">
@@ -182,8 +193,8 @@ export default function AdminProductDetails() {
                   {product.is_alive
                     ? "Live Product"
                     : product.is_fresh
-                    ? "Fresh Product"
-                    : "Standard Product"}
+                      ? "Fresh Product"
+                      : "Standard Product"}
                 </p>
               </div>
               <div className="rounded-lg border p-4">

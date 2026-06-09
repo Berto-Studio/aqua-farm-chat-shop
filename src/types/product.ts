@@ -1,8 +1,7 @@
 export type ProductCategory =
-  | "Live Stock"
-  | "Fish"
-  | "Vegetables"
-  | "Fruits"
+  | "Catfish"
+  | "Tilapia"
+  | "Fingerlings"
   | "Farm Equipment";
 
 export interface Product {
@@ -11,7 +10,7 @@ export interface Product {
   description: string;
   price: number;
   category: ProductCategory;
-  animal_type?: number; // 1=livestock, 2=vegetables, 3=fruits, 4=fish
+  animal_type?: number;
   image?: Blob | File | string; // Allow both file uploads and URL strings
   quantity: number;
   weight_per_unit: string | number;
@@ -24,10 +23,8 @@ export interface Product {
   image_url?: string;
   image_urls?: string[];
   video_urls?: string[];
-
-  // Legacy/computed properties for backward compatibility
   name?: string; // Computed from title
-  age?: "young" | "mature"; // Computed from animal_stage
+  age?: "fingerlings" | "mature"; // Computed from animal_stage
   stock?: number; // Alias for quantity
   discount?: number; // Alias for discount_percentage
   weightPerUnit?: string; // Alias for weight_per_unit

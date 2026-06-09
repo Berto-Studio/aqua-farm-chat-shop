@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { useCategories } from "@/hooks/useCategories";
 import {
@@ -45,7 +44,10 @@ export default function CategoryFilter({
         >
           All Products
         </Button>
-        {(Array.isArray(categories) ? categories : DEFAULT_PRODUCT_CATEGORIES).map((category) => (
+        {(Array.isArray(categories)
+          ? categories
+          : DEFAULT_PRODUCT_CATEGORIES
+        ).map((category) => (
           <Button
             key={category.id}
             variant={

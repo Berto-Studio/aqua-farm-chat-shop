@@ -8,7 +8,10 @@ import {
   ProductStatsResponse,
 } from "@/types/product";
 import { PaginationMeta } from "@/types/admin";
-import { deleteImageFromCloudinary, deleteVideoFromCloudinary } from "./cloudinary";
+import {
+  deleteImageFromCloudinary,
+  deleteVideoFromCloudinary,
+} from "./cloudinary";
 import { buildQueryString } from "./admin/common";
 
 interface ProductsResponse {
@@ -112,12 +115,12 @@ const normalizeProduct = (product: ProductApiRecord): Product => {
   const title = String(product.title || product.name || "");
   const quantity = toOptionalNumber(product.quantity ?? product.stock) ?? 0;
   const discountPercentage = toOptionalNumber(
-    product.discount_percentage ?? product.discount
+    product.discount_percentage ?? product.discount,
   );
   const animalStage = toOptionalNumber(product.animal_stage);
   const weightPerUnit = product.weight_per_unit ?? product.weightPerUnit ?? "";
   const isFeatured = toOptionalBoolean(
-    product.isFeatured ?? product.is_featured
+    product.isFeatured ?? product.is_featured,
   );
 
   return {
@@ -138,7 +141,7 @@ const normalizeProduct = (product: ProductApiRecord): Product => {
     animal_stage: animalStage,
     age:
       animalStage === 0
-        ? "young"
+        ? "fingerlings"
         : animalStage === 1
           ? "mature"
           : product.age,
@@ -156,7 +159,9 @@ const normalizeProduct = (product: ProductApiRecord): Product => {
 };
 
 const normalizeProducts = (products?: ProductApiRecord[]) =>
-  Array.isArray(products) ? products.map((product) => normalizeProduct(product)) : [];
+  Array.isArray(products)
+    ? products.map((product) => normalizeProduct(product))
+    : [];
 
 const extractFeaturedProducts = (response: FeaturedProductsResponse) => {
   if (Array.isArray(response.data)) return response.data;
@@ -168,7 +173,7 @@ const extractFeaturedProducts = (response: FeaturedProductsResponse) => {
 
 const extractPaginationMeta = (
   response: Pick<FeaturedProductsResponse, "meta" | "pagination" | "page">,
-  fallback: Partial<PaginationMeta> = {}
+  fallback: Partial<PaginationMeta> = {},
 ): PaginationMeta | undefined => {
   const source = response.meta || response.pagination || response.page;
   if (!source) return undefined;
@@ -182,7 +187,7 @@ const extractPaginationMeta = (
 };
 
 const normalizeProductFeedback = (
-  feedback: Partial<ProductFeedback> | null | undefined
+  feedback: Partial<ProductFeedback> | null | undefined,
 ): ProductFeedback | undefined => {
   if (!feedback) return undefined;
 
@@ -199,7 +204,7 @@ const normalizeProductFeedback = (
 };
 
 const normalizeProductFeedbackSummary = (
-  summary?: Partial<ProductFeedbackSummary> | null
+  summary?: Partial<ProductFeedbackSummary> | null,
 ): ProductFeedbackSummary => ({
   average_rating: Number(summary?.average_rating || 0),
   total_feedback: Number(summary?.total_feedback || 0),
@@ -289,13 +294,14 @@ export async function CreateProduct(product: Product): Promise<{
         ? Number(product.animal_stage)
         : undefined,
       is_alive:
-        product.category === "Live Stock" || product.category === "Fish",
+        product.category === "Tilapia" || product.category === "Catfish",
       is_fresh:
-        product.category === "Vegetables" || product.category === "Fruits",
+        product.category === "Catfish" || product.category === "Tilapia",
     };
 
     const hasExtendedMedia =
-      Boolean(product.image_urls?.length) || Boolean(product.video_urls?.length);
+      Boolean(product.image_urls?.length) ||
+      Boolean(product.video_urls?.length);
 
     const extendedProductData = {
       ...baseProductData,
@@ -309,7 +315,7 @@ export async function CreateProduct(product: Product): Promise<{
       response = await apiRequest<ProductResponse>(
         "products/",
         "POST",
-        extendedProductData
+        extendedProductData,
       );
     } catch (error) {
       if (!hasExtendedMedia) {
@@ -320,7 +326,7 @@ export async function CreateProduct(product: Product): Promise<{
       response = await apiRequest<ProductResponse>(
         "products/",
         "POST",
-        baseProductData
+        baseProductData,
       );
     }
 
@@ -342,7 +348,7 @@ export async function CreateProduct(product: Product): Promise<{
 
 export async function UpdateProduct(
   id: string | number,
-  product: Partial<Product>
+  product: Partial<Product>,
 ): Promise<{
   success: boolean;
   data?: Product;
@@ -372,7 +378,8 @@ export async function UpdateProduct(
     };
 
     const hasExtendedMedia =
-      Boolean(product.image_urls?.length) || Boolean(product.video_urls?.length);
+      Boolean(product.image_urls?.length) ||
+      Boolean(product.video_urls?.length);
 
     const extendedProductData = {
       ...baseProductData,
@@ -386,7 +393,7 @@ export async function UpdateProduct(
       response = await apiRequest<ProductResponse>(
         `products/${id}`,
         "PUT",
-        extendedProductData
+        extendedProductData,
       );
     } catch (error) {
       if (!hasExtendedMedia) {
@@ -397,7 +404,7 @@ export async function UpdateProduct(
       response = await apiRequest<ProductResponse>(
         `products/${id}`,
         "PUT",
-        baseProductData
+        baseProductData,
       );
     }
 
@@ -441,20 +448,18 @@ export async function DeleteProduct(id: string | number): Promise<{
     // Delete the product from the backend
     const response = await apiRequest<{ message: string; status: number }>(
       `products/${id}`,
-      "DELETE"
+      "DELETE",
     );
 
     // If product deletion was successful and there are images, delete them from Cloudinary
     if (imageUrls.length > 0 || videoUrls.length > 0) {
       console.log(
-        `Attempting to delete ${imageUrls.length} product image(s) and ${videoUrls.length} video(s) from Cloudinary`
+        `Attempting to delete ${imageUrls.length} product image(s) and ${videoUrls.length} video(s) from Cloudinary`,
       );
-      await Promise.allSettled(
-        [
-          ...imageUrls.map((imageUrl) => deleteImageFromCloudinary(imageUrl)),
-          ...videoUrls.map((videoUrl) => deleteVideoFromCloudinary(videoUrl)),
-        ]
-      );
+      await Promise.allSettled([
+        ...imageUrls.map((imageUrl) => deleteImageFromCloudinary(imageUrl)),
+        ...videoUrls.map((videoUrl) => deleteVideoFromCloudinary(videoUrl)),
+      ]);
     }
 
     return {
@@ -501,7 +506,7 @@ export async function DeleteAllProducts(): Promise<{
     // Delete all products from the backend
     const response = await apiRequest<{ message: string; status: number }>(
       "products/",
-      "DELETE"
+      "DELETE",
     );
 
     // If products deletion was successful, delete all images from Cloudinary
@@ -510,21 +515,25 @@ export async function DeleteAllProducts(): Promise<{
 
     if (uniqueImageUrls.length > 0 || uniqueVideoUrls.length > 0) {
       console.log(
-        `Attempting to delete ${uniqueImageUrls.length} images and ${uniqueVideoUrls.length} videos from Cloudinary`
+        `Attempting to delete ${uniqueImageUrls.length} images and ${uniqueVideoUrls.length} videos from Cloudinary`,
       );
 
       const deletePromises = [
-        ...uniqueImageUrls.map((imageUrl) => deleteImageFromCloudinary(imageUrl)),
-        ...uniqueVideoUrls.map((videoUrl) => deleteVideoFromCloudinary(videoUrl)),
+        ...uniqueImageUrls.map((imageUrl) =>
+          deleteImageFromCloudinary(imageUrl),
+        ),
+        ...uniqueVideoUrls.map((videoUrl) =>
+          deleteVideoFromCloudinary(videoUrl),
+        ),
       ];
 
       const results = await Promise.allSettled(deletePromises);
       const successCount = results.filter(
-        (result) => result.status === "fulfilled" && result.value === true
+        (result) => result.status === "fulfilled" && result.value === true,
       ).length;
 
       console.log(
-        `Successfully deleted ${successCount}/${deletePromises.length} media items from Cloudinary`
+        `Successfully deleted ${successCount}/${deletePromises.length} media items from Cloudinary`,
       );
     }
 
@@ -547,7 +556,7 @@ export async function DeleteAllProducts(): Promise<{
 }
 
 export async function GetFeaturedProducts(
-  params: GetFeaturedProductsParams = {}
+  params: GetFeaturedProductsParams = {},
 ): Promise<{
   success: boolean;
   data: Product[];
@@ -559,7 +568,7 @@ export async function GetFeaturedProducts(
     const query = buildQueryString(params as Record<string, unknown>);
     const response = await apiRequest<FeaturedProductsResponse>(
       `products/featured${query}`,
-      "GET"
+      "GET",
     );
     const products = extractFeaturedProducts(response);
 
@@ -596,7 +605,7 @@ export async function GetFeaturedProducts(
 }
 
 export async function AddProductToFeatured(
-  productId: string | number
+  productId: string | number,
 ): Promise<{
   success: boolean;
   data?: Product;
@@ -606,7 +615,7 @@ export async function AddProductToFeatured(
   try {
     const response = await apiRequest<FeatureProductResponse>(
       `admin/products/${productId}/featured`,
-      "POST"
+      "POST",
     );
     const product = response.data || response.item || response.result;
 
@@ -643,7 +652,7 @@ export async function GetFarmerStats(): Promise<{
   try {
     const response = await apiRequest<ProductStatsResponse>(
       "products/stats/overview",
-      "GET"
+      "GET",
     );
 
     const { totalProducts, recentProducts, monthlyRevenue } = response.data;
@@ -688,7 +697,7 @@ export async function GetFarmerStats(): Promise<{
 
 export async function GetProductFeedback(
   productId: string | number,
-  params: { page?: number; per_page?: number } = {}
+  params: { page?: number; per_page?: number } = {},
 ): Promise<{
   success: boolean;
   data: ProductFeedback[];
@@ -701,7 +710,7 @@ export async function GetProductFeedback(
     const query = buildQueryString(params as Record<string, unknown>);
     const response = await apiRequest<ProductFeedbackListResponse>(
       `products/${productId}/feedback${query}`,
-      "GET"
+      "GET",
     );
 
     return {
@@ -709,7 +718,9 @@ export async function GetProductFeedback(
       data: Array.isArray(response.data)
         ? response.data
             .map((feedback) => normalizeProductFeedback(feedback))
-            .filter((feedback): feedback is ProductFeedback => Boolean(feedback))
+            .filter((feedback): feedback is ProductFeedback =>
+              Boolean(feedback),
+            )
         : [],
       message: response.message || "Feedback fetched successfully",
       status: response.status || 200,
@@ -722,7 +733,9 @@ export async function GetProductFeedback(
       success: false,
       data: [],
       message:
-        error instanceof Error ? error.message : "Failed to fetch product feedback",
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch product feedback",
       status: 500,
       summary: normalizeProductFeedbackSummary(),
     };
@@ -731,7 +744,7 @@ export async function GetProductFeedback(
 
 export async function UpsertProductFeedback(
   productId: string | number,
-  payload: { rating: number; feedback: string }
+  payload: { rating: number; feedback: string },
 ): Promise<{
   success: boolean;
   data?: ProductFeedback;
@@ -743,7 +756,7 @@ export async function UpsertProductFeedback(
     const response = await apiRequest<ProductFeedbackSingleResponse>(
       `products/${productId}/feedback`,
       "POST",
-      payload
+      payload,
     );
 
     return {
@@ -758,7 +771,9 @@ export async function UpsertProductFeedback(
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to save product feedback",
+        error instanceof Error
+          ? error.message
+          : "Failed to save product feedback",
       status: 500,
       summary: normalizeProductFeedbackSummary(),
     };

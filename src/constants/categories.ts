@@ -5,25 +5,33 @@ export interface ProductCategoryOption {
 }
 
 export const DEFAULT_PRODUCT_CATEGORIES: ProductCategoryOption[] = [
-  { id: 1, name: "Fish", description: "Fingerlings, mature fish, and aquaculture stock" },
-  { id: 2, name: "Live Stock", description: "Farm animals for meat or breeding" },
-  { id: 3, name: "Vegetables", description: "Fresh farm vegetables" },
-  { id: 4, name: "Fruits", description: "Fresh seasonal fruits" },
   {
-    id: 5,
+    id: 1,
+    name: "Fingerlings",
+    description: "Fingerlings and aquaculture stock.",
+  },
+  {
+    id: 2,
+    name: "Catfish",
+    description: "Mature catfish.",
+  },
+  {
+    id: 3,
+    name: "Tilapia",
+    description: "Mature tilapia.",
+  },
+
+  {
+    id: 4,
     name: "Farm Equipment",
-    description: "Pumps, tanks, aerators, nets, and essential farm tools",
+    description: "Pumps, tanks, aerators, nets, and essential farm tools.",
   },
 ];
 
 const CATEGORY_ALIASES: Record<string, string> = {
+  fingerlings: "Fingerlings",
+  fingerling: "Fingerlings",
   fish: "Fish",
-  "live stock": "Live Stock",
-  livestock: "Live Stock",
-  vegetable: "Vegetables",
-  vegetables: "Vegetables",
-  fruit: "Fruits",
-  fruits: "Fruits",
   "farm equipment": "Farm Equipment",
   "farm equipments": "Farm Equipment",
   "farm tools": "Farm Equipment",
@@ -44,7 +52,7 @@ export const normalizeCategoryName = (name?: string) => {
 };
 
 export const mergeProductCategories = (
-  apiCategories: ProductCategoryOption[] = []
+  apiCategories: ProductCategoryOption[] = [],
 ) => {
   const merged = new Map<string, ProductCategoryOption>();
 

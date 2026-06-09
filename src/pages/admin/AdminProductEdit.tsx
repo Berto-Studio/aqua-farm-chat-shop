@@ -13,14 +13,16 @@ export default function AdminProductEdit() {
 
   const product = useMemo(
     () => products.find((item) => String(item.id) === String(productId)),
-    [products, productId]
+    [products, productId],
   );
 
   if (isLoading) {
     return (
       <div className="p-6">
         <Card>
-          <CardContent className="p-6 text-muted-foreground">Loading product for editing...</CardContent>
+          <CardContent className="p-6 text-muted-foreground">
+            Loading product for editing...
+          </CardContent>
         </Card>
       </div>
     );
@@ -28,7 +30,7 @@ export default function AdminProductEdit() {
 
   if (error || !product) {
     return (
-      <div className="p-6 space-y-4">
+      <div className="p-6 space-y-4 flex flex-col">
         <Button variant="outline" onClick={() => navigate("/admin/products")}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Products
@@ -44,8 +46,11 @@ export default function AdminProductEdit() {
 
   return (
     <div className="p-6 space-y-6">
-      <div className="flex items-center gap-3">
-        <Button variant="outline" onClick={() => navigate(`/admin/products/${product.id}`)}>
+      <div className="flex items-start flex-col gap-3">
+        <Button
+          variant="outline"
+          onClick={() => navigate(`/admin/products/${product.id}`)}
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Product
         </Button>

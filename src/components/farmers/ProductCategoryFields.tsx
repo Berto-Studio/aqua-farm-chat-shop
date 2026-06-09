@@ -1,4 +1,3 @@
-
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,67 +17,17 @@ interface ProductCategoryFieldsProps {
 
 export default function ProductCategoryFields({
   formData,
-  categories,
   onInputChange,
 }: ProductCategoryFieldsProps) {
-  const getAnimalTypeOptions = () => {
-    const categoryName = formData.category.toLowerCase();
-
-    if (categoryName === "livestock" || categoryName === "live stock") {
-      return [
-        { value: "1", label: "Cow" },
-        { value: "2", label: "Pig" },
-        { value: "3", label: "Goat" },
-        { value: "4", label: "Sheep" },
-        { value: "5", label: "Chicken" },
-        { value: "6", label: "Duck" },
-      ];
-    } else if (categoryName === "fish") {
-      return [
-        { value: "1", label: "Catfish" },
-        { value: "2", label: "Tilapia" },
-        { value: "3", label: "Salmon" },
-        { value: "4", label: "Tuna" },
-      ];
-    }
-    return [];
-  };
-
-  const getAnimalStageOptions = () => {
-    return [
-      { value: "0", label: "Young" },
-      { value: "1", label: "Mature" },
-    ];
-  };
-
-  const shouldShowAnimalFields = () => {
-    const categoryName = formData.category.toLowerCase();
-    return (
-      categoryName === "livestock" ||
-      categoryName === "live stock" ||
-      categoryName === "fish"
-    );
-  };
-
-  const getAnimalTypeLabel = () => {
-    const categoryName = formData.category.toLowerCase();
-    
-    if (categoryName === "livestock" || categoryName === "live stock") {
-      return "Animal Type";
-    } else if (categoryName === "fish") {
-      return "Fish Type";
-    }
-    return "Type";
-  };
-
-  if (!shouldShowAnimalFields()) {
-    return null;
-  }
+  const FingerlingsType = [
+    { label: "Catfish", value: "catfish" },
+    { label: "Tilapia", value: "tilapia" },
+  ];
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label htmlFor="animal_type">{getAnimalTypeLabel()}</Label>
+        <Label htmlFor="animal_type">Fingerlings Fish Type</Label>
         <Select
           value={formData.animal_type?.toString() || ""}
           onValueChange={(value) => onInputChange("animal_type", value)}
@@ -88,26 +37,7 @@ export default function ProductCategoryFields({
             <SelectValue placeholder="Select type" />
           </SelectTrigger>
           <SelectContent>
-            {getAnimalTypeOptions().map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="animal_stage">Animal Stage</Label>
-        <Select 
-          value={formData.animal_stage?.toString() || ""}
-          onValueChange={(value) => onInputChange("animal_stage", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select stage" />
-          </SelectTrigger>
-          <SelectContent>
-            {getAnimalStageOptions().map((option) => (
+            {FingerlingsType.map((option) => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

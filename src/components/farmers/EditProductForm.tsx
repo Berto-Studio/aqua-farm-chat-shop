@@ -71,25 +71,29 @@ export default function EditProductForm({
     imagePreviewUrlsRef.current = [];
     videoPreviewUrlsRef.current = [];
 
-    const initialImageItems = getProductImageUrls(product).map((url, index) => ({
-      id: createMediaId(),
-      name: getMediaNameFromUrl(url, index),
-      previewUrl: url,
-      sizeInBytes: 0,
-      uploadedUrl: url,
-      isUploading: false,
-      isExisting: true,
-    }));
+    const initialImageItems = getProductImageUrls(product).map(
+      (url, index) => ({
+        id: createMediaId(),
+        name: getMediaNameFromUrl(url, index),
+        previewUrl: url,
+        sizeInBytes: 0,
+        uploadedUrl: url,
+        isUploading: false,
+        isExisting: true,
+      }),
+    );
 
-    const initialVideoItems = getProductVideoUrls(product).map((url, index) => ({
-      id: createMediaId(),
-      name: getMediaNameFromUrl(url, index),
-      previewUrl: url,
-      sizeInBytes: 0,
-      uploadedUrl: url,
-      isUploading: false,
-      isExisting: true,
-    }));
+    const initialVideoItems = getProductVideoUrls(product).map(
+      (url, index) => ({
+        id: createMediaId(),
+        name: getMediaNameFromUrl(url, index),
+        previewUrl: url,
+        sizeInBytes: 0,
+        uploadedUrl: url,
+        isUploading: false,
+        isExisting: true,
+      }),
+    );
 
     setImageItems(initialImageItems);
     setVideoItems(initialVideoItems);
@@ -116,7 +120,7 @@ export default function EditProductForm({
     if (!files || files.length === 0) return;
 
     const imageFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("image/")
+      file.type.startsWith("image/"),
     );
     if (imageFiles.length === 0) return;
 
@@ -148,8 +152,8 @@ export default function EditProductForm({
                     isUploading: false,
                     uploadError: undefined,
                   }
-                : imageItem
-            )
+                : imageItem,
+            ),
           );
         })
         .catch((error) => {
@@ -166,8 +170,8 @@ export default function EditProductForm({
                     isUploading: false,
                     uploadError,
                   }
-                : imageItem
-            )
+                : imageItem,
+            ),
           );
 
           toast({
@@ -183,7 +187,7 @@ export default function EditProductForm({
     if (!files || files.length === 0) return;
 
     const mediaFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("video/")
+      file.type.startsWith("video/"),
     );
     if (mediaFiles.length === 0) return;
 
@@ -215,8 +219,8 @@ export default function EditProductForm({
                     isUploading: false,
                     uploadError: undefined,
                   }
-                : videoItem
-            )
+                : videoItem,
+            ),
           );
         })
         .catch((error) => {
@@ -233,8 +237,8 @@ export default function EditProductForm({
                     isUploading: false,
                     uploadError,
                   }
-                : videoItem
-            )
+                : videoItem,
+            ),
           );
 
           toast({
@@ -248,7 +252,9 @@ export default function EditProductForm({
 
   const handleMoveImageToTop = (imageId: string) => {
     setImageItems((prev) => {
-      const imageIndex = prev.findIndex((imageItem) => imageItem.id === imageId);
+      const imageIndex = prev.findIndex(
+        (imageItem) => imageItem.id === imageId,
+      );
       if (imageIndex <= 0) return prev;
 
       const next = [...prev];
@@ -258,15 +264,18 @@ export default function EditProductForm({
     });
   };
 
-  const handleReorderImages = (draggedImageId: string, targetImageId: string) => {
+  const handleReorderImages = (
+    draggedImageId: string,
+    targetImageId: string,
+  ) => {
     if (draggedImageId === targetImageId) return;
 
     setImageItems((prev) => {
       const draggedImageIndex = prev.findIndex(
-        (imageItem) => imageItem.id === draggedImageId
+        (imageItem) => imageItem.id === draggedImageId,
       );
       const targetImageIndex = prev.findIndex(
-        (imageItem) => imageItem.id === targetImageId
+        (imageItem) => imageItem.id === targetImageId,
       );
 
       if (draggedImageIndex === -1 || targetImageIndex === -1) return prev;
@@ -284,7 +293,7 @@ export default function EditProductForm({
       if (imageToRemove?.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(imageToRemove.previewUrl);
         imagePreviewUrlsRef.current = imagePreviewUrlsRef.current.filter(
-          (previewUrl) => previewUrl !== imageToRemove.previewUrl
+          (previewUrl) => previewUrl !== imageToRemove.previewUrl,
         );
       }
 
@@ -298,7 +307,7 @@ export default function EditProductForm({
       if (videoToRemove?.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(videoToRemove.previewUrl);
         videoPreviewUrlsRef.current = videoPreviewUrlsRef.current.filter(
-          (previewUrl) => previewUrl !== videoToRemove.previewUrl
+          (previewUrl) => previewUrl !== videoToRemove.previewUrl,
         );
       }
 
@@ -319,7 +328,7 @@ export default function EditProductForm({
     }
 
     const hasUploadingMedia = [...imageItems, ...videoItems].some(
-      (mediaItem) => mediaItem.isUploading
+      (mediaItem) => mediaItem.isUploading,
     );
     if (hasUploadingMedia) {
       toast({
@@ -331,7 +340,7 @@ export default function EditProductForm({
     }
 
     const hasMediaUploadErrors = [...imageItems, ...videoItems].some(
-      (mediaItem) => mediaItem.uploadError
+      (mediaItem) => mediaItem.uploadError,
     );
     if (hasMediaUploadErrors) {
       toast({
@@ -402,19 +411,20 @@ export default function EditProductForm({
         discount_percentage: formData.discount_percentage
           ? Number(formData.discount_percentage)
           : undefined,
-        animal_type: formData.animal_type
-          ? Number(formData.animal_type)
-          : undefined,
+        animal_type: formData.animal_type || undefined,
         animal_stage: formData.animal_stage
           ? Number(formData.animal_stage)
           : undefined,
         is_alive:
-          formData.category === "Live Stock" || formData.category === "Fish",
+          formData.category === "Catfish" || formData.category === "Tilapia",
         is_fresh:
-          formData.category === "Vegetables" || formData.category === "Fruits",
+          formData.category === "Catfish" || formData.category === "Tilapia",
       };
 
-      console.log("Updating product data with uploaded media URLs:", productData);
+      console.log(
+        "Updating product data with uploaded media URLs:",
+        productData,
+      );
 
       const response = await UpdateProduct(product.id!, productData);
 
@@ -452,8 +462,8 @@ export default function EditProductForm({
                 ...imageItem,
                 uploadedUrl: undefined,
                 uploadError: imageItem.uploadError ?? REUPLOAD_REQUIRED_MESSAGE,
-              }
-        )
+              },
+        ),
       );
       setVideoItems((prev) =>
         prev.map((videoItem) =>
@@ -463,8 +473,8 @@ export default function EditProductForm({
                 ...videoItem,
                 uploadedUrl: undefined,
                 uploadError: videoItem.uploadError ?? REUPLOAD_REQUIRED_MESSAGE,
-              }
-        )
+              },
+        ),
       );
 
       console.error("Error updating product:", error);
@@ -482,7 +492,7 @@ export default function EditProductForm({
   };
 
   const isAnyMediaUploading = [...imageItems, ...videoItems].some(
-    (mediaItem) => mediaItem.isUploading
+    (mediaItem) => mediaItem.isUploading,
   );
 
   return (
@@ -507,11 +517,13 @@ export default function EditProductForm({
             onInputChange={handleInputChange}
           />
 
-          <ProductCategoryFields
-            formData={formData}
-            categories={categories}
-            onInputChange={handleInputChange}
-          />
+          {formData.category === "Fingerlings" && (
+            <ProductCategoryFields
+              formData={formData}
+              categories={categories}
+              onInputChange={handleInputChange}
+            />
+          )}
 
           <ProductImageUpload
             imageItems={imageItems}
@@ -541,8 +553,8 @@ export default function EditProductForm({
               {isAnyMediaUploading
                 ? "Uploading Media..."
                 : isLoading
-                ? "Updating Market Item..."
-                : "Update Market Item"}
+                  ? "Updating Market Item..."
+                  : "Update Market Item"}
             </Button>
           </div>
         </form>

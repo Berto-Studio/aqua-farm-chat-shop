@@ -20,6 +20,7 @@ import ProductImageUpload, {
 } from "./ProductImageUpload";
 import { Product } from "@/types/product";
 import { ModalMessage } from "@/components/ui/modalMessage";
+import { DEFAULT_PRODUCT_CATEGORIES } from "@/constants/categories";
 
 interface AddProductFormProps {
   onClose: () => void;
@@ -35,7 +36,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   const [formData, setFormData] = useState<Product>({
     title: "",
     description: "",
-    category: "Live Stock",
+    category: "Catfish",
     price: 0,
     quantity: 0,
     weight_per_unit: 0,
@@ -79,7 +80,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     if (!files || files.length === 0) return;
 
     const imageFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("image/")
+      file.type.startsWith("image/"),
     );
     if (imageFiles.length === 0) return;
 
@@ -111,8 +112,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
                     isUploading: false,
                     uploadError: undefined,
                   }
-                : imageItem
-            )
+                : imageItem,
+            ),
           );
         })
         .catch((error) => {
@@ -129,8 +130,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
                     isUploading: false,
                     uploadError,
                   }
-                : imageItem
-            )
+                : imageItem,
+            ),
           );
 
           toast({
@@ -146,7 +147,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     if (!files || files.length === 0) return;
 
     const mediaFiles = Array.from(files).filter((file) =>
-      file.type.startsWith("video/")
+      file.type.startsWith("video/"),
     );
     if (mediaFiles.length === 0) return;
 
@@ -178,8 +179,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
                     isUploading: false,
                     uploadError: undefined,
                   }
-                : videoItem
-            )
+                : videoItem,
+            ),
           );
         })
         .catch((error) => {
@@ -196,8 +197,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
                     isUploading: false,
                     uploadError,
                   }
-                : videoItem
-            )
+                : videoItem,
+            ),
           );
 
           toast({
@@ -211,7 +212,9 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
   const handleMoveImageToTop = (imageId: string) => {
     setImageItems((prev) => {
-      const imageIndex = prev.findIndex((imageItem) => imageItem.id === imageId);
+      const imageIndex = prev.findIndex(
+        (imageItem) => imageItem.id === imageId,
+      );
       if (imageIndex <= 0) return prev;
 
       const next = [...prev];
@@ -221,15 +224,18 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     });
   };
 
-  const handleReorderImages = (draggedImageId: string, targetImageId: string) => {
+  const handleReorderImages = (
+    draggedImageId: string,
+    targetImageId: string,
+  ) => {
     if (draggedImageId === targetImageId) return;
 
     setImageItems((prev) => {
       const draggedImageIndex = prev.findIndex(
-        (imageItem) => imageItem.id === draggedImageId
+        (imageItem) => imageItem.id === draggedImageId,
       );
       const targetImageIndex = prev.findIndex(
-        (imageItem) => imageItem.id === targetImageId
+        (imageItem) => imageItem.id === targetImageId,
       );
 
       if (draggedImageIndex === -1 || targetImageIndex === -1) return prev;
@@ -247,7 +253,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       if (imageToRemove?.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(imageToRemove.previewUrl);
         imagePreviewUrlsRef.current = imagePreviewUrlsRef.current.filter(
-          (previewUrl) => previewUrl !== imageToRemove.previewUrl
+          (previewUrl) => previewUrl !== imageToRemove.previewUrl,
         );
       }
 
@@ -261,7 +267,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
       if (videoToRemove?.previewUrl.startsWith("blob:")) {
         URL.revokeObjectURL(videoToRemove.previewUrl);
         videoPreviewUrlsRef.current = videoPreviewUrlsRef.current.filter(
-          (previewUrl) => previewUrl !== videoToRemove.previewUrl
+          (previewUrl) => previewUrl !== videoToRemove.previewUrl,
         );
       }
 
@@ -282,7 +288,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     }
 
     const hasUploadingMedia = [...imageItems, ...videoItems].some(
-      (mediaItem) => mediaItem.isUploading
+      (mediaItem) => mediaItem.isUploading,
     );
     if (hasUploadingMedia) {
       toast({
@@ -294,7 +300,7 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
     }
 
     const hasMediaUploadErrors = [...imageItems, ...videoItems].some(
-      (mediaItem) => mediaItem.uploadError
+      (mediaItem) => mediaItem.uploadError,
     );
     if (hasMediaUploadErrors) {
       toast({
@@ -373,12 +379,15 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
           ? Number(formData.animal_stage)
           : undefined,
         is_alive:
-          formData.category === "Live Stock" || formData.category === "Fish",
+          formData.category === "Catfish" || formData.category === "Tilapia",
         is_fresh:
-          formData.category === "Vegetables" || formData.category === "Fruits",
+          formData.category === "Catfish" || formData.category === "Tilapia",
       };
 
-      console.log("Submitting product data with uploaded media URLs:", productData);
+      console.log(
+        "Submitting product data with uploaded media URLs:",
+        productData,
+      );
 
       const response = await CreateProduct(productData);
 
@@ -416,8 +425,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
                 ...imageItem,
                 uploadedUrl: undefined,
                 uploadError: imageItem.uploadError ?? REUPLOAD_REQUIRED_MESSAGE,
-              }
-        )
+              },
+        ),
       );
       setVideoItems((prev) =>
         prev.map((videoItem) =>
@@ -427,8 +436,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
                 ...videoItem,
                 uploadedUrl: undefined,
                 uploadError: videoItem.uploadError ?? REUPLOAD_REQUIRED_MESSAGE,
-              }
-        )
+              },
+        ),
       );
 
       console.error("Error adding product:", error);
@@ -446,16 +455,13 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
   };
 
   const isAnyMediaUploading = [...imageItems, ...videoItems].some(
-    (mediaItem) => mediaItem.isUploading
+    (mediaItem) => mediaItem.isUploading,
   );
 
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Add New Market Item</CardTitle>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -471,11 +477,13 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
             onInputChange={handleInputChange}
           />
 
-          <ProductCategoryFields
-            formData={formData}
-            categories={categories}
-            onInputChange={handleInputChange}
-          />
+          {formData.category === "Fingerlings" && (
+            <ProductCategoryFields
+              formData={formData}
+              categories={categories}
+              onInputChange={handleInputChange}
+            />
+          )}
 
           <ProductImageUpload
             imageItems={imageItems}
@@ -505,8 +513,8 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
               {isAnyMediaUploading
                 ? "Uploading Media..."
                 : isLoading
-                ? "Creating Market Item..."
-                : "Create Market Item"}
+                  ? "Creating Market Item..."
+                  : "Create Market Item"}
             </Button>
           </div>
         </form>

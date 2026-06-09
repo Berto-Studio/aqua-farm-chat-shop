@@ -36,17 +36,19 @@ export default function ProductPricingInfo({
           required
         />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="weight_per_unit">Weight per Unit</Label>
-        <Input
-          id="weight_per_unit"
-          type="number"
-          step="0.01"
-          placeholder="1.5"
-          value={formData.weight_per_unit}
-          onChange={(e) => onInputChange("weight_per_unit", e.target.value)}
-        />
-      </div>
+      {formData.category !== "Farm Equipment" && (
+        <div className="space-y-2">
+          <Label htmlFor="weight_per_unit">Weight per Unit (kg)</Label>
+          <Input
+            id="weight_per_unit"
+            type="number"
+            step="0.01"
+            placeholder="1.5"
+            value={formData.weight_per_unit}
+            onChange={(e) => onInputChange("weight_per_unit", e.target.value)}
+          />
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="discount_percentage">Discount (%)</Label>
         <Input

@@ -21,6 +21,7 @@ import {
 import type { Product } from "@/types/product";
 import { useFarmServices } from "@/hooks/useServices";
 import CTA from "@/components/global/cta";
+import ProductsSlider from "@/components/product/ProductsSlider";
 
 const HeroCarouselItems = [
   {
@@ -153,9 +154,12 @@ export default function Index() {
                 className="w-full h-full object-cover"
               />
               <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">Fish</h3>
+                <h3 className="text-2xl md:text-3xl font-bold mb-2">
+                  Fingerlings
+                </h3>
                 <p className="text-lg text-center">
-                  Premium catfish and tilapia fingerlings and mature fish
+                  Healthy catfish and tilapia fingerlings for stocking your
+                  farm.
                 </p>
                 <Button variant="secondary" className="mt-4">
                   View Products
@@ -163,20 +167,20 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products?category=Live%20Stock" className="group">
+          <Link to="/products?category=Fish" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-blue-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-950 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
-                src="/live-stock-bg.jpg"
-                alt="Live Stock"
+                src="/catfishbg.webp"
+                alt="Catfish"
                 className="w-full h-full object-cover"
               />
               <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">
-                  Live Stock
+                <h3 className="text-2xl md:text-3xl font-bold mb-2 text-center">
+                  Catfish & Tilapia
                 </h3>
                 <p className="text-lg text-center">
-                  High-quality meat for consumption
+                  Farm-raised mature fish ready consumption.
                 </p>
                 <Button variant="secondary" className="mt-4">
                   View Products
@@ -184,44 +188,6 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          {/* <Link to="/products?category=Vegetables" className="group">
-            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-gray-500/80 to-gray-500/80 opacity-80 group-hover:opacity-90 transition-opacity"></div>
-              <img
-                src="/vegitables-fruits-bg.jpg"
-                alt="vegetables and fruits"
-                className="w-full h-full object-cover"
-              />
-              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">
-                  Vegetables
-                </h3>
-                <p className="text-lg text-center">
-                  Nutritious vegetables available
-                </p>
-                <Button variant="secondary" className="mt-4">
-                  View Products
-                </Button>
-              </CardContent>
-            </Card>
-          </Link> */}
-          {/* <Link to="/products?category=Fruits" className="group">
-            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-shopBlack/80 to-shopBlack opacity-80 group-hover:opacity-90 transition-opacity"></div>
-              <img
-                src="/fruits.jpg"
-                alt="fruits"
-                className="w-full h-full object-cover"
-              />
-              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">Fruits</h3>
-                <p className="text-lg text-center">Juicy fruits available</p>
-                <Button variant="secondary" className="mt-4">
-                  View Products
-                </Button>
-              </CardContent>
-            </Card>
-          </Link> */}
           <Link to="/products?category=Farm%20Equipment" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-700/80 to-amber-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
@@ -241,6 +207,16 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
+        </div>
+      </section>
+
+      <section className="py-12 container">
+        <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
+          Fingerlings
+        </h2>
+
+        <div>
+          <ProductsSlider products={featuredProducts} />
         </div>
       </section>
 

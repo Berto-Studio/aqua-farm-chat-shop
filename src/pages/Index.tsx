@@ -97,7 +97,7 @@ export default function Index() {
   const { data: catfishTilapiaProduct = [] } =
     useProductByCategoryCatfishTilapia("catfish,tilapia");
   const { data: farmEquipmentProduct = [] } =
-    useProductByCategoryFarmEquipment("farm-equipment");
+    useProductByCategoryFarmEquipment("Farm Equipment");
   const {
     data: services = [],
     isLoading: isLoadingServices,

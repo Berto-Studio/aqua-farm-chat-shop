@@ -399,6 +399,15 @@ export default function AddProductForm({ onClose }: AddProductFormProps) {
 
         queryClient.invalidateQueries({ queryKey: ["products"] });
         queryClient.invalidateQueries({ queryKey: ["farmer-stats"] });
+        queryClient.invalidateQueries({
+          queryKey: ["product-category-fingerlings"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["product-category-catfish-tilapia"],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["product-category-farm-equipment"],
+        });
 
         onClose();
       } else {

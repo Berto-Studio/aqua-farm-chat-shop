@@ -779,3 +779,63 @@ export async function UpsertProductFeedback(
     };
   }
 }
+
+export async function GetProductsByCategory(categoryName: string): Promise<{
+  success: boolean;
+  data: Product[];
+  message: string;
+  status: number;
+}> {
+  try {
+    const response = await apiRequest<ProductsResponse>(
+      `products?category=${categoryName}`,
+      "GET",
+    );
+
+    return {
+      success: true,
+      data: normalizeProducts(response?.data),
+      message: response.message || "Success",
+      status: response.status || 200,
+    };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return {
+      success: false,
+      data: [],
+      message:
+        error instanceof Error ? error.message : "Failed to fetch products",
+      status: 500,
+    };
+  }
+}
+
+export async function GetProductsByCategories(categoryName: string): Promise<{
+  success: boolean;
+  data: Product[];
+  message: string;
+  status: number;
+}> {
+  try {
+    const response = await apiRequest<ProductsResponse>(
+      `products?categories=${categoryName}`,
+      "GET",
+    );
+
+    return {
+      success: true,
+      data: normalizeProducts(response?.data),
+      message: response.message || "Success",
+      status: response.status || 200,
+    };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return {
+      success: false,
+      data: [],
+      message:
+        error instanceof Error ? error.message : "Failed to fetch products",
+      status: 500,
+    };
+  }
+}

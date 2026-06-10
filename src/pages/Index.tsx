@@ -22,6 +22,11 @@ import type { Product } from "@/types/product";
 import { useFarmServices } from "@/hooks/useServices";
 import CTA from "@/components/global/cta";
 import ProductsSlider from "@/components/product/ProductsSlider";
+import {
+  useProductByCategoryCatfishTilapia,
+  useProductByCategoryFarmEquipment,
+  useProductByCategoryFingerlings,
+} from "@/hooks/useProducts";
 
 const HeroCarouselItems = [
   {
@@ -87,6 +92,12 @@ export default function Index() {
   const { data: featuredProductsData = [], isLoading } = useFeaturedProducts({
     per_page: 10,
   });
+  const { data: fingerlingsProduct = [] } =
+    useProductByCategoryFingerlings("fingerlings");
+  const { data: catfishTilapiaProduct = [] } =
+    useProductByCategoryCatfishTilapia("catfish,tilapia");
+  const { data: farmEquipmentProduct = [] } =
+    useProductByCategoryFarmEquipment("farm-equipment");
   const {
     data: services = [],
     isLoading: isLoadingServices,
@@ -210,15 +221,41 @@ export default function Index() {
         </div>
       </section>
 
-      <section className="py-12 container">
-        <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
-          Fingerlings
-        </h2>
+      {fingerlingsProduct.length > 0 && (
+        <section className="py-12 container">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
+            Fingerlings
+          </h2>
 
-        <div>
-          <ProductsSlider products={featuredProducts} />
-        </div>
-      </section>
+          <div>
+            <ProductsSlider products={fingerlingsProduct} />
+          </div>
+        </section>
+      )}
+
+      {catfishTilapiaProduct.length > 0 && (
+        <section className="py-12 container">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
+            Catfish
+          </h2>
+
+          <div>
+            <ProductsSlider products={catfishTilapiaProduct} />
+          </div>
+        </section>
+      )}
+
+      {farmEquipmentProduct.length > 0 && (
+        <section className="py-12 container">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
+            Farm Equipment
+          </h2>
+
+          <div>
+            <ProductsSlider products={farmEquipmentProduct} />
+          </div>
+        </section>
+      )}
 
       {/* Featured Products */}
       <section className="bg-black py-16 md:px-6">

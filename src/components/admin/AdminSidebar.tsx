@@ -39,9 +39,7 @@ function NavLink({ to, icon, label, isActive }: NavLinkProps) {
       to={to}
       className={cn(
         "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-        isActive 
-          ? "bg-primary text-primary-foreground" 
-          : "hover:bg-primary/10"
+        isActive ? "bg-primary text-primary-foreground" : "hover:bg-primary/10",
       )}
     >
       {icon}
@@ -55,7 +53,7 @@ export default function AdminSidebar() {
   const pathname = location.pathname;
   const navigate = useNavigate();
   const user = useUserStore((state) => state.user);
-  
+
   const navItems = [
     {
       to: "/admin",
@@ -115,7 +113,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="h-full w-64 border-r bg-white p-4 flex flex-col gap-6">
+    <div className="h-full w-80 border-r bg-white p-4 flex flex-col gap-6 overflow-hidden">
       <div className="flex items-center gap-2 px-2">
         <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
           FS
@@ -125,7 +123,7 @@ export default function AdminSidebar() {
           <div className="text-xs text-muted-foreground">Admin Dashboard</div>
         </div>
       </div>
-      
+
       <nav className="space-y-1 flex-1">
         {navItems.map((item) => (
           <NavLink
@@ -134,8 +132,8 @@ export default function AdminSidebar() {
             icon={item.icon}
             label={item.label}
             isActive={
-              item.to === "/admin" 
-                ? pathname === "/admin" 
+              item.to === "/admin"
+                ? pathname === "/admin"
                 : pathname.startsWith(item.to) ||
                   (item.to === "/admin/users" &&
                     pathname.startsWith("/admin/customers"))
@@ -143,7 +141,7 @@ export default function AdminSidebar() {
           />
         ))}
       </nav>
-      
+
       <div className="border-t pt-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -151,14 +149,14 @@ export default function AdminSidebar() {
               variant="ghost"
               className="h-auto w-full justify-between px-3 py-2"
             >
-              <div className="flex items-center gap-3 text-left">
+              <div className="flex items-center gap-3 text-left w-full">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.image_url} alt={user?.full_name} />
                   <AvatarFallback className="bg-primary/10 text-primary">
                     {userInitials}
                   </AvatarFallback>
                 </Avatar>
-                <div>
+                <div className="flex-1 overflow-hidden">
                   <div className="font-medium text-sm">
                     {user?.full_name || "Admin User"}
                   </div>
@@ -174,7 +172,7 @@ export default function AdminSidebar() {
             <DropdownMenuItem asChild>
               <Link to="/">
                 <House className="mr-2 h-4 w-4" />
-                Home
+                Back to store
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>

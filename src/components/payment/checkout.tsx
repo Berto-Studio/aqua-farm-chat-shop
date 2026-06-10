@@ -32,7 +32,11 @@ interface CheckoutProps {
   onBackToCart?: () => void;
 }
 
-export default function Checkout({ value, onChange, onBackToCart }: CheckoutProps) {
+export default function Checkout({
+  value,
+  onChange,
+  onBackToCart,
+}: CheckoutProps) {
   const isPickup = value.shippingMethod === "pickup";
 
   return (
@@ -41,15 +45,21 @@ export default function Checkout({ value, onChange, onBackToCart }: CheckoutProp
         <CardContent className="space-y-6 p-6">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-medium">First Name</label>
+              <label className="mb-2 block text-sm font-medium">
+                First Name
+              </label>
               <Input
                 placeholder="Enter first name"
                 value={value.firstName}
-                onChange={(event) => onChange({ firstName: event.target.value })}
+                onChange={(event) =>
+                  onChange({ firstName: event.target.value })
+                }
               />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium">Last Name</label>
+              <label className="mb-2 block text-sm font-medium">
+                Last Name
+              </label>
               <Input
                 placeholder="Enter last name"
                 value={value.lastName}
@@ -69,7 +79,9 @@ export default function Checkout({ value, onChange, onBackToCart }: CheckoutProp
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Phone Number</label>
+            <label className="mb-2 block text-sm font-medium">
+              Phone Number
+            </label>
             <Input
               type="tel"
               placeholder="Enter phone number"
@@ -91,7 +103,7 @@ export default function Checkout({ value, onChange, onBackToCart }: CheckoutProp
             />
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-2 block text-sm font-medium">City</label>
               <Input
@@ -110,43 +122,51 @@ export default function Checkout({ value, onChange, onBackToCart }: CheckoutProp
                 disabled={isPickup}
               />
             </div>
-            <div>
-              <label className="mb-2 block text-sm font-medium">Postal Code</label>
+            {/* <div>
+              <label className="mb-2 block text-sm font-medium">
+                Postal Code
+              </label>
               <Input
                 placeholder="Postal Code"
                 value={value.postalCode}
-                onChange={(event) => onChange({ postalCode: event.target.value })}
+                onChange={(event) =>
+                  onChange({ postalCode: event.target.value })
+                }
                 disabled={isPickup}
               />
-            </div>
+            </div> */}
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Shipping Method</label>
+            <label className="mb-2 block text-sm font-medium">
+              Delivery Method
+            </label>
             <Select
               value={value.shippingMethod}
               onValueChange={(nextValue: ShippingMethod) =>
                 onChange({
                   shippingMethod: nextValue,
                   ...(nextValue === "pickup"
-                    ? { address: "", city: "", region: "", postalCode: "" }
+                    ? { address: "", city: "", region: "", postalCode: "0233" }
                     : {}),
                 })
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select shipping" />
+                <SelectValue placeholder="Select delivery" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="standard">Standard (3-5 days)</SelectItem>
-                <SelectItem value="express">Express (1-2 days)</SelectItem>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="express">Express</SelectItem>
                 <SelectItem value="pickup">Pickup</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Payment Method</label>
+            <label className="mb-2 block text-sm font-medium">
+              Payment Method
+            </label>
             <Select
               value={value.paymentMethod}
               onValueChange={(nextValue: PaymentMethod) =>

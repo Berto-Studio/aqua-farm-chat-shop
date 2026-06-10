@@ -19,10 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCarts } from "@/hooks/useCart";
 import { DeleteCartItem } from "@/services/cart";
 import { CreateOrder } from "@/services/orders";
-import {
-  InitializePayment,
-  VerifyPayment,
-} from "@/services/payments";
+import { InitializePayment, VerifyPayment } from "@/services/payments";
 import Carts from "@/components/payment/cart";
 import Checkout, {
   CheckoutFormData,
@@ -60,7 +57,7 @@ const defaultCheckoutForm: CheckoutFormData = {
   address: "",
   city: "",
   region: "",
-  postalCode: "",
+  postalCode: "0233",
   shippingMethod: "",
   paymentMethod: "",
 };
@@ -123,7 +120,9 @@ const buildOrderNotes = (
     `Phone: ${form.phone.trim()}`,
     `Shipping method: ${formatShippingMethodLabel(form.shippingMethod)}`,
     `Payment method: ${formatPaymentMethodLabel(form.paymentMethod)}`,
-    ...(mobileProvider ? [`Mobile provider: ${mobileProvider.toUpperCase()}`] : []),
+    ...(mobileProvider
+      ? [`Mobile provider: ${mobileProvider.toUpperCase()}`]
+      : []),
     ...(mobileNumber.trim() ? [`Mobile number: ${mobileNumber.trim()}`] : []),
     ...(isPhysicalPaymentMethodValue(form.paymentMethod)
       ? ["Payment tracking: Physical payment selected for delivery or pickup."]
@@ -136,7 +135,8 @@ const buildGatewayMetadata = (
   mobileNumber: string,
   orderId: number,
 ) => {
-  const customerName = `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
+  const customerName =
+    `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
   const customFields = [
     {
       display_name: "Order ID",
@@ -185,7 +185,8 @@ const buildGatewayMetadata = (
 };
 
 const getStoredPendingOnlinePayments = () => {
-  if (typeof window === "undefined") return {} as Record<string, PendingOnlinePayment>;
+  if (typeof window === "undefined")
+    return {} as Record<string, PendingOnlinePayment>;
 
   try {
     const rawValue = window.sessionStorage.getItem(
@@ -263,9 +264,8 @@ export default function PaymentProccess() {
   const [cartItems, setCartItems] = useState<CartProps[]>([]);
   const [couponCode, setCouponCode] = useState("");
   const [step, setStep] = useState<Step>("cart");
-  const [checkoutForm, setCheckoutForm] = useState<CheckoutFormData>(
-    defaultCheckoutForm,
-  );
+  const [checkoutForm, setCheckoutForm] =
+    useState<CheckoutFormData>(defaultCheckoutForm);
   const [mobileProvider, setMobileProvider] = useState<MobileProvider>("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
@@ -288,7 +288,8 @@ export default function PaymentProccess() {
     if (!isLoggedIn) {
       openAuthPrompt({
         title: "Login required",
-        description: "Please login or register to view your cart and continue to checkout.",
+        description:
+          "Please login or register to view your cart and continue to checkout.",
       });
     }
   }, [isLoggedIn, openAuthPrompt]);
@@ -306,7 +307,10 @@ export default function PaymentProccess() {
     }
   }, [paymentReference]);
 
-  const subtotal = cartItems.reduce((total, item) => total + item.totalPrice, 0);
+  const subtotal = cartItems.reduce(
+    (total, item) => total + item.totalPrice,
+    0,
+  );
   const delivery = subtotal > 100 ? 0 : 15;
   const discount = 0;
   const total = subtotal + delivery - discount;
@@ -363,12 +367,7 @@ export default function PaymentProccess() {
     }
 
     if (checkoutForm.shippingMethod !== "pickup") {
-      if (
-        !checkoutForm.address ||
-        !checkoutForm.city ||
-        !checkoutForm.region ||
-        !checkoutForm.postalCode
-      ) {
+      if (!checkoutForm.address || !checkoutForm.city || !checkoutForm.region) {
         toast({
           title: "Address required",
           description: "Please complete the shipping address details.",
@@ -544,13 +543,7 @@ export default function PaymentProccess() {
   useEffect(() => {
     if (!paymentReference) return;
     void verifyCompletedPayment(paymentReference, { replaceUrl: true });
-  }, [
-    navigate,
-    paymentReference,
-    queryClient,
-    toast,
-    verificationAttempt,
-  ]);
+  }, [navigate, paymentReference, queryClient, toast, verificationAttempt]);
 
   const handleProceed = () => {
     if (step === "cart") {
@@ -683,7 +676,9 @@ export default function PaymentProccess() {
       const reference = paymentResult.data.reference?.trim();
 
       if (!reference) {
-        throw new Error("Payment gateway response is missing a payment reference.");
+        throw new Error(
+          "Payment gateway response is missing a payment reference.",
+        );
       }
 
       rememberPendingOnlinePayment({
@@ -810,16 +805,13 @@ export default function PaymentProccess() {
           <CardContent className="space-y-4 p-6">
             <h2 className="text-xl font-bold">Card Checkout</h2>
             <p className="text-sm text-muted-foreground">
-              After you continue, Paystack will open a secure popup for the
-              real card entry and authorization step.
+              After you continue, Paystack will open a secure popup for the real
+              card entry and authorization step.
             </p>
             {!PAYSTACK_PUBLIC_KEY ? (
               <p className="text-sm text-destructive">
-                Paystack public key is missing. Add
-                {" "}
-                <code>VITE_PAYSTACK_PUBLIC_KEY</code>
-                {" "}
-                to enable online payments.
+                Paystack public key is missing. Add{" "}
+                <code>VITE_PAYSTACK_PUBLIC_KEY</code> to enable online payments.
               </p>
             ) : null}
           </CardContent>
@@ -840,7 +832,9 @@ export default function PaymentProccess() {
               <Label className="mb-2 block">Provider</Label>
               <Select
                 value={mobileProvider}
-                onValueChange={(value: MobileProvider) => setMobileProvider(value)}
+                onValueChange={(value: MobileProvider) =>
+                  setMobileProvider(value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select provider" />
@@ -889,10 +883,14 @@ export default function PaymentProccess() {
             : "Continue to Secure Payment"
           : "Place Order";
 
-  const actionHandler = step === "payment" ? handleCompletePayment : handleProceed;
+  const actionHandler =
+    step === "payment" ? handleCompletePayment : handleProceed;
 
   const paymentStatusCard =
-    isVerifyingPayment || paymentErrorMessage || verifiedPayment || pendingOnlineOrderId ? (
+    isVerifyingPayment ||
+    paymentErrorMessage ||
+    verifiedPayment ||
+    pendingOnlineOrderId ? (
       <Card className="mb-6">
         <CardContent className="space-y-4 p-6">
           {isVerifyingPayment ? (
@@ -927,7 +925,9 @@ export default function PaymentProccess() {
               </div>
               {paymentReference ? (
                 <div className="flex flex-wrap gap-2">
-                  <Button onClick={() => setVerificationAttempt((value) => value + 1)}>
+                  <Button
+                    onClick={() => setVerificationAttempt((value) => value + 1)}
+                  >
                     Retry Verification
                   </Button>
                   <Button
@@ -949,7 +949,8 @@ export default function PaymentProccess() {
               <h2 className="font-semibold">Pending online payment</h2>
               <p className="text-sm text-muted-foreground">
                 Order #{pendingOnlineOrderId} is waiting for online payment.
-                Continuing will reuse that order instead of creating a duplicate.
+                Continuing will reuse that order instead of creating a
+                duplicate.
               </p>
             </div>
           ) : null}
@@ -966,9 +967,12 @@ export default function PaymentProccess() {
               <ShoppingBag className="h-10 w-10 text-muted-foreground" />
             </div>
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold">Login to view your cart</h1>
+              <h1 className="text-2xl font-semibold">
+                Login to view your cart
+              </h1>
               <p className="text-sm text-muted-foreground">
-                Please login or register before reviewing your cart and completing checkout.
+                Please login or register before reviewing your cart and
+                completing checkout.
               </p>
             </div>
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
@@ -1027,12 +1031,16 @@ export default function PaymentProccess() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery</span>
-                    <span>{delivery === 0 ? "Free" : `$${delivery.toFixed(2)}`}</span>
+                    <span>
+                      {delivery === 0 ? "Free" : `$${delivery.toFixed(2)}`}
+                    </span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Discount</span>
-                      <span className="text-green-600">-${discount.toFixed(2)}</span>
+                      <span className="text-green-600">
+                        -${discount.toFixed(2)}
+                      </span>
                     </div>
                   )}
                   <Separator className="my-4" />
@@ -1044,7 +1052,9 @@ export default function PaymentProccess() {
 
                 {step !== "cart" && (
                   <div className="mt-6 space-y-2 rounded-md border p-3">
-                    <p className="text-sm font-medium">Selected Payment Method</p>
+                    <p className="text-sm font-medium">
+                      Selected Payment Method
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {checkoutForm.paymentMethod
                         ? formatPaymentMethodLabel(checkoutForm.paymentMethod)

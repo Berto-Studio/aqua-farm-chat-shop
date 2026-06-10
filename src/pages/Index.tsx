@@ -155,8 +155,8 @@ export default function Index() {
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
           Shop by Category
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Link to="/products?category=Fish" className="group">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Link to="/products?category=fingerlings" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -178,7 +178,7 @@ export default function Index() {
               </CardContent>
             </Card>
           </Link>
-          <Link to="/products?category=Fish" className="group">
+          <Link to="/products?category=catfish" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
               <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-950 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
@@ -188,10 +188,31 @@ export default function Index() {
               />
               <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
                 <h3 className="text-2xl md:text-3xl font-bold mb-2 text-center">
-                  Catfish & Tilapia
+                  Catfish
                 </h3>
                 <p className="text-lg text-center">
-                  Farm-raised mature fish ready consumption.
+                  Farm-raised mature catfish ready consumption.
+                </p>
+                <Button variant="secondary" className="mt-4">
+                  View Products
+                </Button>
+              </CardContent>
+            </Card>
+          </Link>
+          <Link to="/products?category=tilapia" className="group">
+            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-700 to-yellow-950 opacity-80 group-hover:opacity-90 transition-opacity"></div>
+              <img
+                src="/catfishbg.webp"
+                alt="Catfish"
+                className="w-full h-full object-cover"
+              />
+              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
+                <h3 className="text-2xl md:text-3xl font-bold mb-2 text-center">
+                  Tilapia
+                </h3>
+                <p className="text-lg text-center">
+                  Farm-raised mature tilapia ready consumption.
                 </p>
                 <Button variant="secondary" className="mt-4">
                   View Products
@@ -201,7 +222,7 @@ export default function Index() {
           </Link>
           <Link to="/products?category=Farm%20Equipment" className="group">
             <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-amber-700/80 to-amber-900 opacity-80 group-hover:opacity-90 transition-opacity"></div>
+              <div className="absolute inset-0 bg-gradient-to-r from-black to-black/50 opacity-80 group-hover:opacity-90 transition-opacity"></div>
               <img
                 src="/waterpump.webp"
                 alt="Farm equipment"

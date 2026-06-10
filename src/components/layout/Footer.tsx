@@ -64,7 +64,15 @@ export default function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
-                  to="/products?category=Fish"
+                  to="/products?category=fingerlings"
+                  className="transition-colors hover:text-zinc-900"
+                >
+                  Fingerlings
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/products?category=catfish"
                   className="transition-colors hover:text-zinc-900"
                 >
                   Catfish
@@ -72,7 +80,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  to="/products?category=Fish"
+                  to="/products?category=tilapia"
                   className="transition-colors hover:text-zinc-900"
                 >
                   Tilapia

@@ -16,8 +16,8 @@ export default function Footer() {
   const quickLinks = [
     { label: "Products", to: "/products" },
     { label: "Services", to: "/services" },
-    { label: "About Us", to: "/about" },
-    { label: "Contact", to: "/contact" },
+    // { label: "About Us", to: "/about" },
+    // { label: "Contact", to: "/contact" },
     { label: "Calculator", to: "/calculator" },
   ];
 
@@ -108,7 +108,7 @@ export default function Footer() {
                   href="mailto:info@fishfarm.com"
                   className="transition-colors hover:text-zinc-900"
                 >
-                  info@fishfarm.com
+                  info@pomegrid.com
                 </a>
               </li>
               <li className="flex items-center gap-3">
@@ -117,12 +117,12 @@ export default function Footer() {
                   href="tel:+11234567890"
                   className="transition-colors hover:text-zinc-900"
                 >
-                  (123) 456-7890
+                  {"054 528 7775"}
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <MapPin className="h-4 w-4 text-sky-600" />
-                <span>123 Farm Road, Fish Valley, CA 90210</span>
+                <span>Essikadu, Silhouette Street, Mempeasem</span>
               </li>
             </ul>
           </div>

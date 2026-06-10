@@ -12,12 +12,30 @@ import { useRequireAuthAction } from "@/hooks/useRequireAuthAction";
 
 interface ProductCardProps {
   product: Product;
+  size?: "default" | "sm";
 }
 
-export default function ProductCard({ product }: ProductCardProps) {
+export default function ProductCard({
+  product,
+  size = "default",
+}: ProductCardProps) {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const requireAuthAction = useRequireAuthAction();
+  const isSmall = size === "sm";
+
+  const imageRatio = isSmall ? 1 : 4 / 3;
+  const contentPadding = isSmall ? "p-2 space-y-2" : "p-2 space-y-3";
+  const titleClass = isSmall
+    ? "text-xs font-semibold line-clamp-2"
+    : "font-semibold line-clamp-2";
+
+  const descriptionClass = isSmall
+    ? "text-xs text-muted-foreground line-clamp-1"
+    : "text-sm text-muted-foreground line-clamp-2";
+
+  const buttonClass = isSmall ? "h-8 text-xs" : "";
+
   const formattedPrice = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -39,7 +57,8 @@ export default function ProductCard({ product }: ProductCardProps) {
     if (
       !requireAuthAction({
         title: "Login required",
-        description: "Please login or register to add this product to your cart.",
+        description:
+          "Please login or register to add this product to your cart.",
       })
     ) {
       return;
@@ -72,7 +91,7 @@ export default function ProductCard({ product }: ProductCardProps) {
     <Card className="group flex h-full w-full flex-col justify-between overflow-hidden border shadow-sm transition-all duration-300 hover:shadow-lg">
       <Link to={`/products/${product.id}`} className="block">
         <div className="relative overflow-hidden bg-muted">
-          <AspectRatio ratio={4 / 3}>
+          <AspectRatio ratio={imageRatio}>
             <img
               src={
                 product.image_url ||
@@ -94,16 +113,16 @@ export default function ProductCard({ product }: ProductCardProps) {
           </div>
         </div>
 
-        <CardContent className="p-2 space-y-3">
+        <CardContent className={contentPadding}>
           <div className="space-y-1">
-            <h3 className="font-semibold text-card-foreground group-hover:text-primary transition-colors line-clamp-2">
+            <h3
+              className={`${titleClass} text-card-foreground group-hover:text-primary transition-colors`}
+            >
               {product.title}
             </h3>
           </div>
 
-          <p className="text-sm text-muted-foreground line-clamp-2">
-            {product.description}
-          </p>
+          <p className={descriptionClass}>{product.description}</p>
 
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -123,7 +142,7 @@ export default function ProductCard({ product }: ProductCardProps) {
               )}
             </div>
 
-            <div className="flex items-center text-amber-500">
+            <div className="items-center text-amber-500 hidden md:flex">
               <Star className="w-4 h-4 fill-current" />
               <span className="ml-1 text-sm font-medium">
                 {product.rating?.toFixed(1) || "4.0"}
@@ -135,7 +154,7 @@ export default function ProductCard({ product }: ProductCardProps) {
 
       <CardFooter className="p-2 pt-0">
         <Button
-          className="w-full gap-2 group-hover:bg-primary/90 transition-colors"
+          className={`w-full gap-2 group-hover:bg-primary/90 transition-colors ${buttonClass}`}
           onClick={AddCart}
         >
           <ShoppingCart className="w-4 h-4" />

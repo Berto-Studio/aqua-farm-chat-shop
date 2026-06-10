@@ -114,6 +114,9 @@ export default function Navbar() {
 
   const NavLinks = () => (
     <div className="flex gap-4 items-center">
+      <Link to="/" className="font-medium hover:text-primary transition-colors">
+        Home
+      </Link>
       <Link
         to="/products"
         className="font-medium hover:text-primary transition-colors"
@@ -132,7 +135,7 @@ export default function Navbar() {
       >
         Calculator
       </Link>
-      <Link
+      {/* <Link
         to="/about"
         className="font-medium hover:text-primary transition-colors"
       >
@@ -143,7 +146,7 @@ export default function Navbar() {
         className="font-medium hover:text-primary transition-colors"
       >
         Contact
-      </Link>
+      </Link> */}
     </div>
   );
   const { totalCartItems } = useCarts({ enabled: isLoggedIn });
@@ -171,6 +174,11 @@ export default function Navbar() {
                   <SheetContent side="left" className="w-[250px] sm:w-[300px]">
                     <div className="flex flex-col gap-6 mt-6">
                       <SheetClose asChild>
+                        <Link to="/" className="font-medium text-lg">
+                          Home
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
                         <Link to="/products" className="font-medium text-lg">
                           Products
                         </Link>
@@ -185,7 +193,7 @@ export default function Navbar() {
                           Calculator
                         </Link>
                       </SheetClose>
-                      <SheetClose asChild>
+                      {/* <SheetClose asChild>
                         <Link to="/about" className="font-medium text-lg">
                           About Us
                         </Link>
@@ -194,7 +202,7 @@ export default function Navbar() {
                         <Link to="/contact" className="font-medium text-lg">
                           Contact
                         </Link>
-                      </SheetClose>
+                      </SheetClose> */}
                     </div>
                   </SheetContent>
                 </Sheet>

@@ -28,9 +28,9 @@ export default function ProductsSlider({
           {products.map((product) => (
             <CarouselItem
               key={product.id}
-              className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/3 2xl:basis-1/5"
+              className="pl-2 md:pl-4 basis-1/2 sm:basis-1/2 lg:basis-1/3 xl:basis-1/3 2xl:basis-1/5"
             >
-              <ProductCard product={product} />
+              <ProductCard product={product} size="sm" />
             </CarouselItem>
           ))}
         </CarouselContent>

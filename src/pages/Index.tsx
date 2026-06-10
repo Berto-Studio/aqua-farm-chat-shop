@@ -30,11 +30,27 @@ import {
 
 const HeroCarouselItems = [
   {
+    title: "Catfish Fingerlings",
+    description:
+      "High-quality catfish fingerlings and mature fish for your farm",
+    image: "/catfishFingerlings.png",
+    link: "/products?category=fingerlings",
+    color: "from-shopBlack/80 to-shopBlack",
+  },
+  {
+    title: "Tilapia Fingerlings",
+    description:
+      "High-quality catfish fingerlings and mature fish for your farm",
+    image: "/tilapiafingerlings.webp",
+    link: "/products?category=fingerlings",
+    color: "from-shopBlack/80 to-shopBlack",
+  },
+  {
     title: "Premium Catfish",
     description:
       "High-quality catfish fingerlings and mature fish for your farm",
     image: "/catfishbg.webp",
-    link: "/products?category=Fish",
+    link: "/products?category=catfish",
     color: "from-shopBlack/80 to-shopBlack",
   },
   {
@@ -43,6 +59,37 @@ const HeroCarouselItems = [
     image: "/tilapiabg.jpg",
     link: "/products?category=Fish",
     color: "from-shopBlack/80 to-shopBlack",
+  },
+];
+
+const categories = [
+  {
+    title: "Fingerlings",
+    category: "fingerlings",
+    image: "/tilapiafingerlings.webp",
+    gradient: "from-primary/80 to-primary",
+    height: "h-[150px]",
+  },
+  {
+    title: "Catfish",
+    category: "catfish",
+    image: "/catfishbg.webp",
+    gradient: "from-blue-700 to-blue-950",
+    height: "h-[150px]",
+  },
+  {
+    title: "Tilapia",
+    category: "tilapia",
+    image: "/tilapiabg.jpg",
+    gradient: "from-yellow-700 to-yellow-950",
+    height: "h-[150px]",
+  },
+  {
+    title: "Farm Equipment",
+    category: "Farm Equipment",
+    image: "/waterpump.webp",
+    gradient: "from-black to-black/50",
+    height: "h-[150px]",
   },
 ];
 
@@ -155,95 +202,38 @@ export default function Index() {
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">
           Shop by Category
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Link to="/products?category=fingerlings" className="group">
-            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-primary opacity-80 group-hover:opacity-90 transition-opacity"></div>
-              <img
-                src="/catfishbg.webp"
-                alt="Catfish"
-                className="w-full h-full object-cover"
-              />
-              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2">
-                  Fingerlings
-                </h3>
-                <p className="text-lg text-center">
-                  Healthy catfish and tilapia fingerlings for stocking your
-                  farm.
-                </p>
-                <Button variant="secondary" className="mt-4">
-                  View Products
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to="/products?category=catfish" className="group">
-            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-700 to-blue-950 opacity-80 group-hover:opacity-90 transition-opacity"></div>
-              <img
-                src="/catfishbg.webp"
-                alt="Catfish"
-                className="w-full h-full object-cover"
-              />
-              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2 text-center">
-                  Catfish
-                </h3>
-                <p className="text-lg text-center">
-                  Farm-raised mature catfish ready consumption.
-                </p>
-                <Button variant="secondary" className="mt-4">
-                  View Products
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to="/products?category=tilapia" className="group">
-            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-yellow-700 to-yellow-950 opacity-80 group-hover:opacity-90 transition-opacity"></div>
-              <img
-                src="/catfishbg.webp"
-                alt="Catfish"
-                className="w-full h-full object-cover"
-              />
-              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold mb-2 text-center">
-                  Tilapia
-                </h3>
-                <p className="text-lg text-center">
-                  Farm-raised mature tilapia ready consumption.
-                </p>
-                <Button variant="secondary" className="mt-4">
-                  View Products
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
-          <Link to="/products?category=Farm%20Equipment" className="group">
-            <Card className="overflow-hidden h-60 relative transition-transform hover:scale-[1.02]">
-              <div className="absolute inset-0 bg-gradient-to-r from-black to-black/50 opacity-80 group-hover:opacity-90 transition-opacity"></div>
-              <img
-                src="/waterpump.webp"
-                alt="Farm equipment"
-                className="w-full h-full object-cover"
-              />
-              <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white">
-                <h3 className="text-2xl md:text-3xl font-bold text-center mb-2">
-                  Farm Equipment
-                </h3>
-                <p className="text-lg text-center">Farm tools</p>
-                <Button variant="secondary" className="mt-4">
-                  View Products
-                </Button>
-              </CardContent>
-            </Card>
-          </Link>
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3">
+          {categories.map((cat) => (
+            <Link
+              to={`/products?category=${encodeURIComponent(cat.category)}`}
+              className="group"
+            >
+              <Card
+                className={`overflow-hidden relative transition-transform hover:scale-[1.02] pb-0 ${cat.height}`}
+              >
+                <div
+                  className={`absolute inset-0 bg-gradient-to-r ${cat.gradient} opacity-80 group-hover:opacity-90 transition-opacity`}
+                />
+
+                <img
+                  src={cat.image}
+                  alt={cat.title}
+                  className="w-full h-full object-cover"
+                />
+
+                <CardContent className="absolute inset-0 flex flex-col justify-center items-center text-white pb-0">
+                  <h3 className="text-2xl md:text-3xl font-bold text-center">
+                    {cat.title}
+                  </h3>
+                </CardContent>
+              </Card>
+            </Link>
+          ))}
         </div>
       </section>
 
       {fingerlingsProduct.length > 0 && (
-        <section className="py-12 container">
+        <section className="container">
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
             Fingerlings
           </h2>
@@ -255,7 +245,9 @@ export default function Index() {
       )}
 
       {catfishTilapiaProduct.length > 0 && (
-        <section className="py-12 container">
+        <section
+          className={`${farmEquipmentProduct.length > 0 ? "pt-12" : "py-12"} container`}
+        >
           <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
             Catfish
           </h2>

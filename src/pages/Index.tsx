@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, PlayCircle, Star } from "lucide-react";
+import { ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +32,7 @@ const HeroCarouselItems = [
   {
     title: "Catfish Fingerlings",
     description:
-      "High-quality catfish fingerlings and mature fish for your farm",
+      "High-quality and fast-growing catfish fingerlings and mature fish for your farm",
     image: "/catfishFingerlings.png",
     link: "/products?category=fingerlings",
     color: "from-shopBlack/80 to-shopBlack",
@@ -40,15 +40,14 @@ const HeroCarouselItems = [
   {
     title: "Tilapia Fingerlings",
     description:
-      "High-quality catfish fingerlings and mature fish for your farm",
+      "High-quality and fast-growing tilapia fingerlings and mature fish for your farm",
     image: "/tilapiafingerlings.webp",
     link: "/products?category=fingerlings",
     color: "from-shopBlack/80 to-shopBlack",
   },
   {
     title: "Premium Catfish",
-    description:
-      "High-quality catfish fingerlings and mature fish for your farm",
+    description: "High-quality and fast-growing catfish for your farm",
     image: "/catfishbg.webp",
     link: "/products?category=catfish",
     color: "from-shopBlack/80 to-shopBlack",
@@ -107,13 +106,10 @@ const shuffleProducts = (products: Product[]) => {
   return shuffled;
 };
 
-const getStartingPrice = (service: FarmService) =>
-  Math.min(...serviceTierKeys.map((tier) => service.pricing[tier].price));
-
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", {
+  new Intl.NumberFormat("en-GH", {
     style: "currency",
-    currency: "USD",
+    currency: "GHS",
   }).format(value);
 
 const getProductImageSource = (product: Product) =>

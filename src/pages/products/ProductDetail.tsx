@@ -39,6 +39,7 @@ import {
   ProductFeedbackSummary,
 } from "@/types/product";
 import { AddToCart } from "@/services/cart";
+import { Input } from "@/components/ui/input";
 
 const EMPTY_FEEDBACK_SUMMARY: ProductFeedbackSummary = {
   average_rating: 0,
@@ -86,6 +87,7 @@ export default function ProductDetail() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [quantity, setQuantity] = useState(1);
+  const [quantityInput, setQuantityInput] = useState("1");
   const [selectedImage, setSelectedImage] = useState("");
 
   const [feedbackItems, setFeedbackItems] = useState<ProductFeedback[]>([]);
@@ -229,15 +231,19 @@ export default function ProductDetail() {
     );
   }
 
-  const decrementQuantity = () => {
-    if (quantity > 1) {
-      setQuantity(quantity - 1);
+  const incrementQuantity = () => {
+    if (quantity < product.quantity) {
+      const value = quantity + 1;
+      setQuantity(value);
+      setQuantityInput(value.toString());
     }
   };
 
-  const incrementQuantity = () => {
-    if (quantity < product.quantity) {
-      setQuantity(quantity + 1);
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      const value = quantity - 1;
+      setQuantity(value);
+      setQuantityInput(value.toString());
     }
   };
 
@@ -251,7 +257,8 @@ export default function ProductDetail() {
     if (
       !requireAuthAction({
         title: "Login required",
-        description: "Please login or register to add this product to your cart.",
+        description:
+          "Please login or register to add this product to your cart.",
       })
     ) {
       return;
@@ -288,7 +295,8 @@ export default function ProductDetail() {
     if (
       !requireAuthAction({
         title: "Login required",
-        description: "Please login or register to leave feedback for this product.",
+        description:
+          "Please login or register to leave feedback for this product.",
       })
     ) {
       return;
@@ -357,15 +365,15 @@ export default function ProductDetail() {
     }
   };
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
+  const formattedPrice = new Intl.NumberFormat("en-GH", {
     style: "currency",
-    currency: "USD",
+    currency: "GHS",
   }).format(product.price);
 
   const discountedPrice = product.discount_percentage
-    ? new Intl.NumberFormat("en-US", {
+    ? new Intl.NumberFormat("en-GH", {
         style: "currency",
-        currency: "USD",
+        currency: "GHS",
       }).format(product.price * (1 - product.discount_percentage / 100))
     : null;
 
@@ -396,7 +404,8 @@ export default function ProductDetail() {
   const handleFeedbackPrompt = () => {
     requireAuthAction({
       title: "Login required",
-      description: "Please login or register to leave feedback for this product.",
+      description:
+        "Please login or register to leave feedback for this product.",
     });
   };
 
@@ -466,9 +475,6 @@ export default function ProductDetail() {
             <Badge variant="secondary" className="capitalize">
               {product.category}
             </Badge>
-            <Badge variant="outline" className="capitalize">
-              {productAge}
-            </Badge>
             {product.discount_percentage ? (
               <Badge variant="destructive">
                 {product.discount_percentage}% OFF
@@ -512,16 +518,16 @@ export default function ProductDetail() {
                 <strong>Stock:</strong> {product.quantity} available
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <Ruler className="h-5 w-5 text-muted-foreground" />
-              <span>
-                <strong>Unit:</strong> {product.weight_per_unit}
-              </span>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <p className="text-gray-700">{product.description}</p>
+            {product.category === "Farm Equipment" ? (
+              ""
+            ) : (
+              <div className="flex items-center gap-2">
+                <Ruler className="h-5 w-5 text-muted-foreground" />
+                <span>
+                  <strong>Unit:</strong> {product.weight_per_unit}
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="mb-8 flex items-center gap-4">
@@ -533,7 +539,29 @@ export default function ProductDetail() {
               >
                 -
               </button>
-              <span className="px-4 py-2">{quantity}</span>
+
+              <Input
+                type="number"
+                min={1}
+                max={product.quantity}
+                value={quantityInput}
+                onChange={(e) => setQuantityInput(e.target.value)}
+                onBlur={() => {
+                  let value = parseInt(quantityInput, 10);
+
+                  if (isNaN(value)) value = 1;
+
+                  value = Math.max(1, Math.min(value, product.quantity));
+
+                  setQuantity(value);
+                  setQuantityInput(value.toString());
+                }}
+                className="w-16 border-0 text-center shadow-none
+             [-moz-appearance:textfield]
+             [&::-webkit-inner-spin-button]:appearance-none
+             [&::-webkit-outer-spin-button]:appearance-none"
+              />
+
               <button
                 onClick={incrementQuantity}
                 className="border-l px-3 py-2 transition-colors hover:bg-gray-100"
@@ -543,10 +571,20 @@ export default function ProductDetail() {
               </button>
             </div>
 
-            <Button className="flex-1 gap-2" onClick={() => AddCart()}>
-              <ShoppingCart className="h-4 w-4" />
-              Add to Cart
-            </Button>
+            {product.stock <= 0 ? (
+              <Button
+                className="flex-1 gap-2"
+                disabled
+                onClick={() => AddCart()}
+              >
+                Out of Stock
+              </Button>
+            ) : (
+              <Button className="flex-1 gap-2" onClick={() => AddCart()}>
+                <ShoppingCart className="h-4 w-4" />
+                Add to Cart
+              </Button>
+            )}
           </div>
 
           <Card className="mb-4">
@@ -581,41 +619,22 @@ export default function ProductDetail() {
 
       <div className="mt-12">
         <Tabs defaultValue="details" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 md:w-1/2 lg:w-1/3">
+          <TabsList className="grid w-full grid-cols-2 md:w-1/2 lg:w-1/2">
             <TabsTrigger value="details">Details</TabsTrigger>
-            <TabsTrigger value="care">Care Guide</TabsTrigger>
             <TabsTrigger value="reviews">Reviews</TabsTrigger>
           </TabsList>
 
           <TabsContent value="details" className="mt-6">
             <h3 className="mb-4 text-xl font-semibold">Product Details</h3>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              {detailSections.map((section) => (
-                <div key={section.title}>
-                  <h4 className="mb-2 font-medium">{section.title}</h4>
-                  <ul className="list-disc space-y-2 pl-5">
-                    {section.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </TabsContent>
 
-          <TabsContent value="care" className="mt-6">
-            <h3 className="mb-4 text-xl font-semibold">Care Guide</h3>
-            <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
-              {careGuideSections.map((section) => (
-                <div key={section.title}>
-                  <h4 className="mb-2 font-medium">{section.title}</h4>
-                  <ul className="list-disc space-y-2 pl-5">
-                    {section.items.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
+            <div className="flex flex-col gap-4 rounded-lg border bg-card p-5 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <div className="mb-6">
+                  <p className="whitespace-pre-wrap break-words break-all text-gray-700">
+                    {product.description}
+                  </p>
                 </div>
-              ))}
+              </div>
             </div>
           </TabsContent>
 

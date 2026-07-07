@@ -36,15 +36,15 @@ export default function ProductCard({
 
   const buttonClass = isSmall ? "h-8 text-xs" : "";
 
-  const formattedPrice = new Intl.NumberFormat("en-US", {
+  const formattedPrice = new Intl.NumberFormat("en-GH", {
     style: "currency",
-    currency: "USD",
+    currency: "GHS",
   }).format(product.price);
 
   const discountedPrice = product.discount_percentage
-    ? new Intl.NumberFormat("en-US", {
+    ? new Intl.NumberFormat("en-GH", {
         style: "currency",
-        currency: "USD",
+        currency: "GHS",
       }).format(product.price * (1 - product.discount_percentage / 100))
     : null;
 

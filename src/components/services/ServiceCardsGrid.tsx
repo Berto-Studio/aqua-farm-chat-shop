@@ -38,7 +38,11 @@ export default function ServiceCardsGrid({
               isClickable &&
                 "cursor-pointer transition-all hover:-translate-y-1 hover:shadow-lg",
             )}
-            id={service.id !== undefined && service.id !== null ? String(service.id) : undefined}
+            id={
+              service.id !== undefined && service.id !== null
+                ? String(service.id)
+                : undefined
+            }
             onClick={isClickable ? () => onServiceSelect?.(service) : undefined}
           >
             <CardHeader>
@@ -88,7 +92,10 @@ export default function ServiceCardsGrid({
                           </p>
                         </div>
                         <span className="font-bold text-lg">
-                          ${details.price.toLocaleString()}
+                          {new Intl.NumberFormat("en-GH", {
+                            style: "currency",
+                            currency: "GHS",
+                          }).format(details.price)}
                         </span>
                       </div>
                     );

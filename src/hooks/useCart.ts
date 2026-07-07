@@ -24,11 +24,13 @@ export const useCarts = (options?: UseCartsOptions) => {
     enabled: options?.enabled ?? true, // ✅ now works
   });
 
+  console.log("Cart Items:", cartItems); // Log the cart items for debugging
+
   // Calculate total quantity of items
-  const totalCartItems = cartItems.reduce(
-    (acc: number, item: any) => acc + item.quantity,
-    0
-  );
+  const totalCartItems =
+    cartItems.length > 0
+      ? cartItems.reduce((total, item) => total + item.quantity, 0)
+      : 0;
 
   return { cartItems, totalCartItems, isLoading, isError };
 };

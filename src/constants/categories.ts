@@ -26,6 +26,12 @@ export const DEFAULT_PRODUCT_CATEGORIES: ProductCategoryOption[] = [
     name: "Farm Equipment",
     description: "Pumps, tanks, aerators, nets, and essential farm tools.",
   },
+
+  {
+    id: 5,
+    name: "Fish Feed",
+    description: "Nutritious feed for fish.",
+  },
 ];
 
 const CATEGORY_ALIASES: Record<string, string> = {
@@ -40,6 +46,7 @@ const CATEGORY_ALIASES: Record<string, string> = {
   pumps: "Farm Equipment",
   tanks: "Farm Equipment",
   "farm supplies": "Farm Equipment",
+  "fish feed": "Fish Feed",
 };
 
 export const normalizeCategoryName = (name?: string) => {

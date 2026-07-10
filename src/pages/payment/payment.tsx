@@ -27,21 +27,15 @@ import Checkout, {
 } from "@/components/payment/checkout";
 import { CheckoutSteps } from "@/components/payment/paymentStepsHeading";
 import type { PaymentRecord } from "@/types/payments";
-import {
-  formatPaymentMethodLabel,
-  isPhysicalPaymentMethodValue,
-} from "@/lib/paymentUtils";
 import { useUserStore } from "@/store/store";
 import { useAuthPromptStore } from "@/store/authPromptStore";
 
 type Step = "cart" | "checkout" | "payment";
-type MobileProvider = "mtn" | "airteltigo" | "telecel" | "";
 
 type PendingOnlinePayment = {
   orderId: number;
   reference: string;
   cartItemIds: number[];
-  paymentMethod: string;
   createdAt: string;
 };
 
@@ -59,7 +53,6 @@ const defaultCheckoutForm: CheckoutFormData = {
   region: "",
   postalCode: "0233",
   shippingMethod: "",
-  paymentMethod: "",
 };
 
 const PENDING_ONLINE_PAYMENTS_STORAGE_KEY = "pending-online-payments";
@@ -109,79 +102,37 @@ const buildShippingAddress = (form: CheckoutFormData) => {
     .join(", ");
 };
 
-const buildOrderNotes = (
-  form: CheckoutFormData,
-  mobileProvider: MobileProvider,
-  mobileNumber: string,
-) =>
+const buildOrderNotes = (form: CheckoutFormData) =>
   [
     `Customer: ${form.firstName.trim()} ${form.lastName.trim()}`,
     `Email: ${form.email.trim()}`,
     `Phone: ${form.phone.trim()}`,
     `Shipping method: ${formatShippingMethodLabel(form.shippingMethod)}`,
-    `Payment method: ${formatPaymentMethodLabel(form.paymentMethod)}`,
-    ...(mobileProvider
-      ? [`Mobile provider: ${mobileProvider.toUpperCase()}`]
-      : []),
-    ...(mobileNumber.trim() ? [`Mobile number: ${mobileNumber.trim()}`] : []),
-    ...(isPhysicalPaymentMethodValue(form.paymentMethod)
-      ? ["Payment tracking: Physical payment selected for delivery or pickup."]
-      : ["Payment tracking: Online payment to be completed through Paystack."]),
+    "Payment tracking: Secure online payment through Paystack.",
   ].join("\n");
 
-const buildGatewayMetadata = (
-  form: CheckoutFormData,
-  mobileProvider: MobileProvider,
-  mobileNumber: string,
-  orderId: number,
-) => {
+const buildGatewayMetadata = (form: CheckoutFormData, orderId: number) => {
   const customerName =
     `${form.firstName.trim()} ${form.lastName.trim()}`.trim();
-  const customFields = [
-    {
-      display_name: "Order ID",
-      variable_name: "order_id",
-      value: String(orderId),
-    },
-    {
-      display_name: "Payment method",
-      variable_name: "checkout_payment_method",
-      value: formatPaymentMethodLabel(form.paymentMethod),
-    },
-    {
-      display_name: "Shipping method",
-      variable_name: "shipping_method",
-      value: formatShippingMethodLabel(form.shippingMethod),
-    },
-  ];
 
-  const metadata: Record<string, unknown> = {
-    checkout_payment_method: form.paymentMethod,
+  return {
+    checkout_payment_method: "paystack",
     shipping_method: form.shippingMethod,
     customer_name: customerName,
     phone: form.phone.trim(),
-    mobile_number: mobileNumber.trim() || undefined,
-    custom_fields: customFields,
+    custom_fields: [
+      {
+        display_name: "Order ID",
+        variable_name: "order_id",
+        value: String(orderId),
+      },
+      {
+        display_name: "Shipping method",
+        variable_name: "shipping_method",
+        value: formatShippingMethodLabel(form.shippingMethod),
+      },
+    ],
   };
-
-  if (mobileProvider) {
-    metadata.mobile_provider = mobileProvider;
-    customFields.push({
-      display_name: "Mobile provider",
-      variable_name: "mobile_provider",
-      value: mobileProvider.toUpperCase(),
-    });
-  }
-
-  if (mobileNumber.trim()) {
-    customFields.push({
-      display_name: "Mobile number",
-      variable_name: "mobile_number",
-      value: mobileNumber.trim(),
-    });
-  }
-
-  return metadata;
 };
 
 const getStoredPendingOnlinePayments = () => {
@@ -266,8 +217,6 @@ export default function PaymentProccess() {
   const [step, setStep] = useState<Step>("cart");
   const [checkoutForm, setCheckoutForm] =
     useState<CheckoutFormData>(defaultCheckoutForm);
-  const [mobileProvider, setMobileProvider] = useState<MobileProvider>("");
-  const [mobileNumber, setMobileNumber] = useState("");
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [verificationAttempt, setVerificationAttempt] = useState(0);
@@ -313,13 +262,7 @@ export default function PaymentProccess() {
   );
   const delivery = subtotal > 100 ? 0 : 15;
   const discount = 0;
-  const total = subtotal + delivery - discount;
-  const isPhysicalPaymentSelected = isPhysicalPaymentMethodValue(
-    checkoutForm.paymentMethod,
-  );
-  const isOnlinePaymentSelected = Boolean(
-    checkoutForm.paymentMethod && !isPhysicalPaymentSelected,
-  );
+  const total = subtotal - discount;
 
   const applyCoupon = () => {
     if (couponCode.trim() === "") {
@@ -377,31 +320,11 @@ export default function PaymentProccess() {
       }
     }
 
-    if (!checkoutForm.paymentMethod) {
-      toast({
-        title: "Payment method required",
-        description: "Please select your payment method.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
     return true;
   };
 
   const validatePaymentForm = () => {
-    const paymentMethod = checkoutForm.paymentMethod;
-
-    if (!paymentMethod) {
-      toast({
-        title: "Payment method required",
-        description: "Please go back to checkout and select a payment method.",
-        variant: "destructive",
-      });
-      return false;
-    }
-
-    if (!isPhysicalPaymentMethodValue(paymentMethod) && !PAYSTACK_PUBLIC_KEY) {
+    if (!PAYSTACK_PUBLIC_KEY) {
       toast({
         title: "Paystack not configured",
         description:
@@ -411,26 +334,12 @@ export default function PaymentProccess() {
       return false;
     }
 
-    if (paymentMethod === "mobile") {
-      if (!mobileProvider || !mobileNumber) {
-        toast({
-          title: "Mobile money details incomplete",
-          description: "Select provider and enter mobile money number.",
-          variant: "destructive",
-        });
-        return false;
-      }
-      return true;
-    }
-
     return true;
   };
 
   const resetCheckoutState = () => {
     setCartItems([]);
     setCheckoutForm(defaultCheckoutForm);
-    setMobileProvider("");
-    setMobileNumber("");
     setCouponCode("");
     setStep("cart");
     setPendingOnlineOrderId(null);
@@ -579,9 +488,6 @@ export default function PaymentProccess() {
 
     if (!validatePaymentForm()) return;
 
-    const paymentMethod = checkoutForm.paymentMethod;
-    if (!paymentMethod) return;
-
     setIsSubmittingOrder(true);
     setPaymentErrorMessage(null);
     setVerifiedPayment(null);
@@ -590,22 +496,7 @@ export default function PaymentProccess() {
     let activeOrderId: number | null = null;
 
     try {
-      if (pendingOnlineOrderId && isPhysicalPaymentMethodValue(paymentMethod)) {
-        toast({
-          title: "Pending online order detected",
-          description: `Order #${pendingOnlineOrderId} is already waiting for online payment. Please resume that payment instead of switching this checkout to physical payment.`,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const orderPaymentMethod = isPhysicalPaymentMethodValue(paymentMethod)
-        ? "physical_payment"
-        : "paystack";
-
-      let orderId = isPhysicalPaymentMethodValue(paymentMethod)
-        ? null
-        : pendingOnlineOrderId;
+      let orderId = pendingOnlineOrderId;
 
       if (!orderId) {
         const orderResult = await CreateOrder({
@@ -613,9 +504,9 @@ export default function PaymentProccess() {
             product_id: item.product_id,
             quantity: item.quantity,
           })),
-          payment_method: orderPaymentMethod,
+          payment_method: "paystack",
           shipping_address: buildShippingAddress(checkoutForm),
-          notes: buildOrderNotes(checkoutForm, mobileProvider, mobileNumber),
+          notes: buildOrderNotes(checkoutForm),
         });
 
         if (!orderResult.success || !orderResult.data?.id) {
@@ -628,41 +519,11 @@ export default function PaymentProccess() {
 
       activeOrderId = orderId;
 
-      if (isPhysicalPaymentMethodValue(paymentMethod)) {
-        const cleanupSummary = await cleanUpCartItems(
-          cartItems
-            .map((item) => Number(item.cart_id))
-            .filter((cartId) => Number.isFinite(cartId)),
-        );
-
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ["carts"] }),
-          queryClient.invalidateQueries({ queryKey: ["orders"] }),
-        ]);
-
-        resetCheckoutState();
-
-        toast({
-          title: "Order placed",
-          description: cleanupSummary.hasIssues
-            ? `Order #${orderId} was created, but some cart items may still appear until the next refresh.`
-            : `Order #${orderId} was created with ${formatPaymentMethodLabel(paymentMethod)}.`,
-          variant: "success",
-        });
-
-        return;
-      }
-
       const paymentResult = await InitializePayment({
         order_id: orderId,
         email: checkoutForm.email.trim(),
         callback_url: buildPaymentCallbackUrl(),
-        metadata: buildGatewayMetadata(
-          checkoutForm,
-          mobileProvider,
-          mobileNumber,
-          orderId,
-        ),
+        metadata: buildGatewayMetadata(checkoutForm, orderId),
       });
 
       if (!paymentResult.success || !paymentResult.data) {
@@ -681,16 +542,6 @@ export default function PaymentProccess() {
         );
       }
 
-      rememberPendingOnlinePayment({
-        orderId,
-        reference,
-        paymentMethod,
-        cartItemIds: cartItems
-          .map((item) => Number(item.cart_id))
-          .filter((cartId) => Number.isFinite(cartId)),
-        createdAt: new Date().toISOString(),
-      });
-
       if (accessCode && PAYSTACK_PUBLIC_KEY) {
         const paystackPopup = new PaystackPop();
 
@@ -708,17 +559,21 @@ export default function PaymentProccess() {
             );
           },
           onCancel: () => {
+            clearPendingOnlinePayment(reference);
+            setPendingOnlineOrderId(null);
             setPaymentErrorMessage(
-              `Order #${orderId} is still waiting for payment. Reopen Paystack when you are ready to finish it.`,
+              `Payment was cancelled for order #${orderId}. You can try again when you are ready.`,
             );
             toast({
-              title: "Payment not finished",
+              title: "Payment cancelled",
               description:
-                "Your order is still pending. You can reopen the Paystack checkout at any time.",
+                "The payment was cancelled, and no pending payment will be kept for this checkout.",
               variant: "destructive",
             });
           },
           onError: ({ message }) => {
+            clearPendingOnlinePayment(reference);
+            setPendingOnlineOrderId(null);
             const description =
               message?.trim() || "Unable to open Paystack checkout right now.";
 
@@ -785,28 +640,22 @@ export default function PaymentProccess() {
   };
 
   const renderPaymentPanel = () => {
-    const paymentMethod = checkoutForm.paymentMethod;
+    const deliveryAddress =
+      checkoutForm.shippingMethod === "pickup"
+        ? "Pickup selected"
+        : [checkoutForm.address, checkoutForm.city, checkoutForm.region]
+            .map((value) => value.trim())
+            .filter(Boolean)
+            .join(", ") || "Not provided";
 
-    if (!paymentMethod) {
-      return (
-        <Card>
-          <CardContent className="p-6">
-            <p className="text-sm text-muted-foreground">
-              No payment method selected. Go back to checkout and choose one.
-            </p>
-          </CardContent>
-        </Card>
-      );
-    }
-
-    if (paymentMethod === "card") {
-      return (
+    return (
+      <div className="space-y-4">
         <Card>
           <CardContent className="space-y-4 p-6">
-            <h2 className="text-xl font-bold">Card Checkout</h2>
+            <h2 className="text-xl font-bold">Secure Paystack Checkout</h2>
             <p className="text-sm text-muted-foreground">
-              After you continue, Paystack will open a secure popup for the real
-              card entry and authorization step.
+              After you continue, Paystack will open a secure checkout so you
+              can complete the payment safely.
             </p>
             {!PAYSTACK_PUBLIC_KEY ? (
               <p className="text-sm text-destructive">
@@ -816,59 +665,44 @@ export default function PaymentProccess() {
             ) : null}
           </CardContent>
         </Card>
-      );
-    }
 
-    if (paymentMethod === "mobile") {
-      return (
         <Card>
           <CardContent className="space-y-4 p-6">
-            <h2 className="text-xl font-bold">Mobile Money Checkout</h2>
-            <p className="text-sm text-muted-foreground">
-              After you continue, Paystack will open a secure popup so you can
-              finish the payment.
-            </p>
-            <div>
-              <Label className="mb-2 block">Provider</Label>
-              <Select
-                value={mobileProvider}
-                onValueChange={(value: MobileProvider) =>
-                  setMobileProvider(value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select provider" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="mtn">MTN</SelectItem>
-                  <SelectItem value="airteltigo">AirtelTigo</SelectItem>
-                  <SelectItem value="telecel">Telecel</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="mb-2 block">Mobile Number</Label>
-              <Input
-                placeholder="e.g. 024xxxxxxx"
-                value={mobileNumber}
-                onChange={(event) => setMobileNumber(event.target.value)}
-              />
+            <h2 className="text-lg font-semibold">Your checkout summary</h2>
+            <div className="grid gap-3 text-sm sm:grid-cols-2">
+              <div>
+                <p className="text-muted-foreground">Name</p>
+                <p className="font-medium">
+                  {`${checkoutForm.firstName} ${checkoutForm.lastName}`.trim() ||
+                    "Not provided"}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Email</p>
+                <p className="font-medium">
+                  {checkoutForm.email.trim() || "Not provided"}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Phone</p>
+                <p className="font-medium">
+                  {checkoutForm.phone.trim() || "Not provided"}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Delivery method</p>
+                <p className="font-medium">
+                  {formatShippingMethodLabel(checkoutForm.shippingMethod)}
+                </p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-muted-foreground">Address</p>
+                <p className="font-medium">{deliveryAddress}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-      );
-    }
-
-    return (
-      <Card>
-        <CardContent className="space-y-3 p-6">
-          <h2 className="text-xl font-bold">Physical Payment</h2>
-          <p className="text-sm text-muted-foreground">
-            Pay physically when your order is delivered or when you collect it.
-            Admin will be able to track this payment inside the app.
-          </p>
-        </CardContent>
-      </Card>
+      </div>
     );
   };
 
@@ -877,11 +711,9 @@ export default function PaymentProccess() {
       ? "Proceed to Checkout"
       : step === "checkout"
         ? "Proceed to Payment"
-        : isOnlinePaymentSelected
-          ? pendingOnlineOrderId
-            ? "Resume Secure Payment"
-            : "Continue to Secure Payment"
-          : "Place Order";
+        : pendingOnlineOrderId
+          ? "Resume Secure Payment"
+          : "Continue to Secure Payment";
 
   const actionHandler =
     step === "payment" ? handleCompletePayment : handleProceed;
@@ -1027,38 +859,47 @@ export default function PaymentProccess() {
                 <div className="space-y-3">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subtotal</span>
-                    <span>${subtotal.toFixed(2)}</span>
+                    <span>
+                      {new Intl.NumberFormat("en-GH", {
+                        style: "currency",
+                        currency: "GHS",
+                      }).format(subtotal)}
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Delivery</span>
-                    <span>
-                      {delivery === 0 ? "Free" : `$${delivery.toFixed(2)}`}
-                    </span>
+                    <span>To Be Negotiated</span>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Discount</span>
                       <span className="text-green-600">
-                        -${discount.toFixed(2)}
+                        -
+                        {new Intl.NumberFormat("en-GH", {
+                          style: "currency",
+                          currency: "GHS",
+                        }).format(discount)}
                       </span>
                     </div>
                   )}
                   <Separator className="my-4" />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span>
+                      {new Intl.NumberFormat("en-GH", {
+                        style: "currency",
+                        currency: "GHS",
+                      }).format(total)}
+                    </span>
                   </div>
                 </div>
 
                 {step !== "cart" && (
-                  <div className="mt-6 space-y-2 rounded-md border p-3">
-                    <p className="text-sm font-medium">
-                      Selected Payment Method
-                    </p>
+                  <div className="mt-6 rounded-md border p-3">
+                    <p className="text-sm font-medium">Secure payment</p>
                     <p className="text-sm text-muted-foreground">
-                      {checkoutForm.paymentMethod
-                        ? formatPaymentMethodLabel(checkoutForm.paymentMethod)
-                        : "Not selected"}
+                      Paystack will handle the checkout securely after you
+                      continue.
                     </p>
                   </div>
                 )}

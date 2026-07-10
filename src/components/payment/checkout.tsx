@@ -11,7 +11,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 export type ShippingMethod = "standard" | "express" | "pickup";
-export type PaymentMethod = "card" | "mobile" | "cod";
 
 export interface CheckoutFormData {
   firstName: string;
@@ -23,7 +22,6 @@ export interface CheckoutFormData {
   region: string;
   postalCode: string;
   shippingMethod: ShippingMethod | "";
-  paymentMethod: PaymentMethod | "";
 }
 
 interface CheckoutProps {
@@ -159,27 +157,6 @@ export default function Checkout({
                 <SelectItem value="standard">Standard</SelectItem>
                 <SelectItem value="express">Express</SelectItem>
                 <SelectItem value="pickup">Pickup</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium">
-              Payment Method
-            </label>
-            <Select
-              value={value.paymentMethod}
-              onValueChange={(nextValue: PaymentMethod) =>
-                onChange({ paymentMethod: nextValue })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="card">Credit/Debit Card</SelectItem>
-                <SelectItem value="mobile">Mobile Money</SelectItem>
-                <SelectItem value="cod">Physical Payment</SelectItem>
               </SelectContent>
             </Select>
           </div>

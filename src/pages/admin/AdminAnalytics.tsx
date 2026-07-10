@@ -51,13 +51,13 @@ const paymentPalette = [
   "#4ade80",
 ];
 
-const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
 
-const formatCompactCurrency = (value: number) => {
-  if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}m`;
-  if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`;
-  return `$${value.toFixed(0)}`;
-};
+const formatCompactCurrency = (value: number) => formatCurrency(value);
 
 const createPieConfig = (
   rows: Array<{ key: string; name: string }>,
@@ -127,7 +127,10 @@ export default function AdminAnalytics() {
   const messageDelta = getAdminAnalyticsDelta(
     analytics.timeline.map((entry) => entry.conversations),
   );
-  const orderStatusConfig = createPieConfig(analytics.orderStatus, statusColors);
+  const orderStatusConfig = createPieConfig(
+    analytics.orderStatus,
+    statusColors,
+  );
   const paymentConfig = createPieConfig(
     analytics.paymentMethods,
     paymentPalette,
@@ -138,8 +141,8 @@ export default function AdminAnalytics() {
       <div className="space-y-2">
         <h1 className="text-2xl font-bold">Admin Analytics</h1>
         <p className="text-sm text-muted-foreground">
-          One view for revenue, orders, customers, products and support
-          activity across the admin workspace.
+          One view for revenue, orders, customers, products and support activity
+          across the admin workspace.
         </p>
       </div>
 
@@ -296,7 +299,9 @@ export default function AdminAnalytics() {
           <CardContent className="flex min-h-[24rem] items-center justify-center">
             {analytics.orderStatus.length === 0 ? (
               <div className="text-sm text-muted-foreground">
-                {isLoading ? "Loading status distribution..." : "No order statuses yet."}
+                {isLoading
+                  ? "Loading status distribution..."
+                  : "No order statuses yet."}
               </div>
             ) : (
               <ChartContainer
@@ -331,7 +336,11 @@ export default function AdminAnalytics() {
                   >
                     <Label
                       content={({ viewBox }) => {
-                        if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) {
+                        if (
+                          !viewBox ||
+                          !("cx" in viewBox) ||
+                          !("cy" in viewBox)
+                        ) {
                           return null;
                         }
 
@@ -394,7 +403,9 @@ export default function AdminAnalytics() {
             },
           ]}
           emptyMessage={
-            isLoading ? "Loading customer growth..." : "No customer growth data yet."
+            isLoading
+              ? "Loading customer growth..."
+              : "No customer growth data yet."
           }
         />
         <StatisticsChart
@@ -412,7 +423,9 @@ export default function AdminAnalytics() {
             },
           ]}
           emptyMessage={
-            isLoading ? "Loading support activity..." : "No support activity yet."
+            isLoading
+              ? "Loading support activity..."
+              : "No support activity yet."
           }
         />
       </div>
@@ -439,7 +452,9 @@ export default function AdminAnalytics() {
             },
           ]}
           emptyMessage={
-            isLoading ? "Loading top customers..." : "No customer spend data yet."
+            isLoading
+              ? "Loading top customers..."
+              : "No customer spend data yet."
           }
         />
 
@@ -453,7 +468,9 @@ export default function AdminAnalytics() {
           <CardContent className="flex min-h-[24rem] items-center justify-center">
             {analytics.paymentMethods.length === 0 ? (
               <div className="text-sm text-muted-foreground">
-                {isLoading ? "Loading payment methods..." : "No payment data yet."}
+                {isLoading
+                  ? "Loading payment methods..."
+                  : "No payment data yet."}
               </div>
             ) : (
               <ChartContainer
@@ -493,7 +510,11 @@ export default function AdminAnalytics() {
                   >
                     <Label
                       content={({ viewBox }) => {
-                        if (!viewBox || !("cx" in viewBox) || !("cy" in viewBox)) {
+                        if (
+                          !viewBox ||
+                          !("cx" in viewBox) ||
+                          !("cy" in viewBox)
+                        ) {
                           return null;
                         }
 

@@ -38,10 +38,7 @@ import {
   getUserStatusLabel,
   getUserTotalSpent,
 } from "@/lib/adminTransformers";
-import type {
-  AdminOrderRecord,
-  AdminUserDetailsRecord,
-} from "@/types/admin";
+import type { AdminOrderRecord, AdminUserDetailsRecord } from "@/types/admin";
 
 const orderStatusClass: Record<string, string> = {
   delivered: "border-emerald-200 bg-emerald-50 text-emerald-700",
@@ -254,7 +251,11 @@ export default function AdminCustomerDetails() {
       : formatDistanceToNow(date, { addSuffix: true });
   };
 
-  const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-GH", {
+      style: "currency",
+      currency: "GHS",
+    }).format(value);
   const computedOrders = toFiniteNumber(
     detailsStats?.total_orders ?? detailsStats?.totalOrders,
     getUserOrderCount(customer) || ordersSource.length,
@@ -325,7 +326,10 @@ export default function AdminCustomerDetails() {
     detailsStats?.lastOrderAt,
     latestOrder?.created_at,
   );
-  const endpointNotes = toStringList(userDetails?.notes, userDetails?.highlights);
+  const endpointNotes = toStringList(
+    userDetails?.notes,
+    userDetails?.highlights,
+  );
   const additionalDetails = getUserAdditionalDetails(userDetails);
   const showAdditionalDetails =
     endpointNotes.length > 0 || additionalDetails.length > 0;
@@ -629,9 +633,9 @@ export default function AdminCustomerDetails() {
                         <p className="mt-1 font-medium">
                           {getOrderItemsCount(latestOrder)} items
                         </p>
-                          <p className="text-xs text-muted-foreground">
-                            Payment method: {getOrderPaymentLabel(latestOrder)}
-                          </p>
+                        <p className="text-xs text-muted-foreground">
+                          Payment method: {getOrderPaymentLabel(latestOrder)}
+                        </p>
                       </div>
                     </div>
                   </div>

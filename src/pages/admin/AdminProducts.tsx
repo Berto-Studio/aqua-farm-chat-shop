@@ -67,6 +67,12 @@ const stockBadgeClass: Record<Exclude<StockFilter, "all">, string> = {
 
 const PRODUCTS_PER_PAGE = 10;
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
+
 export default function AdminProducts() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -301,10 +307,7 @@ export default function AdminProducts() {
       cellClassName: "text-right",
       cell: (product) => (
         <>
-          {new Intl.NumberFormat("en-GH", {
-            style: "currency",
-            currency: "GHS",
-          }).format(product.price)}
+          {formatCurrency(product.price)}
           {product.discount_percentage ? (
             <span className="ml-2 text-xs text-red-500">
               -{product.discount_percentage}%
@@ -627,7 +630,7 @@ export default function AdminProducts() {
 
                       <div className="flex items-center justify-between">
                         <p className="text-lg font-bold">
-                          ${Number(product.price).toFixed(2)}
+                          {formatCurrency(Number(product.price))}
                         </p>
                         <Badge
                           variant="outline"

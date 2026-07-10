@@ -28,6 +28,12 @@ const statusClass: Record<string, string> = {
   cancelled: "bg-red-50 text-red-700 border border-red-200",
 };
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
+
 export default function AdminDashboard() {
   const { data: products = [] } = useProducts();
   const { data: usersResponse } = useAdminUsers({ per_page: 300 });
@@ -99,7 +105,7 @@ export default function AdminDashboard() {
               style: "currency",
               currency: "GHS",
             }).format(totalRevenue)}
-            description={`Avg order $${analytics.summary.averageOrderValue.toFixed(2)}`}
+            description={`Avg order ${formatCurrency(analytics.summary.averageOrderValue)}`}
             icon={<DollarSign className="h-4 w-4" />}
             className="border"
             trendValue={revenueDelta}
@@ -137,11 +143,7 @@ export default function AdminDashboard() {
             data={analytics.timeline}
             xKey="period"
             kind="area"
-            valueFormatter={(value) =>
-              value >= 1000
-                ? `$${(value / 1000).toFixed(1)}k`
-                : `$${value.toFixed(0)}`
-            }
+            valueFormatter={(value) => formatCurrency(value)}
             series={[
               {
                 key: "revenue",

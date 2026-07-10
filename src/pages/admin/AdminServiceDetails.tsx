@@ -141,7 +141,10 @@ export default function AdminServiceDetails() {
                       {serviceTierLabels[tier]}
                     </Badge>
                     <p className="text-xl font-bold">
-                      ${details.price.toLocaleString()}
+                      {new Intl.NumberFormat("en-GH", {
+                        style: "currency",
+                        currency: "GHS",
+                      }).format(details.price)}
                     </p>
                   </div>
                   <p className="mt-3 text-sm text-muted-foreground">

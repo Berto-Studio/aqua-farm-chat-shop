@@ -12,6 +12,12 @@ import {
   getProductVideoUrls,
 } from "@/lib/productMedia";
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
+
 export default function AdminProductDetails() {
   const navigate = useNavigate();
   const { productId } = useParams<{ productId: string }>();
@@ -174,7 +180,7 @@ export default function AdminProductDetails() {
                   Price
                 </p>
                 <p className="mt-1 text-xl font-bold">
-                  ${Number(product.price).toFixed(2)}
+                  {formatCurrency(Number(product.price))}
                 </p>
               </div>
               <div className="rounded-lg border p-4">

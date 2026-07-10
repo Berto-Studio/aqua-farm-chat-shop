@@ -55,6 +55,12 @@ const ORDERS_PER_PAGE = 10;
 const toStatusLabel = (value: string) =>
   value.charAt(0).toUpperCase() + value.slice(1);
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
+
 const normalizeOrderStatus = (value: string) =>
   statusOptions.includes(value as (typeof statusOptions)[number])
     ? value
@@ -310,7 +316,7 @@ export default function AdminOrders() {
           {getSortIcon("total")}
         </button>
       ),
-      cell: (order) => `$${getOrderTotal(order).toFixed(2)}`,
+      cell: (order) => formatCurrency(getOrderTotal(order)),
     },
     {
       id: "payment",
@@ -393,7 +399,7 @@ export default function AdminOrders() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="text-2xl font-bold">
-                ${totalRevenue.toFixed(2)}
+                {formatCurrency(totalRevenue)}
               </div>
               <ShoppingCart className="h-5 w-5 text-muted-foreground" />
             </div>

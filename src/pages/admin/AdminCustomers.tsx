@@ -19,6 +19,12 @@ import type { AdminUserRecord } from "@/types/admin";
 
 const USERS_PER_PAGE = 10;
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
+
 export default function AdminCustomers() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
@@ -102,7 +108,7 @@ export default function AdminCustomers() {
     {
       id: "spent",
       header: "Spent",
-      cell: (user) => `$${getUserTotalSpent(user).toFixed(2)}`,
+      cell: (user) => formatCurrency(getUserTotalSpent(user)),
     },
     {
       id: "status",
@@ -195,7 +201,7 @@ export default function AdminCustomers() {
           <CardContent>
             <div className="flex items-center justify-between">
               <div className="text-2xl font-bold">
-                ${totalRevenue.toFixed(2)}
+                {formatCurrency(totalRevenue)}
               </div>
               <ShoppingCart className="h-5 w-5 text-muted-foreground" />
             </div>

@@ -11,7 +11,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useAdminOrder, useUpdateAdminOrderStatus } from "@/hooks/useAdminOrders";
+import {
+  useAdminOrder,
+  useUpdateAdminOrderStatus,
+} from "@/hooks/useAdminOrders";
 import { useToast } from "@/hooks/use-toast";
 import {
   getOrderItemName,
@@ -39,6 +42,12 @@ const statusOptions = ["pending", "processing", "delivered", "cancelled"];
 const toStatusLabel = (value: string) =>
   value.charAt(0).toUpperCase() + value.slice(1);
 
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
+
 export default function AdminOrderDetails() {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -50,7 +59,7 @@ export default function AdminOrderDetails() {
 
   const normalizedStatus = useMemo(
     () => String(getOrderStatusLabel(order)).toLowerCase(),
-    [order]
+    [order],
   );
   const selectStatusValue = statusOptions.includes(normalizedStatus)
     ? normalizedStatus
@@ -60,9 +69,7 @@ export default function AdminOrderDetails() {
   const formatDate = (value?: string) => {
     if (!value) return "N/A";
     const parsed = new Date(value);
-    return Number.isNaN(parsed.getTime())
-      ? value
-      : parsed.toLocaleString();
+    return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
   };
 
   useEffect(() => {
@@ -102,7 +109,9 @@ export default function AdminOrderDetails() {
           Back to Orders
         </Button>
         <Card>
-          <CardContent className="p-6 text-destructive">Missing order id.</CardContent>
+          <CardContent className="p-6 text-destructive">
+            Missing order id.
+          </CardContent>
         </Card>
       </div>
     );
@@ -116,7 +125,9 @@ export default function AdminOrderDetails() {
           Back to Orders
         </Button>
         <Card>
-          <CardContent className="p-6 text-muted-foreground">Loading order...</CardContent>
+          <CardContent className="p-6 text-muted-foreground">
+            Loading order...
+          </CardContent>
         </Card>
       </div>
     );
@@ -146,7 +157,9 @@ export default function AdminOrderDetails() {
           Back to Orders
         </Button>
         <Card>
-          <CardContent className="p-6 text-destructive">Order not found.</CardContent>
+          <CardContent className="p-6 text-destructive">
+            Order not found.
+          </CardContent>
         </Card>
       </div>
     );
@@ -197,10 +210,13 @@ export default function AdminOrderDetails() {
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">
-                      ${getOrderItemUnitPrice(item).toFixed(2)} each
+                      {formatCurrency(getOrderItemUnitPrice(item))} each
                     </p>
                     <p className="font-semibold">
-                      ${(getOrderItemUnitPrice(item) * Number(item.quantity || 0)).toFixed(2)}
+                      {formatCurrency(
+                        getOrderItemUnitPrice(item) *
+                          Number(item.quantity || 0),
+                      )}
                     </p>
                   </div>
                 </div>
@@ -257,7 +273,9 @@ export default function AdminOrderDetails() {
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Payment Method
               </p>
-              <p className="mt-1 font-semibold">{getOrderPaymentLabel(order)}</p>
+              <p className="mt-1 font-semibold">
+                {getOrderPaymentLabel(order)}
+              </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <Badge
                   variant="outline"
@@ -284,7 +302,9 @@ export default function AdminOrderDetails() {
               <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Total
               </p>
-              <p className="mt-1 text-2xl font-bold">${getOrderTotal(order).toFixed(2)}</p>
+              <p className="mt-1 text-2xl font-bold">
+                {formatCurrency(getOrderTotal(order))}
+              </p>
             </div>
 
             {order.notes ? (

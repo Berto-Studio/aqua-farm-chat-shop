@@ -53,7 +53,11 @@ const paymentTrackingOptions = [
   { value: "cancelled", label: "Cancelled" },
 ];
 
-const formatCurrency = (value: number) => `$${value.toFixed(2)}`;
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat("en-GH", {
+    style: "currency",
+    currency: "GHS",
+  }).format(value);
 
 const formatDate = (value?: string) => {
   if (!value) return "N/A";
@@ -131,7 +135,9 @@ export default function AdminPayments() {
     return paymentRecords.filter((order) => {
       const paymentLabel = getOrderPaymentLabel(order);
       const paymentValue = normalizePaymentValue(paymentLabel);
-      const trackingValue = normalizePaymentValue(getPaymentTrackingStatus(order));
+      const trackingValue = normalizePaymentValue(
+        getPaymentTrackingStatus(order),
+      );
       const isPhysical = isPhysicalPaymentMethod(order);
 
       const matchesMethod =
@@ -272,7 +278,9 @@ export default function AdminPayments() {
       id: "amount",
       header: "Amount",
       cell: (order) => (
-        <span className="font-semibold">{formatCurrency(getOrderTotal(order))}</span>
+        <span className="font-semibold">
+          {formatCurrency(getOrderTotal(order))}
+        </span>
       ),
     },
     {
@@ -328,7 +336,9 @@ export default function AdminPayments() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{physicalPayments.length}</div>
+              <div className="text-2xl font-bold">
+                {physicalPayments.length}
+              </div>
               <Banknote className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>
@@ -342,7 +352,9 @@ export default function AdminPayments() {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between">
-              <div className="text-2xl font-bold">{awaitingCollection.length}</div>
+              <div className="text-2xl font-bold">
+                {awaitingCollection.length}
+              </div>
               <Clock3 className="h-5 w-5 text-muted-foreground" />
             </div>
           </CardContent>

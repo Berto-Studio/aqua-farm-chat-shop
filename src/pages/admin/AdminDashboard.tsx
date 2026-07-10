@@ -58,8 +58,7 @@ export default function AdminDashboard() {
   );
 
   const totalRevenue =
-    orderStats?.total_revenue ??
-    analytics.summary.totalRevenue;
+    orderStats?.total_revenue ?? analytics.summary.totalRevenue;
   const totalOrders =
     orderStats?.total_orders ?? ordersResponse?.meta?.total ?? orders.length;
   const totalUsers = usersResponse?.meta?.total ?? users.length;
@@ -96,7 +95,10 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <DashboardCard
             title="Total Revenue"
-            value={`$${Number(totalRevenue || 0).toFixed(2)}`}
+            value={new Intl.NumberFormat("en-GH", {
+              style: "currency",
+              currency: "GHS",
+            }).format(totalRevenue)}
             description={`Avg order $${analytics.summary.averageOrderValue.toFixed(2)}`}
             icon={<DollarSign className="h-4 w-4" />}
             className="border"
@@ -250,7 +252,10 @@ export default function AdminDashboard() {
                             </div>
                           </td>
                           <td className="py-3 px-2 font-semibold">
-                            ${getOrderTotal(order).toFixed(2)}
+                            {new Intl.NumberFormat("en-GH", {
+                              style: "currency",
+                              currency: "GHS",
+                            }).format(getOrderTotal(order))}
                           </td>
                           <td className="py-3 px-2">
                             <span

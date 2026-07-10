@@ -112,7 +112,9 @@ export default function AdminProducts() {
           ? Boolean(product.isFeatured)
           : !product.isFeatured);
 
-      return matchesSearch && matchesCategory && matchesStock && matchesFeatured;
+      return (
+        matchesSearch && matchesCategory && matchesStock && matchesFeatured
+      );
     });
   }, [products, searchTerm, categoryFilter, stockFilter, featuredFilter]);
 
@@ -179,7 +181,7 @@ export default function AdminProducts() {
 
   const handleDeleteProduct = async (productId: string | number) => {
     const confirmed = window.confirm(
-      "Delete this product? This action cannot be undone."
+      "Delete this product? This action cannot be undone.",
     );
     if (!confirmed) return;
 
@@ -201,7 +203,8 @@ export default function AdminProducts() {
     } catch (err) {
       toast({
         title: "Delete Failed",
-        description: err instanceof Error ? err.message : "Unable to delete product.",
+        description:
+          err instanceof Error ? err.message : "Unable to delete product.",
         variant: "destructive",
       });
     } finally {
@@ -298,7 +301,10 @@ export default function AdminProducts() {
       cellClassName: "text-right",
       cell: (product) => (
         <>
-          ${Number(product.price).toFixed(2)}
+          {new Intl.NumberFormat("en-GH", {
+            style: "currency",
+            currency: "GHS",
+          }).format(product.price)}
           {product.discount_percentage ? (
             <span className="ml-2 text-xs text-red-500">
               -{product.discount_percentage}%
@@ -533,8 +539,7 @@ export default function AdminProducts() {
             pageSize: PRODUCTS_PER_PAGE,
             totalItems: displayedProducts.length,
             totalPages,
-            onPrevious: () =>
-              setCurrentPage((page) => Math.max(1, page - 1)),
+            onPrevious: () => setCurrentPage((page) => Math.max(1, page - 1)),
             onNext: () =>
               setCurrentPage((page) => Math.min(totalPages, page + 1)),
           }}
@@ -598,7 +603,9 @@ export default function AdminProducts() {
                         <button
                           type="button"
                           className="line-clamp-1 text-left text-base font-semibold hover:text-primary hover:underline"
-                          onClick={() => navigate(`/admin/products/${product.id}`)}
+                          onClick={() =>
+                            navigate(`/admin/products/${product.id}`)
+                          }
                         >
                           {product.title}
                         </button>
@@ -622,7 +629,10 @@ export default function AdminProducts() {
                         <p className="text-lg font-bold">
                           ${Number(product.price).toFixed(2)}
                         </p>
-                        <Badge variant="outline" className={stockBadgeClass[status]}>
+                        <Badge
+                          variant="outline"
+                          className={stockBadgeClass[status]}
+                        >
                           {stockLabel[status]}
                         </Badge>
                       </div>
@@ -654,7 +664,9 @@ export default function AdminProducts() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => navigate(`/admin/products/${product.id}`)}
+                        onClick={() =>
+                          navigate(`/admin/products/${product.id}`)
+                        }
                       >
                         <Eye className="mr-2 h-4 w-4" />
                         View
@@ -662,7 +674,9 @@ export default function AdminProducts() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => navigate(`/admin/products/${product.id}/edit`)}
+                        onClick={() =>
+                          navigate(`/admin/products/${product.id}/edit`)
+                        }
                       >
                         <Pencil className="mr-2 h-4 w-4" />
                         Edit

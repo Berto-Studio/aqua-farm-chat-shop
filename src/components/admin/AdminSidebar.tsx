@@ -113,7 +113,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <div className="h-full w-64 md:w-80 border-r bg-white p-4 flex flex-col gap-6 overflow-hidden">
+    <div className="h-full w-80 border-r bg-white p-4 flex flex-col gap-6 overflow-hidden">
       <div className="flex items-center gap-2 px-2">
         <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
           FS

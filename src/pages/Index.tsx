@@ -32,7 +32,7 @@ const HeroCarouselItems = [
   {
     title: "Catfish Fingerlings",
     description:
-      "High-quality and fast-growing catfish fingerlings and mature fish for your farm",
+      "High-quality and fast-growing catfish fingerlings for your farm",
     image: "/catfishFingerlings.png",
     link: "/products?category=fingerlings",
     color: "from-shopBlack/80 to-shopBlack",
@@ -40,14 +40,14 @@ const HeroCarouselItems = [
   {
     title: "Tilapia Fingerlings",
     description:
-      "High-quality and fast-growing tilapia fingerlings and mature fish for your farm",
+      "High-quality and fast-growing tilapia fingerlings for your farm",
     image: "/tilapiafingerlings.webp",
     link: "/products?category=fingerlings",
     color: "from-shopBlack/80 to-shopBlack",
   },
   {
     title: "Premium Catfish",
-    description: "High-quality and fast-growing catfish for your farm",
+    description: "Farm-raised catfish for optimal growth and yield",
     image: "/catfishbg.webp",
     link: "/products?category=catfish",
     color: "from-shopBlack/80 to-shopBlack",

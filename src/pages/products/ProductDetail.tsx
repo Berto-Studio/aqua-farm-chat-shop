@@ -459,7 +459,7 @@ export default function ProductDetail() {
                 <img
                   src={selectedImage}
                   alt={product.title}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-fill"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-muted text-sm text-muted-foreground">

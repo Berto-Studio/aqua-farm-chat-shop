@@ -453,13 +453,13 @@ export default function ProductDetail() {
             </div>
           ) : null}
 
-          <div className="order-1 overflow-hidden rounded-lg bg-white shadow-sm md:order-2">
+          <div className="order-1 overflow-hidden rounded-lg bg-white shadow-sm md:order-2 ">
             <AspectRatio ratio={4 / 3}>
               {selectedImage ? (
                 <img
                   src={selectedImage}
                   alt={product.title}
-                  className="h-full w-full object-fill"
+                  className="h-full w-full object-contain"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-muted text-sm text-muted-foreground">

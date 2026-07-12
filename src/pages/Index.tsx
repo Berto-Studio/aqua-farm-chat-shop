@@ -47,16 +47,16 @@ const HeroCarouselItems = [
   },
   {
     title: "Premium Catfish",
-    description: "Farm-raised catfish for optimal growth and yield",
+    description: "Farm-raised catfish for consumption and wholesale",
     image: "/catfishbg.webp",
     link: "/products?category=catfish",
     color: "from-shopBlack/80 to-shopBlack",
   },
   {
     title: "Healthy Tilapia",
-    description: "Farm-raised tilapia for optimal growth and yield",
+    description: "Farm-raised tilapia for consumption and wholesale",
     image: "/tilapiabg.jpg",
-    link: "/products?category=Fish",
+    link: "/products?category=tilapia",
     color: "from-shopBlack/80 to-shopBlack",
   },
 ];

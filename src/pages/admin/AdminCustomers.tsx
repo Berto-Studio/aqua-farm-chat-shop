@@ -1,11 +1,20 @@
 import { useEffect, useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Users, Search, Eye, Mail, ShoppingCart } from "lucide-react";
 import { useAdminUsers } from "@/hooks/useAdminUsers";
+import { useToast } from "@/hooks/use-toast";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import {
   getUserDisplayName,
@@ -15,7 +24,9 @@ import {
   getUserTotalSpent,
   isUserActive,
 } from "@/lib/adminTransformers";
-import type { AdminUserRecord } from "@/types/admin";
+import { UpdateUserRole } from "@/services/admin/users";
+import { useUserStore } from "@/store/store";
+import type { AdminUserRecord, AdminUserRole } from "@/types/admin";
 
 const USERS_PER_PAGE = 10;
 
@@ -25,13 +36,81 @@ const formatCurrency = (value: number) =>
     currency: "GHS",
   }).format(value);
 
+const normalizeUserRole = (user?: AdminUserRecord): AdminUserRole => {
+  const rawRole = String(
+    user?.role || user?.user_type || (user?.is_admin ? "admin" : "user"),
+  ).toLowerCase();
+
+  if (rawRole === "worker" || rawRole === "farmer") return "worker";
+  if (rawRole === "admin") return "admin";
+  return "user";
+};
+
 export default function AdminCustomers() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+  const currentUser = useUserStore((state) => state.user);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const { data, isLoading, isError, error } = useAdminUsers({ per_page: 200 });
 
   const users = data?.data || [];
+  const canManageRoles = Boolean(
+    currentUser?.is_admin ||
+    String(currentUser?.role || "").toLowerCase() === "admin" ||
+    String(currentUser?.user_type || "").toLowerCase() === "admin",
+  );
+
+  const updateUserRoleMutation = useMutation({
+    mutationFn: ({
+      userId,
+      role,
+    }: {
+      userId: string | number;
+      role: AdminUserRole;
+    }) => UpdateUserRole(userId, role),
+    onSuccess: (response, variables) => {
+      toast({
+        title: "Role updated",
+        description: response.message || "User role was updated successfully.",
+      });
+
+      queryClient.setQueriesData(
+        { queryKey: ["admin-users"] },
+        (oldData: any) => {
+          if (!oldData?.data) return oldData;
+
+          return {
+            ...oldData,
+            data: oldData.data.map((user: AdminUserRecord) =>
+              String(user.id) === String(variables.userId)
+                ? {
+                    ...user,
+                    role: response.data?.role || variables.role,
+                    user_type: response.data?.user_type || variables.role,
+                    is_admin:
+                      response.data?.is_admin ?? variables.role === "admin",
+                  }
+                : user,
+            ),
+          };
+        },
+      );
+
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Role update failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to update user role.",
+        variant: "destructive",
+      });
+    },
+  });
 
   const filteredUsers = useMemo(
     () =>
@@ -118,6 +197,38 @@ export default function AdminCustomers() {
           {getUserStatusLabel(user)}
         </Badge>
       ),
+    },
+    {
+      id: "role",
+      header: "Role",
+      cell: (user) => {
+        const selectedRole = normalizeUserRole(user);
+        const isSelf = String(currentUser?.id) === String(user.id);
+        const isDisabled =
+          !canManageRoles || isSelf || updateUserRoleMutation.isPending;
+
+        return (
+          <Select
+            value={selectedRole}
+            onValueChange={(value) =>
+              updateUserRoleMutation.mutate({
+                userId: user.id,
+                role: value as AdminUserRole,
+              })
+            }
+            disabled={isDisabled}
+          >
+            <SelectTrigger className="h-9 w-[130px]">
+              <SelectValue placeholder="Role" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="user">User</SelectItem>
+              <SelectItem value="worker">Worker</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+            </SelectContent>
+          </Select>
+        );
+      },
     },
     {
       id: "actions",

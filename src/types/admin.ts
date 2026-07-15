@@ -20,6 +20,8 @@ export interface ApiSingleResponse<T> {
   status: number;
 }
 
+export type AdminUserRole = "user" | "worker" | "admin";
+
 export interface AdminUserRecord {
   id: string | number;
   full_name?: string;
@@ -30,6 +32,9 @@ export interface AdminUserRecord {
   location?: string;
   status?: string;
   is_active?: boolean;
+  role?: string;
+  user_type?: string;
+  is_admin?: boolean | number;
   created_at?: string;
   updated_at?: string;
   orders?: number;

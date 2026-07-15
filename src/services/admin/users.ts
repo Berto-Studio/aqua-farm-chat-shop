@@ -3,6 +3,7 @@ import {
   AdminOrderRecord,
   AdminUserDetailsRecord,
   AdminUserRecord,
+  AdminUserRole,
   ApiListResponse,
   ApiSingleResponse,
 } from "@/types/admin";
@@ -66,6 +67,35 @@ export const GetAdminUsers = async (
   }
 };
 
+export const UpdateUserRole = async (
+  userId: string | number,
+  role: AdminUserRole,
+): Promise<ApiSingleResponse<AdminUserRecord>> => {
+  try {
+    const response = await apiRequest<Record<string, any>>(
+      `admin/users/${userId}/role`,
+      "PATCH",
+      { role },
+    );
+    const data = extractSingleData<AdminUserRecord>(response, ["user", "data"]);
+
+    return {
+      success: true,
+      data,
+      message: response.message || "User role updated successfully",
+      status: response.status || 200,
+    };
+  } catch (error) {
+    console.error("Error updating user role:", error);
+    return {
+      success: false,
+      message:
+        error instanceof Error ? error.message : "Failed to update user role",
+      status: 500,
+    };
+  }
+};
+
 export const GetAdminUser = async (
   userId: string | number,
 ): Promise<ApiSingleResponse<AdminUserRecord>> => {
@@ -119,9 +149,7 @@ export const GetAdminUserDetails = async (
     return {
       success: false,
       message:
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch user details",
+        error instanceof Error ? error.message : "Failed to fetch user details",
       status: 500,
     };
   }

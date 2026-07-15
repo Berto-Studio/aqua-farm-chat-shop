@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -26,6 +26,7 @@ import {
 import {
   getProductImageUrls,
   getProductPrimaryImageUrl,
+  getProductVideoUrls,
 } from "@/lib/productMedia";
 import {
   GetProduct,
@@ -89,6 +90,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [quantityInput, setQuantityInput] = useState("1");
   const [selectedImage, setSelectedImage] = useState("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
 
   const [feedbackItems, setFeedbackItems] = useState<ProductFeedback[]>([]);
   const [feedbackSummary, setFeedbackSummary] =
@@ -98,6 +100,15 @@ export default function ProductDetail() {
   const [draftRating, setDraftRating] = useState(5);
   const [draftFeedback, setDraftFeedback] = useState("");
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
+
+  const isFingerlingsProduct =
+    product?.category?.toLowerCase() === "fingerlings" ||
+    product?.title?.toLowerCase().includes("fingerlings");
+  const minimumOrderQuantity = isFingerlingsProduct
+    ? product?.quantity && product.quantity < 100
+      ? product.quantity
+      : 100
+    : 1;
 
   useEffect(() => {
     let isCancelled = false;
@@ -174,28 +185,67 @@ export default function ProductDetail() {
     return [...new Set([primaryImage, ...galleryImages].filter(Boolean))];
   }, [product]);
 
-  const detailSections = useMemo(
-    () => (product ? getProductDetailsSections(product) : []),
-    [product],
-  );
+  const productVideos = useMemo(() => {
+    if (!product) return [];
+    return getProductVideoUrls(product);
+  }, [product]);
 
-  const careGuideSections = useMemo(
-    () => (product ? getProductCareGuideSections(product) : []),
-    [product],
-  );
+  const mediaItems = useMemo(() => {
+    const items: Array<{ type: "image" | "video"; url: string }> =
+      productImages.map((imageUrl) => ({
+        type: "image",
+        url: imageUrl,
+      }));
+
+    productVideos.forEach((videoUrl) => {
+      items.push({ type: "video", url: videoUrl });
+    });
+
+    return items;
+  }, [productImages, productVideos]);
 
   useEffect(() => {
-    if (!productImages.length) {
+    if (!mediaItems.length) {
       setSelectedImage("");
       return;
     }
 
-    setSelectedImage((currentImage) =>
-      currentImage && productImages.includes(currentImage)
-        ? currentImage
-        : productImages[0],
+    setSelectedImage((currentImage) => {
+      if (
+        currentImage &&
+        mediaItems.some((item) => item.url === currentImage)
+      ) {
+        return currentImage;
+      }
+
+      return mediaItems[0].url;
+    });
+  }, [mediaItems]);
+
+  useEffect(() => {
+    if (!product) return;
+
+    const nextQuantity = Math.min(
+      Math.max(minimumOrderQuantity, 0),
+      product.quantity || minimumOrderQuantity,
     );
-  }, [productImages]);
+
+    setQuantity(nextQuantity);
+    setQuantityInput(nextQuantity.toString());
+  }, [product, minimumOrderQuantity]);
+
+  const activeMediaUrl = selectedImage || mediaItems[0]?.url || "";
+
+  useEffect(() => {
+    const selectedItem = mediaItems.find((item) => item.url === activeMediaUrl);
+
+    if (selectedItem?.type === "video") {
+      videoRef.current?.play().catch(() => undefined);
+    } else if (videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+  }, [activeMediaUrl, mediaItems]);
 
   if (isLoading) {
     return (
@@ -240,7 +290,7 @@ export default function ProductDetail() {
   };
 
   const decrementQuantity = () => {
-    if (quantity > 1) {
+    if (quantity > minimumOrderQuantity) {
       const value = quantity - 1;
       setQuantity(value);
       setQuantityInput(value.toString());
@@ -423,29 +473,50 @@ export default function ProductDetail() {
 
       <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
         <div className="grid gap-4 md:grid-cols-[88px_minmax(0,1fr)] md:items-start">
-          {productImages.length > 1 ? (
+          {mediaItems.length > 1 ? (
             <div className="order-2 flex gap-3 overflow-x-auto pb-1 md:order-1 md:flex-col md:overflow-visible">
-              {productImages.map((imageUrl, index) => {
-                const isActive = imageUrl === selectedImage;
+              {mediaItems.map((item, index) => {
+                const isActive = item.url === activeMediaUrl;
 
                 return (
                   <button
-                    key={`${imageUrl}-${index}`}
+                    key={`${item.type}-${item.url}-${index}`}
                     type="button"
-                    onClick={() => setSelectedImage(imageUrl)}
+                    onClick={() => setSelectedImage(item.url)}
                     className={`shrink-0 overflow-hidden rounded-lg border bg-white transition-all ${
                       isActive
                         ? "border-primary ring-2 ring-primary"
                         : "border-border hover:border-primary/50"
                     }`}
-                    aria-label={`View product image ${index + 1}`}
+                    aria-label={`View ${item.type === "video" ? "product video" : "product image"} ${index + 1}`}
                   >
-                    <div className="h-20 w-20">
-                      <img
-                        src={imageUrl}
-                        alt={`${product.title} thumbnail ${index + 1}`}
-                        className="h-full w-full object-cover"
-                      />
+                    <div className="relative h-20 w-20">
+                      {item.type === "video" ? (
+                        <>
+                          <img
+                            src={product?.image_url || "/logo/logo.png"}
+                            alt={`${product.title} video thumbnail ${index + 1}`}
+                            className="h-full w-full object-cover"
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                            <div className="rounded-full bg-white/80 p-2 text-primary">
+                              <svg
+                                viewBox="0 0 24 24"
+                                className="h-6 w-6 fill-current"
+                                aria-hidden="true"
+                              >
+                                <path d="M8 5v14l11-7z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <img
+                          src={item.url}
+                          alt={`${product.title} thumbnail ${index + 1}`}
+                          className="h-full w-full object-cover"
+                        />
+                      )}
                     </div>
                   </button>
                 );
@@ -454,16 +525,31 @@ export default function ProductDetail() {
           ) : null}
 
           <div className="order-1 overflow-hidden rounded-lg bg-white shadow-sm md:order-2 ">
-            <AspectRatio ratio={4 / 3}>
-              {selectedImage ? (
-                <img
-                  src={selectedImage}
-                  alt={product.title}
-                  className="h-full w-full object-fill"
-                />
+            <AspectRatio ratio={10 / 9}>
+              {activeMediaUrl ? (
+                mediaItems.find((item) => item.url === activeMediaUrl)?.type ===
+                "video" ? (
+                  <video
+                    ref={videoRef}
+                    key={activeMediaUrl}
+                    src={activeMediaUrl}
+                    controls
+                    autoPlay
+                    muted
+                    playsInline
+                    preload="metadata"
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <img
+                    src={activeMediaUrl}
+                    alt={product.title}
+                    className="h-full w-full object-fill"
+                  />
+                )
               ) : (
                 <div className="flex h-full items-center justify-center bg-muted text-sm text-muted-foreground">
-                  No image available
+                  No media available
                 </div>
               )}
             </AspectRatio>
@@ -530,19 +616,19 @@ export default function ProductDetail() {
             )}
           </div>
 
-          <div className="mb-8 flex items-center gap-4">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center">
             <div className="flex items-center rounded-md border">
               <button
                 onClick={decrementQuantity}
                 className="border-r px-3 py-2 transition-colors hover:bg-gray-100"
-                disabled={quantity <= 1}
+                disabled={quantity <= minimumOrderQuantity}
               >
                 -
               </button>
 
               <Input
                 type="number"
-                min={1}
+                min={minimumOrderQuantity}
                 max={product.quantity}
                 value={quantityInput}
                 onChange={(e) => setQuantityInput(e.target.value)}
@@ -551,7 +637,10 @@ export default function ProductDetail() {
 
                   if (isNaN(value)) value = 1;
 
-                  value = Math.max(1, Math.min(value, product.quantity));
+                  value = Math.max(
+                    minimumOrderQuantity,
+                    Math.min(value, product.quantity),
+                  );
 
                   setQuantity(value);
                   setQuantityInput(value.toString());
@@ -585,6 +674,11 @@ export default function ProductDetail() {
                 Add to Cart
               </Button>
             )}
+            {isFingerlingsProduct ? (
+              <p className="text-sm text-muted-foreground">
+                Minimum order for fingerlings is {minimumOrderQuantity}.
+              </p>
+            ) : null}
           </div>
 
           <Card className="mb-4">

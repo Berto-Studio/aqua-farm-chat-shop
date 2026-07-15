@@ -115,11 +115,13 @@ export default function AdminSidebar() {
   return (
     <div className="h-full w-80 border-r bg-white p-4 flex flex-col gap-6 overflow-hidden">
       <div className="flex items-center gap-2 px-2">
-        <div className="h-10 w-10 rounded-full bg-primary text-white flex items-center justify-center font-bold">
-          FS
+        <div className="h-14 w-14 flex items-center justify-center font-bold">
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo/logo1.png" alt="" className="w-16 h-13" />
+          </Link>
         </div>
         <div>
-          <div className="font-bold text-lg">FishFarm</div>
+          <div className="font-bold text-lg">Pomegrid Aqua</div>
           <div className="text-xs text-muted-foreground">Admin Dashboard</div>
         </div>
       </div>

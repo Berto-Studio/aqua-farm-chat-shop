@@ -29,7 +29,7 @@ export const GetAdminOrders = async (
   try {
     const query = buildQueryString(params as Record<string, unknown>);
     const response = await apiRequest<Record<string, any>>(
-      `orders${query}`,
+      `admin/orders${query}?payment_status=paid`,
       "GET",
     );
 
@@ -71,7 +71,7 @@ export const GetAdminOrder = async (
 ): Promise<ApiSingleResponse<AdminOrderRecord>> => {
   try {
     const response = await apiRequest<Record<string, any>>(
-      `orders/${orderId}`,
+      `admin/orders/${orderId}`,
       "GET",
     );
     const data = extractSingleData<AdminOrderRecord>(response, ["order"]);
@@ -98,7 +98,7 @@ export const UpdateAdminOrderStatus = async (
 ): Promise<ApiSingleResponse<AdminOrderRecord>> => {
   try {
     const response = await apiRequest<Record<string, any>>(
-      `orders/${orderId}/status`,
+      `admin/orders/${orderId}/status`,
       "PATCH",
       { status },
     );
@@ -128,7 +128,7 @@ export const GetAdminOrderStats = async (): Promise<
 > => {
   try {
     const response = await apiRequest<Record<string, any>>(
-      "orders/stats/overview",
+      "admin/orders/stats/overview",
       "GET",
     );
     const data = extractSingleData<AdminOrderStats>(response, [

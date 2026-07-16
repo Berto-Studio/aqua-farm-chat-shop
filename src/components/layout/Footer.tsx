@@ -117,12 +117,12 @@ export default function Footer() {
                   href="tel:+11234567890"
                   className="transition-colors hover:text-zinc-900"
                 >
-                  {"054 528 7775"}
+                  {"054 474 3630/053 120 9142/054 528 7775"}
                 </a>
               </li>
               <li className="flex items-center gap-3">
                 <MapPin className="h-4 w-4 text-sky-600" />
-                <span>Essikadu, Silhouette Street, Mempeasem</span>
+                <span>Takoradi</span>
               </li>
             </ul>
           </div>

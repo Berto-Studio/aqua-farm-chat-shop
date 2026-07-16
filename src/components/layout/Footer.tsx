@@ -117,7 +117,7 @@ export default function Footer() {
                   href="tel:+11234567890"
                   className="transition-colors hover:text-zinc-900"
                 >
-                  {"054 474 3630/053 120 9142/054 528 7775"}
+                  {"054 474 3630 / 053 120 9142 / 054 528 7775"}
                 </a>
               </li>
               <li className="flex items-center gap-3">

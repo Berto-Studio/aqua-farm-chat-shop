@@ -26,6 +26,7 @@ import {
   useProductByCategoryCatfishTilapia,
   useProductByCategoryFarmEquipment,
   useProductByCategoryFingerlings,
+  useProductByCategoryFishFeed,
 } from "@/hooks/useProducts";
 
 const HeroCarouselItems = [
@@ -141,6 +142,9 @@ export default function Index() {
     useProductByCategoryCatfishTilapia("catfish,tilapia");
   const { data: farmEquipmentProduct = [] } =
     useProductByCategoryFarmEquipment("Farm Equipment");
+  const { data: fishfeedProduct = [] } =
+    useProductByCategoryFishFeed("Fish Feed");
+
   const {
     data: services = [],
     isLoading: isLoadingServices,
@@ -262,6 +266,18 @@ export default function Index() {
 
           <div>
             <ProductsSlider products={farmEquipmentProduct} />
+          </div>
+        </section>
+      )}
+
+      {fishfeedProduct.length > 0 && (
+        <section className="py-12 container">
+          <h2 className="text-2xl md:text-3xl font-bold mb-8 text-start">
+            Fish Feed
+          </h2>
+
+          <div>
+            <ProductsSlider products={fishfeedProduct} />
           </div>
         </section>
       )}

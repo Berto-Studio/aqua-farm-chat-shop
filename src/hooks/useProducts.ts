@@ -63,3 +63,18 @@ export const useProductByCategoryFarmEquipment = (categoryName: string) => {
     refetchOnWindowFocus: false,
   });
 };
+
+export const useProductByCategoryFishFeed = (categoryName: string) => {
+  return useQuery({
+    queryKey: ["product-category-fish-feed"],
+    queryFn: async () => {
+      const response = await GetProductsByCategory(categoryName);
+      if (!response.success) {
+        throw new Error(response.message);
+      }
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+  });
+};

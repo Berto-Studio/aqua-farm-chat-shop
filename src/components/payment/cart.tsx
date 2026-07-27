@@ -11,7 +11,7 @@ import { ModalMessage } from "../ui/modalMessage";
 interface CartItems {
   cartItems: CartProps[];
   setCartItems: (
-    items: CartProps[] | ((prevItems: CartProps[]) => CartProps[])
+    items: CartProps[] | ((prevItems: CartProps[]) => CartProps[]),
   ) => void;
 }
 
@@ -36,8 +36,8 @@ export default function Carts({ cartItems, setCartItems }: CartItems) {
                 quantity: newQuantity,
                 totalPrice: item.price * newQuantity,
               }
-            : item
-        )
+            : item,
+        ),
       );
 
       // Optionally: refresh cart via react-query
@@ -106,7 +106,7 @@ export default function Carts({ cartItems, setCartItems }: CartItems) {
                     <div>
                       <div className="flex items-start justify-between gap-2">
                         <Link
-                          to={`/products/${item.cart_id}`}
+                          to={`/products/${item.product_id}`}
                           className="font-semibold text-sm hover:text-primary transition-colors"
                         >
                           {item.name}

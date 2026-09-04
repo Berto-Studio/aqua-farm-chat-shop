@@ -19,6 +19,7 @@ export default function Footer() {
     // { label: "About Us", to: "/about" },
     // { label: "Contact", to: "/contact" },
     { label: "Calculator", to: "/calculator" },
+    { label: "Sell With Us", to: "/sell-with-us" },
   ];
 
   return (

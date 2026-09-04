@@ -48,6 +48,7 @@ import AppCalculator from "./pages/calculator";
 import TermsAndConditions from "./pages/legal/TermsAndConditions";
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
 import CookiePolicy from "./pages/legal/CookiePolicy";
+import SellWithUs from "./pages/SellWithUs";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -93,6 +94,7 @@ const App = () => (
               <Route path="products/:id" element={<ProductDetail />} />
               <Route path="services" element={<Services />} />
               <Route path="calculator" element={<AppCalculator />} />
+              <Route path="sell-with-us" element={<SellWithUs />} />
               <Route path="about" element={<AboutUs />} />
               <Route path="contact" element={<ContactUs />} />
               <Route

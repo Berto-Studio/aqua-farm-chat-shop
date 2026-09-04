@@ -481,6 +481,40 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Sell With Us Banner */}
+      <section className="container py-6 md:py-10">
+        <Link
+          to="/sell-with-us"
+          className="group relative block min-h-[360px] overflow-hidden rounded-2xl sm:min-h-[460px] sm:rounded-[28px] lg:min-h-[650px]"
+          aria-label="Sell with us"
+        >
+          <img
+            src="/banners/sell-with-us-banner.webp"
+            alt="Sell your farm products with Pomegrid"
+            className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
+          <div className="relative flex min-h-[360px] items-center px-5 py-6 text-white sm:min-h-[460px] sm:px-10 sm:py-8 lg:min-h-[650px]">
+            <div className="max-w-xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/75 sm:text-sm sm:tracking-[0.22em]">
+                For farmers and suppliers
+              </p>
+              <h2 className="mt-2 text-2xl font-bold sm:text-4xl">
+                Sell with us
+              </h2>
+              <p className="mt-3 max-w-lg text-sm leading-5 text-white/85 sm:text-base sm:leading-6">
+                Connect your farm products with customers looking for fresh,
+                trusted produce.
+              </p>
+              <span className="mt-4 inline-flex items-center text-sm font-semibold sm:mt-5">
+                Learn how it works
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </span>
+            </div>
+          </div>
+        </Link>
+      </section>
+
       {/* Services Section */}
       <section className="py-12 container">
         <h2 className="text-2xl md:text-3xl font-bold mb-8 text-center">

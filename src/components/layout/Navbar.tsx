@@ -135,6 +135,12 @@ export default function Navbar() {
       >
         Calculator
       </Link>
+      <Link
+        to="/sell-with-us"
+        className="font-medium hover:text-primary transition-colors"
+      >
+        Sell With Us
+      </Link>
       {/* <Link
         to="/about"
         className="font-medium hover:text-primary transition-colors"
@@ -191,6 +197,14 @@ export default function Navbar() {
                       <SheetClose asChild>
                         <Link to="/calculator" className="font-medium text-lg">
                           Calculator
+                        </Link>
+                      </SheetClose>
+                      <SheetClose asChild>
+                        <Link
+                          to="/sell-with-us"
+                          className="font-medium text-lg"
+                        >
+                          Sell With Us
                         </Link>
                       </SheetClose>
                       {/* <SheetClose asChild>

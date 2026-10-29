@@ -8,7 +8,8 @@ const RAW_API_BASE_URL =
   "/api/v1/";
 const USE_DEV_PROXY =
   import.meta.env.DEV && import.meta.env.VITE_USE_DEV_PROXY === "true";
-const USE_PLATFORM_PROXY = import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
+const USE_PLATFORM_PROXY =
+  import.meta.env.DEV && import.meta.env.VITE_USE_PLATFORM_PROXY === "true";
 const USE_PROXY_TUNNEL = USE_DEV_PROXY || USE_PLATFORM_PROXY;
 const ACCESS_TOKEN_COOKIE = "access_token";
 const REFRESH_TOKEN_COOKIE = "refresh_token";
